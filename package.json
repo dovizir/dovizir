@@ -1,0 +1,19 @@
+{
+    "name": "dovizir",
+    "private": true,
+    "workspaces": ["apps/*", "services/*", "packages/*"],
+    "engines": { "node": ">=20" },
+    "scripts": {
+      "lint": "eslint . --ext .ts,.tsx || true",
+      "typecheck": "tsc -p tsconfig.base.json --noEmit",
+      "test": "vitest run",
+      "dev:web": "pnpm --filter @dovizir/web dev",
+      "dev:indexer": "pnpm --filter @dovizir/indexer dev"
+    },
+    "devDependencies": {
+      "typescript": "^5.4.0",
+      "vitest": "^1.6.0",
+      "@types/node": "^20.10.0",
+      "eslint": "^9.0.0"
+    }
+}
