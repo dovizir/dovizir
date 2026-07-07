@@ -1,0 +1,70 @@
+# dash: import Figma published styles as a brand source (custody-free).
+# Dispatched by dash; runs with YOUR FIGMA_TOKEN secret — dash never sees it.
+name: dash-figma-import
+on:
+  workflow_dispatch:
+    inputs:
+      figma_url:
+        description: "Figma file link"
+        required: true
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch published styles from Figma
+        env:
+          FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
+          FIGMA_URL: ${{ inputs.figma_url }}
+        run: |
+          if [ -z "$FIGMA_TOKEN" ]; then
+            echo "::error::FIGMA_TOKEN secret is not set — add it in dash's Vault (or repo Settings → Secrets), then re-run."
+            exit 1
+          fi
+          node -e '
+          const url = process.env.FIGMA_URL || "";
+          const m = /figma\.com\/(?:file|design|board)\/([A-Za-z0-9]{10,})/.exec(url);
+          if (!m) { console.error("::error::not a Figma file link: " + url); process.exit(1); }
+          const key = m[1];
+          const H = { "X-Figma-Token": process.env.FIGMA_TOKEN };
+          const get = async (p) => {
+            const r = await fetch("https://api.figma.com/v1" + p, { headers: H });
+            if (!r.ok) { console.error("::error::figma " + p + " -> " + r.status); process.exit(1); }
+            return r.json();
+          };
+          (async () => {
+            const meta = await get("/files/" + key + "?depth=1");
+            const entries = Object.entries(meta.styles || {});
+            const fillIds = entries.filter(([,s]) => s.styleType === "FILL").map(([id]) => id);
+            const textIds = entries.filter(([,s]) => s.styleType === "TEXT").map(([id]) => id);
+            const ids = [...fillIds, ...textIds].slice(0, 60);
+            const colors = [], texts = [];
+            if (ids.length) {
+              const nodes = await get("/files/" + key + "/nodes?ids=" + encodeURIComponent(ids.join(",")));
+              const hex = (c) => "#" + [c.r, c.g, c.b].map((v) => Math.round(Math.max(0, Math.min(1, v)) * 255).toString(16).padStart(2, "0")).join("").toUpperCase();
+              for (const id of fillIds) {
+                const d = nodes.nodes?.[id]?.document;
+                const solid = (d?.fills || []).find((f) => f.type === "SOLID" && f.color);
+                if (d && solid) colors.push("- " + (d.name || "color") + ": " + hex(solid.color));
+              }
+              for (const id of textIds) {
+                const d = nodes.nodes?.[id]?.document;
+                if (d?.style?.fontFamily) texts.push("- " + (d.name || "text") + ": " + d.style.fontFamily + (d.style.fontSize ? " " + d.style.fontSize + "px" : "") + (d.style.fontWeight ? " w" + d.style.fontWeight : ""));
+              }
+            }
+            if (!colors.length && !texts.length) { console.error("::error::that file has no PUBLISHED styles — publish color/text styles in Figma, then re-run."); process.exit(1); }
+            const md = ["# Figma brand source — " + (meta.name || key), "(imported by dash-figma-import from " + url + ")", "", "## Colors (published styles)", ...colors, "", "## Text styles", ...texts, ""].join("\n");
+            require("fs").mkdirSync(".brewing/branding", { recursive: true });
+            require("fs").writeFileSync(".brewing/branding/figma-import.md", md);
+            console.log("wrote .brewing/branding/figma-import.md (" + colors.length + " colors, " + texts.length + " text styles)");
+          })();
+          '
+      - name: Commit the brand source
+        run: |
+          git config user.name "dash-figma-import"
+          git config user.email "noreply@slowcook.dev"
+          git add .brewing/branding/figma-import.md
+          git diff --cached --quiet || git commit -m "brand source: Figma published styles (dash-figma-import)"
+          git push
