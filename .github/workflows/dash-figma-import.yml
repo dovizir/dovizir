@@ -1,4 +1,4 @@
-# dash: import Figma styles as a brand source (custody-free). v3
+# dash: import Figma styles as a brand source (custody-free). v4
 # Dispatched by dash; runs with YOUR FIGMA_TOKEN secret — dash never sees it.
 name: dash-figma-import
 on:
@@ -112,8 +112,8 @@ jobs:
           };
           const fs = await import("fs");
           fs.mkdirSync(".brewing/branding", { recursive: true });
-          fs.writeFileSync(".brewing/branding/figma-import.json", JSON.stringify(out, null, 2));
-          const md = ["# Figma brand source — " + out.file, "(deep dig by dash-figma-import " + "v3" + " from " + url + "; " + nodeCount + " nodes)", "",
+          fs.writeFileSync(".brewing/branding/figma-" + key + ".json", JSON.stringify(out, null, 2));
+          const md = ["# Figma brand source — " + out.file, "(deep dig by dash-figma-import " + "v4" + " from " + url + "; " + nodeCount + " nodes)", "",
             "## Colors", ...out.colors.map((c2) => "- " + c2.hex + " (" + c2.uses + "x" + (c2.names.length ? "; on: " + c2.names.join(", ") : "") + ")"), "",
             "## Text matrix", ...out.text.map((t) => "- " + t.family + " " + (t.size ?? "?") + "px w" + (t.weight ?? "?") + (t.lh ? " lh" + t.lh : "") + " (" + t.uses + "x)"), "",
             "## Components", "sets: " + out.components.sets.length + " · variants: " + out.components.count + " · axes: " + JSON.stringify(out.components.variant_axes), ...out.components.sets.slice(0, 30).map((s) => "- " + s), "",
@@ -121,7 +121,7 @@ jobs:
             "## Spacing", "gaps: " + out.spacing.gaps.map((g) => g.px).join(", "), "paddings: " + out.spacing.paddings.map((g) => g.px).join(", "), "",
             "## Shadows", ...out.shadows.map((s) => "- " + s.kind + " " + s.x + "," + s.y + " blur " + s.blur + " " + (s.color ?? "") + (s.alpha != null ? " @" + s.alpha : "") + " (" + s.uses + "x)"), "",
             "## Motion", ...out.motion.map((mo) => "- " + mo.ms + "ms " + (mo.easing ?? "") + " (" + mo.uses + "x)"), ""].join("\n");
-          fs.writeFileSync(".brewing/branding/figma-import.md", md);
+          fs.writeFileSync(".brewing/branding/figma-" + key + ".md", md);
           console.log("deep dig: " + nodeCount + " nodes → " + out.colors.length + " colors, " + out.text.length + " text styles, " + out.components.count + " component variants, " + out.shadows.length + " shadows, " + out.motion.length + " motion specs");
           SCRIPT
           node /tmp/figma-import.mjs
@@ -129,6 +129,6 @@ jobs:
         run: |
           git config user.name "dash-figma-import"
           git config user.email "noreply@slowcook.dev"
-          git add .brewing/branding/figma-import.json .brewing/branding/figma-import.md
-          git diff --cached --quiet || git commit -m "brand source: Figma deep dig (dash-figma-import v3)"
+          git add .brewing/branding/
+          git diff --cached --quiet || git commit -m "brand source: Figma deep dig (dash-figma-import v4)"
           git push
