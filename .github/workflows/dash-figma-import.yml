@@ -1,4 +1,4 @@
-# dash: import Figma styles as a brand source (custody-free). v2
+# dash: import Figma styles as a brand source (custody-free). v3
 # Dispatched by dash; runs with YOUR FIGMA_TOKEN secret — dash never sees it.
 name: dash-figma-import
 on:
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fetch styles from Figma
+      - name: Deep-dig styles from Figma
         env:
           FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
           FIGMA_URL: ${{ inputs.figma_url }}
@@ -35,63 +35,100 @@ jobs:
             return r.json();
           };
           const hex = (c) => "#" + [c.r, c.g, c.b].map((v) => Math.round(Math.max(0, Math.min(1, v)) * 255).toString(16).padStart(2, "0")).join("").toUpperCase();
-          const colors = [], texts = [];
-          const meta = await get("/files/" + key + "?depth=1");
-          const entries = Object.entries(meta.styles || {});
-          const fillIds = entries.filter(([,s]) => s.styleType === "FILL").map(([id]) => id);
-          const textIds = entries.filter(([,s]) => s.styleType === "TEXT").map(([id]) => id);
-          let source = "published styles";
-          if (fillIds.length || textIds.length) {
-            const nodes = await get("/files/" + key + "/nodes?ids=" + encodeURIComponent([...fillIds, ...textIds].slice(0, 60).join(",")));
-            for (const id of fillIds) {
-              const d = nodes.nodes?.[id]?.document;
-              const solid = (d?.fills || []).find((f) => f.type === "SOLID" && f.color);
-              if (d && solid) colors.push("- " + (d.name || "color") + ": " + hex(solid.color));
-            }
-            for (const id of textIds) {
-              const d = nodes.nodes?.[id]?.document;
-              if (d?.style?.fontFamily) texts.push("- " + (d.name || "text") + ": " + d.style.fontFamily + (d.style.fontSize ? " " + d.style.fontSize + "px" : "") + (d.style.fontWeight ? " w" + d.style.fontWeight : ""));
-            }
-          }
-          if (!colors.length && !texts.length) {
-            // FALLBACK: no published styles (most real files) — scan the document.
-            source = "document scan";
-            const doc = await get("/files/" + key + "?depth=6");
-            const fillCount = new Map(), fontCount = new Map();
-            const walk = (n) => {
-              if (!n || typeof n !== "object") return;
-              if (n.visible !== false) {
-                for (const f of n.fills || []) {
-                  if (f.type === "SOLID" && f.color && (f.opacity ?? 1) > 0.2) {
-                    const h = hex(f.color);
-                    fillCount.set(h, (fillCount.get(h) || 0) + 1);
-                  }
+          const bump = (map, k, by = 1) => map.set(k, (map.get(k) || 0) + by);
+          const top = (map, n) => [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, n);
+
+          // FULL document — the deep dig. Big files: this is the point.
+          const doc = await get("/files/" + key);
+          const fills = new Map(), fillNames = new Map(), fonts = new Map(), radii = new Map(),
+                gaps = new Map(), pads = new Map(), shadows = new Map(), motions = new Map(),
+                strokes = new Map();
+          let iconish = 0, gradients = 0, nodeCount = 0;
+          const walk = (n, depth) => {
+            if (!n || typeof n !== "object" || n.visible === false) return;
+            nodeCount++;
+            for (const f of n.fills || []) {
+              if (f.visible === false) continue;
+              if (f.type === "SOLID" && f.color && (f.opacity ?? 1) > 0.15) {
+                const h = hex(f.color);
+                bump(fills, h);
+                if (n.name && n.name.length < 40) {
+                  const arr = fillNames.get(h) || new Map();
+                  bump(arr, n.name);
+                  fillNames.set(h, arr);
                 }
-                if (n.type === "TEXT" && n.style?.fontFamily) {
-                  const k2 = n.style.fontFamily + (n.style.fontWeight ? " w" + n.style.fontWeight : "");
-                  fontCount.set(k2, (fontCount.get(k2) || 0) + 1);
-                }
+              } else if ((f.type || "").startsWith("GRADIENT")) gradients++;
+            }
+            for (const s of n.strokes || []) {
+              if (s.type === "SOLID" && s.color) bump(strokes, hex(s.color));
+            }
+            if (n.type === "TEXT" && n.style?.fontFamily) {
+              const st = n.style;
+              bump(fonts, JSON.stringify({ family: st.fontFamily, size: st.fontSize ?? null, weight: st.fontWeight ?? null, lh: st.lineHeightPx ? Math.round(st.lineHeightPx) : null }));
+            }
+            if (typeof n.cornerRadius === "number" && n.cornerRadius > 0) bump(radii, Math.round(n.cornerRadius));
+            if (n.layoutMode && n.layoutMode !== "NONE") {
+              if (typeof n.itemSpacing === "number" && n.itemSpacing > 0) bump(gaps, Math.round(n.itemSpacing));
+              for (const p of [n.paddingLeft, n.paddingTop]) if (typeof p === "number" && p > 0) bump(pads, Math.round(p));
+            }
+            for (const e of n.effects || []) {
+              if (e.visible === false) continue;
+              if (e.type === "DROP_SHADOW" || e.type === "INNER_SHADOW") {
+                bump(shadows, JSON.stringify({ kind: e.type, x: Math.round(e.offset?.x ?? 0), y: Math.round(e.offset?.y ?? 0), blur: Math.round(e.radius ?? 0), color: e.color ? hex(e.color) : null, alpha: e.color ? Math.round((e.color.a ?? 1) * 100) / 100 : null }));
               }
-              for (const ch of n.children || []) walk(ch);
-            };
-            walk(doc.document);
-            const topFills = [...fillCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 14);
-            const topFonts = [...fontCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
-            for (const [h, n] of topFills) colors.push("- " + h + " (used " + n + "x)");
-            for (const [f, n] of topFonts) texts.push("- " + f + " (used " + n + "x)");
+            }
+            if (typeof n.transitionDuration === "number" && n.transitionDuration > 0) {
+              bump(motions, JSON.stringify({ ms: Math.round(n.transitionDuration), easing: n.transitionEasing ?? null }));
+            }
+            if (/\b(icon|glyph)\b/i.test(n.name || "") && depth > 1) iconish++;
+            for (const ch of n.children || []) walk(ch, depth + 1);
+          };
+          walk(doc.document, 0);
+
+          // component inventory: sets carry the VARIANT AXES (the real system)
+          const sets = Object.values(doc.componentSets || {}).map((s) => s.name);
+          const comps = Object.values(doc.components || {}).map((c2) => c2.name);
+          const variantAxes = {};
+          for (const c2 of comps) {
+            // "State=Hover, Size=Large" style names under a set
+            if (c2.includes("=")) for (const part of c2.split(",")) {
+              const [k] = part.split("=");
+              const kk = (k || "").trim();
+              if (kk) variantAxes[kk] = (variantAxes[kk] || 0) + 1;
+            }
           }
-          if (!colors.length && !texts.length) { console.error("::error::no styles or visible fills/text found in that file."); process.exit(1); }
-          const md = ["# Figma brand source — " + (meta.name || key), "(imported by dash-figma-import from " + url + " via " + source + ")", "", "## Colors (" + source + ")", ...colors, "", "## Text styles", ...texts, ""].join("\n");
+
+          const out = {
+            version: 3, file: doc.name || key, url, scanned_nodes: nodeCount,
+            colors: top(fills, 24).map(([h, n]) => ({ hex: h, uses: n, names: top(fillNames.get(h) || new Map(), 3).map(([k]) => k) })),
+            strokes: top(strokes, 8).map(([h, n]) => ({ hex: h, uses: n })),
+            text: top(fonts, 16).map(([k, n]) => ({ ...JSON.parse(k), uses: n })),
+            radii: top(radii, 8).map(([v, n]) => ({ px: v, uses: n })),
+            spacing: { gaps: top(gaps, 10).map(([v, n]) => ({ px: v, uses: n })), paddings: top(pads, 10).map(([v, n]) => ({ px: v, uses: n })) },
+            shadows: top(shadows, 8).map(([k, n]) => ({ ...JSON.parse(k), uses: n })),
+            motion: top(motions, 6).map(([k, n]) => ({ ...JSON.parse(k), uses: n })),
+            components: { sets: sets.slice(0, 60), count: comps.length, variant_axes: variantAxes },
+            gradients, icons_detected: iconish,
+          };
           const fs = await import("fs");
           fs.mkdirSync(".brewing/branding", { recursive: true });
+          fs.writeFileSync(".brewing/branding/figma-import.json", JSON.stringify(out, null, 2));
+          const md = ["# Figma brand source — " + out.file, "(deep dig by dash-figma-import " + "v3" + " from " + url + "; " + nodeCount + " nodes)", "",
+            "## Colors", ...out.colors.map((c2) => "- " + c2.hex + " (" + c2.uses + "x" + (c2.names.length ? "; on: " + c2.names.join(", ") : "") + ")"), "",
+            "## Text matrix", ...out.text.map((t) => "- " + t.family + " " + (t.size ?? "?") + "px w" + (t.weight ?? "?") + (t.lh ? " lh" + t.lh : "") + " (" + t.uses + "x)"), "",
+            "## Components", "sets: " + out.components.sets.length + " · variants: " + out.components.count + " · axes: " + JSON.stringify(out.components.variant_axes), ...out.components.sets.slice(0, 30).map((s) => "- " + s), "",
+            "## Radii", ...out.radii.map((r) => "- " + r.px + "px (" + r.uses + "x)"), "",
+            "## Spacing", "gaps: " + out.spacing.gaps.map((g) => g.px).join(", "), "paddings: " + out.spacing.paddings.map((g) => g.px).join(", "), "",
+            "## Shadows", ...out.shadows.map((s) => "- " + s.kind + " " + s.x + "," + s.y + " blur " + s.blur + " " + (s.color ?? "") + (s.alpha != null ? " @" + s.alpha : "") + " (" + s.uses + "x)"), "",
+            "## Motion", ...out.motion.map((mo) => "- " + mo.ms + "ms " + (mo.easing ?? "") + " (" + mo.uses + "x)"), ""].join("\n");
           fs.writeFileSync(".brewing/branding/figma-import.md", md);
-          console.log("wrote .brewing/branding/figma-import.md via " + source + " (" + colors.length + " colors, " + texts.length + " text styles)");
+          console.log("deep dig: " + nodeCount + " nodes → " + out.colors.length + " colors, " + out.text.length + " text styles, " + out.components.count + " component variants, " + out.shadows.length + " shadows, " + out.motion.length + " motion specs");
           SCRIPT
           node /tmp/figma-import.mjs
       - name: Commit the brand source
         run: |
           git config user.name "dash-figma-import"
           git config user.email "noreply@slowcook.dev"
-          git add .brewing/branding/figma-import.md
-          git diff --cached --quiet || git commit -m "brand source: Figma styles (dash-figma-import)"
+          git add .brewing/branding/figma-import.json .brewing/branding/figma-import.md
+          git diff --cached --quiet || git commit -m "brand source: Figma deep dig (dash-figma-import v3)"
           git push
