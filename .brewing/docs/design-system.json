@@ -1,0 +1,116 @@
+{"name":"Dovizir",
+ "palette":[
+  {"name":"Primary Blue","hex":"#2196F3","role":"primary","source":"found","mode":"universal"},
+  {"name":"Light Blue","hex":"#90CAF9","role":"accent","source":"found","mode":"dark"},
+  {"name":"Brand Blue","hex":"#42A5F5","role":"accent","source":"found","mode":"universal"},
+  {"name":"White","hex":"#FFFFFF","role":"bg","source":"found","mode":"light"},
+  {"name":"Surface Light","hex":"#F5F5F5","role":"surface","source":"found","mode":"light"},
+  {"name":"Surface Light Alt","hex":"#F8F8F8","role":"surface","source":"found","mode":"light"},
+  {"name":"Ink","hex":"#171717","role":"text","source":"found","mode":"light"},
+  {"name":"Near Black","hex":"#231F20","role":"text","source":"found","mode":"light"},
+  {"name":"Background Dark","hex":"#0A0A0A","role":"bg","source":"found","mode":"dark"},
+  {"name":"Surface Dark","hex":"#121212","role":"bg","source":"found","mode":"dark"},
+  {"name":"Card Dark","hex":"#2E2E2E","role":"surface","source":"found","mode":"dark"},
+  {"name":"Elevated Dark","hex":"#272727","role":"surface","source":"found","mode":"dark"},
+  {"name":"Paper Dark","hex":"#383838","role":"surface","source":"found","mode":"dark"},
+  {"name":"Text on Dark","hex":"#EDEDED","role":"text","source":"found","mode":"dark"},
+  {"name":"Success Green","hex":"#4CAF50","role":"success","source":"found","mode":"universal"},
+  {"name":"Success Green Dark","hex":"#43A047","role":"success","source":"found","mode":"universal"},
+  {"name":"Error Red","hex":"#E53935","role":"warn","source":"found","mode":"universal"},
+  {"name":"Alert Red","hex":"#FF4B55","role":"warn","source":"found","mode":"universal"},
+  {"name":"Amber","hex":"#FFB400","role":"warn","source":"found","mode":"universal"},
+  {"name":"Muted Gray","hex":"#757575","role":"text","source":"found","mode":"universal"},
+  {"name":"Disabled Gray","hex":"#BDBDBD","role":"border","source":"found","mode":"universal"},
+  {"name":"Border Light","hex":"#E0E0E0","role":"border","source":"found","mode":"light"},
+  {"name":"Border Cool","hex":"#E4E4E7","role":"border","source":"found","mode":"light"}
+ ],
+ "typography":{
+  "families":[
+   {"family":"Roboto","role":"body"},
+   {"family":"Inter","role":"headings"},
+   {"family":"Poppins","role":"headings"},
+   {"family":"Geist Mono","role":"mono"}
+  ],
+  "scale":[
+   {"name":"Brand/Wordmark","px":16,"weight":800,"lineHeight":19,"use":"Inter — 'Dovizir' logotype / emphasis"},
+   {"name":"Title","px":20,"weight":500,"lineHeight":32,"use":"Roboto — section & screen titles"},
+   {"name":"Body Large","px":16,"weight":400,"lineHeight":24,"use":"Roboto/Poppins — primary reading text, list items"},
+   {"name":"Body","px":14,"weight":400,"lineHeight":20,"use":"Roboto — default body (most-used size)"},
+   {"name":"Label","px":14,"weight":500,"lineHeight":22,"use":"Roboto — buttons, form labels, tabs"},
+   {"name":"Button Strong","px":14,"weight":700,"lineHeight":20,"use":"Roboto — emphasized CTA text"},
+   {"name":"Caption","px":12,"weight":400,"lineHeight":20,"use":"Roboto — helper text, metadata, badges"},
+   {"name":"Overline","px":12,"weight":500,"lineHeight":20,"use":"Roboto — chip / tag / small labels"}
+  ]
+ },
+ "radii":[
+  {"name":"sm","value":"4px"},
+  {"name":"md","value":"8px"},
+  {"name":"lg","value":"16px"},
+  {"name":"xl","value":"64px"},
+  {"name":"pill","value":"100px"}
+ ],
+ "spacing":[
+  {"name":"xs","value":"4px"},
+  {"name":"sm","value":"8px"},
+  {"name":"md","value":"12px"},
+  {"name":"lg","value":"16px"},
+  {"name":"xl","value":"24px"},
+  {"name":"2xl","value":"32px"}
+ ],
+ "shadows":[
+  {"name":"sm","value":"0 1px 3px rgba(0,0,0,.08)"},
+  {"name":"card","value":"0 3px 16px rgba(0,0,0,.08)"},
+  {"name":"md","value":"0 7px 34px rgba(0,0,0,.12)"},
+  {"name":"lg","value":"0 18px 28px rgba(0,0,0,.14)"},
+  {"name":"overlay","value":"0 9px 11px rgba(0,0,0,.2)"},
+  {"name":"top","value":"0 -1px 16px rgba(0,0,0,.12)"}
+ ],
+ "borders":[
+  {"name":"default","value":"#E0E0E0"},
+  {"name":"cool","value":"#E4E4E7"},
+  {"name":"focus","value":"#2196F3"},
+  {"name":"dark","value":"#383838"}
+ ],
+ "components":[
+  {"name":"Button","variants":24,"axes":["Variant","Color","Size","State","Disabled","Icon Position"],"states":["Hover","Pressed","Disabled","Active"]},
+  {"name":"IconButton","variants":12,"axes":["Size","Color","State","Disabled"],"states":["Hover","Pressed","Disabled"]},
+  {"name":"TextField","variants":16,"axes":["State","Size","Has Value","Disabled","Rows"],"states":["Focused","Filled","Disabled","Error"]},
+  {"name":"FormHelperText","variants":4,"axes":["Severity","State"],"states":["Error","Disabled"]},
+  {"name":"Link","variants":6,"axes":["Underline","Color","State"],"states":["Hover","Visited"]},
+  {"name":"Tabs","variants":8,"axes":["Orientation","Variant"],"states":[]},
+  {"name":"Tab","variants":8,"axes":["Active","Icon Position","Disabled"],"states":["Active","Disabled"]},
+  {"name":"MenuItem","variants":10,"axes":["Dense","Selected","State","Dis. Gutters"],"states":["Hover","Selected","Disabled"]},
+  {"name":"Chip","variants":9,"axes":["Size","Color","State","Remove button"],"states":["Hover","Disabled"]},
+  {"name":"Badge","variants":8,"axes":["Content","Color","Dot","Max"],"states":[]},
+  {"name":"Alert","variants":9,"axes":["Severity","Variant"],"states":[]},
+  {"name":"Avatar","variants":6,"axes":["Size","Square","Variant"],"states":[]},
+  {"name":"Tooltip","variants":6,"axes":["Placement","Max Width"],"states":[]},
+  {"name":"Card","variants":6,"axes":["Elevation","Variant"],"states":[]},
+  {"name":"BottomNavigation","variants":4,"axes":["Active","Variant"],"states":["Active"]},
+  {"name":"BottomNavigationAction","variants":6,"axes":["Active","Label"],"states":["Active"]},
+  {"name":"MobileStepper","variants":3,"axes":["Progress Type","Step"],"states":[]},
+  {"name":"Skeleton","variants":3,"axes":["Variant"],"states":[]},
+  {"name":"Typography","variants":12,"axes":["Variant","Gutter Bottom","Color"],"states":[]},
+  {"name":"Stack","variants":8,"axes":["Direction","Spacing","Divider"],"states":[]}
+ ],
+ "motion":[
+  {"name":"fast","ms":100,"easing":"linear"},
+  {"name":"standard","ms":300,"easing":"ease-out"},
+  {"name":"emphasized","ms":200,"easing":"cubic-bezier(0.36,0,0.66,-0.56)"},
+  {"name":"inOut","ms":200,"easing":"ease-in-out"}
+ ],
+ "icons":{"count":1541,"style":"mixed"},
+ "logo":{"path":"_Library / Logo Placeholder"},
+ "voice":"Clear, trustworthy guidance for everyday P2P crypto payments.",
+ "cues":[
+  "Material-based fintech UI (MUI component naming, Roboto type, Material blue #2196F3)",
+  "Mobile-first flows: sign-up, wallet deposit/withdraw, P2P buy/sell USDT, scan & pay, chat",
+  "Pill (100px) and large (16px) radii dominate — soft, rounded card language",
+  "Ships both light and dark themes; dark surfaces layered #121212 → #2E2E2E → #383838",
+  "Green = success/positive amount, red = error/negative amount, amber = warning"
+ ],
+ "provenance":{
+  "found":["palette","typography","components","radii","spacing","shadows","borders","motion","icons"],
+  "proposed":["type scale naming/roles","radii & spacing semantic names","shadow semantic names","component variant/state counts (grouped from axis distribution)"]
+ },
+ "notes":"Two-generation history: the 2026-07-06 Next.js globals.css establishes the app shell with an explicit light/dark pair (light bg #ffffff / fg #171717; dark bg #0a0a0a / fg #ededed via prefers-color-scheme) using Geist Sans/Mono. The richer 2026-07-08 Figma import (Dovizir/MVP, 51,588 nodes) is the authoritative source and wins on conflicts: it supplies the real palette, Roboto/Poppins/Inter type matrix, 60 component sets / 537 variants, radii, spacing, shadows and motion. Both modes are retained additively — light surfaces (#FFFFFF/#F5F5F5/#F8F8F8) and dark surfaces (#121212/#272727/#2E2E2E/#383838) both ship. Semantic roles derived from usage: #2196F3 is the most-used color on Button/<Button> interactive names → primary; #90CAF9 is the accent tint used on dark-mode buttons; the dominant on-surface inks (#171717/#231F20 light, #EDEDED dark) → text; #4CAF50/#43A047 recur on positive helper/amount vectors → success; #E53935/#FF4B55 → error/warn; #FFB400 → warning; #E0E0E0/#E4E4E7 are the top stroke colors → borders. Component variant/state counts are grouped estimates apportioned from the global axis distribution (State 95, Size 113, Color 87, Disabled 26, etc.), not per-set exact figures. Fonts marked found only where literally present (Roboto/Poppins/Inter in Figma, Geist Mono in globals.css)."}
