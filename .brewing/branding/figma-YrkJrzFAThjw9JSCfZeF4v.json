@@ -1,0 +1,721 @@
+{
+  "version": 3,
+  "file": "Dovizir/MVP",
+  "url": "https://www.figma.com/design/YrkJrzFAThjw9JSCfZeF4v/Dovizir-MVP?node-id=1190-5019",
+  "scanned_nodes": 51588,
+  "colors": [
+    {
+      "hex": "#FFFFFF",
+      "uses": 6036,
+      "names": [
+        "Vector",
+        "Label",
+        "Button"
+      ]
+    },
+    {
+      "hex": "#000000",
+      "uses": 5426,
+      "names": [
+        "Label",
+        "Vector",
+        "Button"
+      ]
+    },
+    {
+      "hex": "#231F20",
+      "uses": 3259,
+      "names": [
+        "Vector",
+        "Path"
+      ]
+    },
+    {
+      "hex": "#F5F5F5",
+      "uses": 2998,
+      "names": [
+        "Vector",
+        "Rectangle 3",
+        "Button app"
+      ]
+    },
+    {
+      "hex": "#90CAF9",
+      "uses": 886,
+      "names": [
+        "Vector",
+        "Button",
+        "<Button>"
+      ]
+    },
+    {
+      "hex": "#121212",
+      "uses": 815,
+      "names": [
+        "Label Container",
+        "Notification",
+        "Frame 2353"
+      ]
+    },
+    {
+      "hex": "#2196F3",
+      "uses": 810,
+      "names": [
+        "Button",
+        "Vector",
+        "<Button>"
+      ]
+    },
+    {
+      "hex": "#272727",
+      "uses": 301,
+      "names": [
+        "Rectangle 3",
+        "Rectangle 14",
+        "Header menu"
+      ]
+    },
+    {
+      "hex": "#4CAF50",
+      "uses": 253,
+      "names": [
+        "Vector",
+        "Path",
+        "Button"
+      ]
+    },
+    {
+      "hex": "#F8F8F8",
+      "uses": 245,
+      "names": [
+        "Transaction item",
+        "Transaction Card",
+        "Frame 2734"
+      ]
+    },
+    {
+      "hex": "#FF4B55",
+      "uses": 231,
+      "names": [
+        "Vector"
+      ]
+    },
+    {
+      "hex": "#E53935",
+      "uses": 181,
+      "names": [
+        "Vector",
+        "22.324",
+        "USDT"
+      ]
+    },
+    {
+      "hex": "#383838",
+      "uses": 133,
+      "names": [
+        "<Badge>",
+        "<BottomNavigation>",
+        "<Paper>"
+      ]
+    },
+    {
+      "hex": "#2E2E2E",
+      "uses": 127,
+      "names": [
+        "Card",
+        "Frame 22",
+        "Rectangle 20"
+      ]
+    },
+    {
+      "hex": "#221F1F",
+      "uses": 108,
+      "names": [
+        "Vector"
+      ]
+    },
+    {
+      "hex": "#43A047",
+      "uses": 103,
+      "names": [
+        "Vector",
+        "Description",
+        "Helper text"
+      ]
+    },
+    {
+      "hex": "#BDBDBD",
+      "uses": 90,
+      "names": [
+        "<Avatar>",
+        "Scroll"
+      ]
+    },
+    {
+      "hex": "#73AF00",
+      "uses": 87,
+      "names": [
+        "Vector"
+      ]
+    },
+    {
+      "hex": "#DCDC5C",
+      "uses": 85,
+      "names": [
+        "<Badge>",
+        "Vector",
+        "Ellipse 2321"
+      ]
+    },
+    {
+      "hex": "#FFB400",
+      "uses": 79,
+      "names": [
+        "Vector",
+        "Half Full (always see this side)"
+      ]
+    },
+    {
+      "hex": "#757575",
+      "uses": 76,
+      "names": [
+        "<Avatar>",
+        "Tooltip",
+        "Arrow"
+      ]
+    },
+    {
+      "hex": "#D9D9D9",
+      "uses": 74,
+      "names": [
+        "Rectangle 17",
+        "Rectangle 10",
+        "Rectangle 11"
+      ]
+    },
+    {
+      "hex": "#F3F3F3",
+      "uses": 66,
+      "names": [
+        "Tooltip",
+        "Arrow",
+        "Transaction Card"
+      ]
+    },
+    {
+      "hex": "#42A5F5",
+      "uses": 60,
+      "names": [
+        "1",
+        "Dovizir",
+        "Vector"
+      ]
+    }
+  ],
+  "strokes": [
+    {
+      "hex": "#FFFFFF",
+      "uses": 942
+    },
+    {
+      "hex": "#000000",
+      "uses": 628
+    },
+    {
+      "hex": "#E0E0E0",
+      "uses": 262
+    },
+    {
+      "hex": "#E4E4E7",
+      "uses": 158
+    },
+    {
+      "hex": "#2196F3",
+      "uses": 137
+    },
+    {
+      "hex": "#90CAF9",
+      "uses": 112
+    },
+    {
+      "hex": "#BDBDBD",
+      "uses": 62
+    },
+    {
+      "hex": "#4CAF50",
+      "uses": 50
+    }
+  ],
+  "text": [
+    {
+      "family": "Roboto",
+      "size": 14,
+      "weight": 400,
+      "lh": 20,
+      "uses": 1557
+    },
+    {
+      "family": "Roboto",
+      "size": 16,
+      "weight": 400,
+      "lh": 24,
+      "uses": 1343
+    },
+    {
+      "family": "Roboto",
+      "size": 16,
+      "weight": 400,
+      "lh": 28,
+      "uses": 1341
+    },
+    {
+      "family": "Roboto",
+      "size": 12,
+      "weight": 400,
+      "lh": 20,
+      "uses": 926
+    },
+    {
+      "family": "Roboto",
+      "size": 14,
+      "weight": 500,
+      "lh": 22,
+      "uses": 802
+    },
+    {
+      "family": "Roboto",
+      "size": 12,
+      "weight": 500,
+      "lh": 20,
+      "uses": 556
+    },
+    {
+      "family": "Roboto",
+      "size": 13,
+      "weight": 500,
+      "lh": 22,
+      "uses": 424
+    },
+    {
+      "family": "Roboto",
+      "size": 15,
+      "weight": 500,
+      "lh": 26,
+      "uses": 376
+    },
+    {
+      "family": "Roboto",
+      "size": 14,
+      "weight": 500,
+      "lh": 24,
+      "uses": 353
+    },
+    {
+      "family": "Roboto",
+      "size": 12,
+      "weight": 400,
+      "lh": 12,
+      "uses": 221
+    },
+    {
+      "family": "Poppins",
+      "size": 16,
+      "weight": 400,
+      "lh": 24,
+      "uses": 206
+    },
+    {
+      "family": "Roboto",
+      "size": 14,
+      "weight": 700,
+      "lh": 20,
+      "uses": 142
+    },
+    {
+      "family": "Roboto",
+      "size": 20,
+      "weight": 500,
+      "lh": 32,
+      "uses": 123
+    },
+    {
+      "family": "Roboto",
+      "size": 13,
+      "weight": 400,
+      "lh": 18,
+      "uses": 109
+    },
+    {
+      "family": "Poppins",
+      "size": 13,
+      "weight": 500,
+      "lh": 22,
+      "uses": 90
+    },
+    {
+      "family": "Inter",
+      "size": 16,
+      "weight": 800,
+      "lh": 19,
+      "uses": 72
+    }
+  ],
+  "radii": [
+    {
+      "px": 16,
+      "uses": 2115
+    },
+    {
+      "px": 100,
+      "uses": 1240
+    },
+    {
+      "px": 4,
+      "uses": 536
+    },
+    {
+      "px": 8,
+      "uses": 101
+    },
+    {
+      "px": 12,
+      "uses": 24
+    },
+    {
+      "px": 1,
+      "uses": 24
+    },
+    {
+      "px": 5,
+      "uses": 18
+    },
+    {
+      "px": 64,
+      "uses": 5
+    }
+  ],
+  "spacing": {
+    "gaps": [
+      {
+        "px": 8,
+        "uses": 3869
+      },
+      {
+        "px": 4,
+        "uses": 1761
+      },
+      {
+        "px": 16,
+        "uses": 1677
+      },
+      {
+        "px": 10,
+        "uses": 1176
+      },
+      {
+        "px": 24,
+        "uses": 561
+      },
+      {
+        "px": 32,
+        "uses": 143
+      },
+      {
+        "px": 6,
+        "uses": 102
+      },
+      {
+        "px": 5,
+        "uses": 91
+      },
+      {
+        "px": 20,
+        "uses": 31
+      },
+      {
+        "px": 40,
+        "uses": 25
+      }
+    ],
+    "paddings": [
+      {
+        "px": 16,
+        "uses": 1844
+      },
+      {
+        "px": 8,
+        "uses": 1814
+      },
+      {
+        "px": 12,
+        "uses": 1265
+      },
+      {
+        "px": 4,
+        "uses": 880
+      },
+      {
+        "px": 6,
+        "uses": 722
+      },
+      {
+        "px": 9,
+        "uses": 682
+      },
+      {
+        "px": 5,
+        "uses": 459
+      },
+      {
+        "px": 7,
+        "uses": 344
+      },
+      {
+        "px": 22,
+        "uses": 298
+      },
+      {
+        "px": 32,
+        "uses": 157
+      }
+    ]
+  },
+  "shadows": [
+    {
+      "kind": "DROP_SHADOW",
+      "x": 0,
+      "y": 3,
+      "blur": 16,
+      "color": "#000000",
+      "alpha": 0.08,
+      "uses": 235
+    },
+    {
+      "kind": "DROP_SHADOW",
+      "x": 0,
+      "y": 9,
+      "blur": 11,
+      "color": "#000000",
+      "alpha": 0.2,
+      "uses": 199
+    },
+    {
+      "kind": "DROP_SHADOW",
+      "x": 0,
+      "y": 18,
+      "blur": 28,
+      "color": "#000000",
+      "alpha": 0.14,
+      "uses": 199
+    },
+    {
+      "kind": "DROP_SHADOW",
+      "x": 0,
+      "y": 7,
+      "blur": 34,
+      "color": "#000000",
+      "alpha": 0.12,
+      "uses": 199
+    },
+    {
+      "kind": "DROP_SHADOW",
+      "x": 0,
+      "y": -1,
+      "blur": 16,
+      "color": "#000000",
+      "alpha": 0.12,
+      "uses": 167
+    },
+    {
+      "kind": "DROP_SHADOW",
+      "x": 0,
+      "y": 2,
+      "blur": 1,
+      "color": "#000000",
+      "alpha": 0.14,
+      "uses": 146
+    },
+    {
+      "kind": "DROP_SHADOW",
+      "x": 0,
+      "y": 1,
+      "blur": 1,
+      "color": "#000000",
+      "alpha": 0.12,
+      "uses": 146
+    },
+    {
+      "kind": "DROP_SHADOW",
+      "x": 0,
+      "y": 1,
+      "blur": 3,
+      "color": "#000000",
+      "alpha": 0.08,
+      "uses": 146
+    }
+  ],
+  "motion": [
+    {
+      "ms": 100,
+      "easing": "LINEAR",
+      "uses": 1059
+    },
+    {
+      "ms": 300,
+      "easing": "EASE_OUT",
+      "uses": 902
+    },
+    {
+      "ms": 200,
+      "easing": "EASE_IN_BACK",
+      "uses": 100
+    },
+    {
+      "ms": 100,
+      "easing": "EASE_OUT",
+      "uses": 76
+    },
+    {
+      "ms": 200,
+      "easing": "EASE_IN_AND_OUT",
+      "uses": 76
+    },
+    {
+      "ms": 100,
+      "easing": "EASE_IN_AND_OUT",
+      "uses": 15
+    }
+  ],
+  "components": {
+    "sets": [
+      "_Library / Logo Placeholder",
+      "_Custom / Section Headings",
+      "<Typography>",
+      "<Stack>",
+      "Spacing | Horizontal",
+      "<Link>",
+      "Spacing | Vertical",
+      "<TextField>",
+      "<FormHelperText>",
+      "<Button>",
+      "_Custom / Section Headings",
+      "<Typography>",
+      "<Tabs>",
+      "<Tab>",
+      "<Icon>",
+      "<Tab>",
+      "<Icon>",
+      "Flag Pack",
+      "<MenuItem>",
+      "<Typography>",
+      "_Native Browser Scroll",
+      "<MobileStepper>",
+      "Header menu",
+      "_Library / Logo Placeholder",
+      "menu",
+      "info",
+      "document_scanner",
+      "<Tooltip>",
+      "Atom",
+      "<Badge>",
+      "<Skeleton>",
+      "Button app",
+      "receipt",
+      "shopping_cart",
+      "sell",
+      "outbound",
+      "Component 1",
+      "message",
+      "Card",
+      "<BottomNavigation>",
+      "<BottomNavigationAction>",
+      "home",
+      "<BottomNavigationAction>",
+      "qr_code_scanner",
+      "receipt_long",
+      "monetization_on",
+      "<Alert>",
+      "<IconButton>",
+      "Transaction page",
+      "mail",
+      "report_gmailerrorred",
+      "<Tooltip>",
+      "<Chip>",
+      "<Avatar>",
+      "content_copy",
+      "check",
+      "cancel",
+      "dashboard-chart",
+      "List Item With",
+      "Badge"
+    ],
+    "count": 537,
+    "variant_axes": {
+      "Variant": 106,
+      "Small Screen": 9,
+      "Gutter Bottom": 5,
+      "Instances": 2,
+      "Direction": 4,
+      "Spacing": 6,
+      "Visibility": 4,
+      "Color": 87,
+      "Underline": 3,
+      "State": 95,
+      "Size": 113,
+      "Has Value": 13,
+      "Disabled": 26,
+      "Orientation": 12,
+      "Active": 19,
+      "Active Color": 4,
+      "Icon Position": 4,
+      "Property 1": 63,
+      "Dense": 5,
+      "Dis. Gutters": 5,
+      "Progress Type": 3,
+      "Style": 64,
+      "Shape": 1,
+      "Icon Only": 1,
+      "Items": 1,
+      "Label": 5,
+      "Severity": 9,
+      "Content": 12,
+      "With": 1,
+      "Dot": 1,
+      "Remove button": 1,
+      "For": 1,
+      "Max Width": 1,
+      "Elevation": 3,
+      "Square": 3,
+      "DialogTitle?": 1,
+      "Dividers?": 1,
+      "Actions": 1,
+      "Hovered": 6,
+      "Min Rows": 5,
+      "Max Rows": 5,
+      "Rows": 5,
+      "Checked": 13,
+      "Label Placement": 6,
+      "Indeterminate": 6,
+      "First-of-type": 2,
+      "Last-of-type": 2,
+      "Expanded?": 2,
+      "Divider": 3,
+      "Auto Width": 2,
+      "Max Height": 1,
+      "Ratio": 1,
+      "Radios": 1,
+      "Avatar": 1,
+      "Step": 2,
+      "Small": 2,
+      "Checkbox": 2,
+      "Selected": 1,
+      "Columns": 1,
+      "project type": 2,
+      "Category": 2,
+      "Colour": 2,
+      "status": 1
+    }
+  },
+  "gradients": 218,
+  "icons_detected": 1541
+}
