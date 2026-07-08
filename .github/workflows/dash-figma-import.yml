@@ -1,4 +1,4 @@
-# dash: import Figma styles as a brand source (custody-free). v7
+# dash: import Figma styles as a brand source (custody-free). v8
 # Dispatched by dash; runs with YOUR FIGMA_TOKEN secret — dash never sees it.
 name: dash-figma-import
 on:
@@ -7,6 +7,16 @@ on:
       figma_url:
         description: "Figma file link"
         required: true
+      mode:
+        description: "styles (default) | screens"
+        required: false
+        default: "styles"
+      node_id:
+        description: "section node id for screens mode, e.g. 2131:15190"
+        required: false
+      slug:
+        description: "output folder slug for screens mode"
+        required: false
 permissions:
   contents: write
 concurrency:
@@ -18,6 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deep-dig styles from Figma
+        if: ${{ inputs.mode != 'screens' }}
         env:
           FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
           FIGMA_URL: ${{ inputs.figma_url }}
@@ -132,7 +143,7 @@ jobs:
           fs.mkdirSync(".brewing/branding", { recursive: true });
           fs.writeFileSync(".brewing/branding/figma-" + key + ".index.json", JSON.stringify(index, null, 2));
           fs.writeFileSync(".brewing/branding/figma-" + key + ".json", JSON.stringify(out, null, 2));
-          const md = ["# Figma brand source — " + out.file, "(deep dig by dash-figma-import " + "v7" + " from " + url + "; " + nodeCount + " nodes)", "",
+          const md = ["# Figma brand source — " + out.file, "(deep dig by dash-figma-import " + "v8" + " from " + url + "; " + nodeCount + " nodes)", "",
             "## Colors", ...out.colors.map((c2) => "- " + c2.hex + " (" + c2.uses + "x" + (c2.names.length ? "; on: " + c2.names.join(", ") : "") + ")"), "",
             "## Text matrix", ...out.text.map((t) => "- " + t.family + " " + (t.size ?? "?") + "px w" + (t.weight ?? "?") + (t.lh ? " lh" + t.lh : "") + " (" + t.uses + "x)"), "",
             "## Components", "sets: " + out.components.sets.length + " · variants: " + out.components.count + " · axes: " + JSON.stringify(out.components.variant_axes), ...out.components.sets.slice(0, 30).map((s) => "- " + s), "",
@@ -145,11 +156,84 @@ jobs:
           console.log("deep dig: " + nodeCount + " nodes → " + out.colors.length + " colors, " + out.text.length + " text styles, " + out.components.count + " component variants, " + out.shadows.length + " shadows, " + out.motion.length + " motion specs");
           SCRIPT
           node /tmp/figma-import.mjs
+      - name: Extract screens for mock generation
+        if: ${{ inputs.mode == 'screens' }}
+        env:
+          FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
+          FIGMA_URL: ${{ inputs.figma_url }}
+          NODE_ID: ${{ inputs.node_id }}
+          SLUG: ${{ inputs.slug }}
+        run: |
+          if [ -z "$FIGMA_TOKEN" ] || [ -z "$NODE_ID" ]; then
+            echo "::error::FIGMA_TOKEN secret and node_id input are required for screens mode."
+            exit 1
+          fi
+          cat > /tmp/figma-screens.mjs <<'SCRIPT'
+          const url = process.env.FIGMA_URL || "";
+          const m = /figma\.com\/(?:file|design|board)\/([A-Za-z0-9]{10,})/.exec(url);
+          if (!m) { console.error("::error::not a Figma file link"); process.exit(1); }
+          const key = m[1];
+          const nodeId = (process.env.NODE_ID || "").replace("-", ":");
+          const slug = (process.env.SLUG || nodeId.replace(":", "-")).toLowerCase().replace(/[^a-z0-9-]+/g, "-");
+          const H = { "X-Figma-Token": process.env.FIGMA_TOKEN };
+          const get = async (p) => {
+            const r = await fetch("https://api.figma.com/v1" + p, { headers: H });
+            if (!r.ok) { console.error("::error::figma " + p + " -> " + r.status); process.exit(1); }
+            return r.json();
+          };
+          // full subtree of the section — components, text characters, layout
+          const res = await get("/files/" + key + "/nodes?ids=" + encodeURIComponent(nodeId));
+          const root = res.nodes?.[nodeId]?.document;
+          if (!root) { console.error("::error::node not found: " + nodeId); process.exit(1); }
+          // strip vector noise; keep structure/text/instance names/layout/styles
+          const KEEP = new Set(["id","name","type","characters","componentId","layoutMode","itemSpacing","cornerRadius","visible","absoluteBoundingBox"]);
+          const prune = (n, depth) => {
+            if (!n || typeof n !== "object" || n.visible === false) return null;
+            const o = {};
+            for (const k of KEEP) if (n[k] !== undefined) o[k] = n[k];
+            if (n.style?.fontSize) o.font = { size: n.style.fontSize, weight: n.style.fontWeight, family: n.style.fontFamily };
+            const solid = (n.fills || []).find((f) => f.type === "SOLID" && f.color && f.visible !== false);
+            if (solid) { const c2 = solid.color; o.fill = "#" + [c2.r,c2.g,c2.b].map((v)=>Math.round(v*255).toString(16).padStart(2,"0")).join(""); }
+            if (depth < 14 && Array.isArray(n.children)) {
+              const kids = n.children.map((ch) => prune(ch, depth + 1)).filter(Boolean);
+              if (kids.length) o.children = kids;
+            }
+            return o;
+          };
+          const tree = prune(root, 0);
+          // top-level frames = the screens; export PNGs for founder review
+          const frames = (root.children || []).filter((f) => f.type === "FRAME" || f.type === "SECTION").slice(0, 15);
+          const ids = frames.map((f) => f.id);
+          let images = {};
+          if (ids.length) {
+            const img = await get("/images/" + key + "?ids=" + encodeURIComponent(ids.join(",")) + "&format=png&scale=2");
+            images = img.images || {};
+          }
+          const fs = await import("fs");
+          const dir = ".brewing/mock-src/" + slug;
+          fs.mkdirSync(dir, { recursive: true });
+          const screens = [];
+          for (const f of frames) {
+            const u = images[f.id];
+            let png = null;
+            if (u) {
+              const r2 = await fetch(u);
+              if (r2.ok) {
+                const buf = Buffer.from(await r2.arrayBuffer());
+                if (buf.length < 1_500_000) { png = f.name.toLowerCase().replace(/[^a-z0-9-]+/g, "-") + ".png"; fs.writeFileSync(dir + "/" + png, buf); }
+              }
+            }
+            screens.push({ id: f.id, name: f.name, png });
+          }
+          fs.writeFileSync(dir + "/screens.json", JSON.stringify({ file: key, section: root.name, node: nodeId, screens, tree }, null, 2));
+          console.log("screens: " + screens.length + " frames -> " + dir);
+          SCRIPT
+          node /tmp/figma-screens.mjs
       - name: Commit the brand source
         run: |
           git config user.name "dash-figma-import"
           git config user.email "noreply@slowcook.dev"
-          git add .brewing/branding/
-          git diff --cached --quiet || git commit -m "brand source: Figma deep dig (dash-figma-import v7)"
+          git add .brewing/branding/ .brewing/mock-src/ 2>/dev/null || git add .brewing/branding/
+          git diff --cached --quiet || git commit -m "figma import v8: ${{ inputs.mode }} output"
           git pull --rebase origin HEAD || true
           git push
