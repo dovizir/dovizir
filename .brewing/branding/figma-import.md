@@ -1,0 +1,26 @@
+# Figma brand source — Dovizir/MVP
+(imported by dash-figma-import from https://www.figma.com/design/YrkJrzFAThjw9JSCfZeF4v/Dovizir-MVP?node-id=1190-5019 via document scan)
+
+## Colors (document scan)
+- #231F20 (used 2503x)
+- #FFFFFF (used 1169x)
+- #000000 (used 684x)
+- #F5F5F5 (used 297x)
+- #121212 (used 250x)
+- #F8F8F8 (used 193x)
+- #272727 (used 135x)
+- #4CAF50 (used 123x)
+- #221F1F (used 108x)
+- #2196F3 (used 73x)
+- #90CAF9 (used 45x)
+- #404040 (used 43x)
+- #383838 (used 36x)
+- #E53935 (used 35x)
+
+## Text styles
+- Roboto w400 (used 311x)
+- Roboto w500 (used 65x)
+- Poppins w400 (used 57x)
+- Marker Felt w400 (used 10x)
+- Montserrat w400 (used 10x)
+- Poppins w500 (used 2x)
