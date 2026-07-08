@@ -9,7 +9,18 @@
           "id": "2131:15190",
           "name": "Sign up",
           "kind": "section",
-          "frames": 9
+          "frames": 9,
+          "frame_names": [
+            "Sign Up/Phone/OTP",
+            "Sign Up/Phone/OTP",
+            "Sign Up/Phone/Choose country",
+            "Sign Up/Phone/Choose country",
+            "Sign Up/Phone/Choose country",
+            "Sign Up/Phone/Choose country",
+            "Sign Up/Phone",
+            "Sign Up/Email",
+            "Sign in"
+          ]
         }
       ]
     },
@@ -21,7 +32,12 @@
           "id": "3618:56972",
           "name": "Onboarding",
           "kind": "section",
-          "frames": 3
+          "frames": 3,
+          "frame_names": [
+            "Step 1",
+            "Step 2",
+            "Step 3"
+          ]
         }
       ]
     },
@@ -33,13 +49,35 @@
           "id": "2131:21104",
           "name": "Wallet",
           "kind": "section",
-          "frames": 10
+          "frames": 10,
+          "frame_names": [
+            "Withdraw/FirstView",
+            "WithdrawWithdraw/FirstView/Tooltip",
+            "Withdraw/first step/filled",
+            "Withdraw-Second Step/Focused",
+            "Withdraw/Second Step Filled",
+            "Withdraw/Confirmation",
+            "Home",
+            "Home",
+            "Transactions card",
+            "Transaction page"
+          ]
         },
         {
           "id": "3572:17124",
           "name": "Deposit",
           "kind": "section",
-          "frames": 8
+          "frames": 8,
+          "frame_names": [
+            "Deposit/First View",
+            "Deposit/Choose th eblockchain",
+            "Deposit/Filled",
+            "Deposit/Filled",
+            "Deposit/doe",
+            "Transactions card",
+            "Transaction page",
+            "Notifications"
+          ]
         }
       ]
     },
@@ -51,13 +89,23 @@
           "id": "2617:9692",
           "name": "home",
           "kind": "section",
-          "frames": 3
+          "frames": 3,
+          "frame_names": [
+            "Introduction",
+            "Home",
+            "Home-First Time"
+          ]
         },
         {
           "id": "3636:58371",
           "name": "Sidebar",
           "kind": "section",
-          "frames": 3
+          "frames": 3,
+          "frame_names": [
+            "Side bar",
+            "Side bar/Logout Confirmation",
+            "My QRcode"
+          ]
         }
       ]
     },
@@ -69,13 +117,37 @@
           "id": "3842:99029",
           "name": "Create Sales Profile",
           "kind": "section",
-          "frames": 4
+          "frames": 4,
+          "frame_names": [
+            "Create bill- without profile",
+            "Set Sales profile-success message",
+            "Set Sales profile",
+            "Set Sales profile-fielld"
+          ]
         },
         {
           "id": "3842:99111",
           "name": "Business Profile",
           "kind": "section",
-          "frames": 16
+          "frames": 16,
+          "frame_names": [
+            "Sales Profile-First View",
+            "Sales Profile with USDT sales history",
+            "Sales Profile without USDT sales history/OpenState",
+            "Sales Profile without USDT sales history/CloseState",
+            " Sales profile/Quotes ",
+            "No results page",
+            " Sales profile/Requests",
+            " Sales profile/Quotes/Sort",
+            " Sales profile/Quotes/Disable Confirmation",
+            " Sales profile/Quotes/Disable Confirmation",
+            " Sales profile/Requests/Disable Confirmation",
+            " Sales profile/Quotes/Disable Confirmation",
+            " Sales profile/Enable quote Confirmation/Quotes/not enough balance",
+            " Sales profile/SalesAds/Requests",
+            " Sales profile/Review Receips",
+            " Sales profile/Requests/Sort"
+          ]
         }
       ]
     },
@@ -87,13 +159,32 @@
           "id": "4130:8059",
           "name": "P2P-Seller",
           "kind": "section",
-          "frames": 8
+          "frames": 8,
+          "frame_names": [
+            "Sell USDT-Not enough balance",
+            "Sell USDT-First time/First view",
+            "View and edit/Befor Change",
+            "Sell USDT/Message preset",
+            "Sell USDT-First time/First view/Set message",
+            "Sell USDT/Confirmation",
+            " Business profile-Filled/Snackbar",
+            " Business profile-Filled"
+          ]
         },
         {
           "id": "3842:95828",
           "name": "Creat a bill",
           "kind": "section",
-          "frames": 7
+          "frames": 7,
+          "frame_names": [
+            "Create a bill with Fiat",
+            "View the bill",
+            "View the bill",
+            "Create a bill with USDT",
+            "Transaction card",
+            "Nofitication",
+            "Transaction page"
+          ]
         }
       ]
     },
@@ -105,13 +196,40 @@
           "id": "3222:31125",
           "name": "Buyer chat Flow",
           "kind": "section",
-          "frames": 11
+          "frames": 11,
+          "frame_names": [
+            "Message/Purches request",
+            "Message/Waiting for seller",
+            "Message/waiting for upload receipt",
+            "Message/waiting for upload receipt",
+            "Message/after upload",
+            "Message/conversiation ended",
+            "Message/first step",
+            "Transaction card",
+            "Nofitication",
+            "Transaction page",
+            "Rating"
+          ]
         },
         {
           "id": "3245:57898",
           "name": "Seller Chat flow",
           "kind": "section",
-          "frames": 12
+          "frames": 12,
+          "frame_names": [
+            "Seller/Message/Approve Purches",
+            "Seller/Message/Purches Approved",
+            "Seller/Message/Get a receipt",
+            "Seller/Message/End of chat",
+            "Sell USDT-Not enough balance",
+            "Sell USDT- Deny confirmation",
+            "Sell USDT-Approve confirmation",
+            "Transaction card",
+            "Nofitication",
+            "Transaction page",
+            "Seller/Message/Time out",
+            "Seller/Message/Report"
+          ]
         }
       ]
     },
@@ -123,7 +241,13 @@
           "id": "3245:60054",
           "name": "Buy USDT",
           "kind": "section",
-          "frames": 4
+          "frames": 4,
+          "frame_names": [
+            "Buy/First step",
+            "Buy/First step/filled",
+            "Buy/Quote list",
+            "Buy/list/sorting"
+          ]
         }
       ]
     },
@@ -135,19 +259,40 @@
           "id": "3102:64574",
           "name": "Scan and Pay/Scan",
           "kind": "section",
-          "frames": 6
+          "frames": 6,
+          "frame_names": [
+            "Pay a Bill",
+            "Scan and pay/Scan",
+            "Pay a Bill-Confirmation",
+            "Pay a Bill- not enough balance",
+            "Transaction card",
+            "Transaction page/Successful"
+          ]
         },
         {
           "id": "3535:69772",
           "name": "Scan & pay",
           "kind": "section",
-          "frames": 3
+          "frames": 3,
+          "frame_names": [
+            "Scan & Pay/FirstView",
+            "Scan & Pay/Scroll down",
+            "Scan & Pay/Scroll up"
+          ]
         },
         {
           "id": "3539:70762",
           "name": "Pay to addressbook or payment without bill",
           "kind": "section",
-          "frames": 6
+          "frames": 6,
+          "frame_names": [
+            "Scan & pay/AddressBook/FirstView",
+            "Scan & pay/AddressBook/Filled",
+            "Scan & pay/AddressBook/Confirmation",
+            "Scan & pay/AddressBook/not enough balance",
+            "Transaction card",
+            "Transaction page/Successful"
+          ]
         }
       ]
     },
@@ -159,7 +304,19 @@
           "id": "3764:50000",
           "name": "Address Book",
           "kind": "section",
-          "frames": 10
+          "frames": 10,
+          "frame_names": [
+            "AddressBook/Empty",
+            "AddressBook/Default and Scroll down",
+            "AddressBook/ScrollUp",
+            "AddressBook/Contact/Default and Scroll down",
+            "AddressBook/Contact/Remove",
+            "AddressBook/Contact/Default and Scroll Up",
+            "AddressBook/Contact List",
+            "AddressBook/Contact List/Trust confirmation",
+            "AddressBook/Contact List/Trust confirmation",
+            "AddressBook/Contact List/Invite"
+          ]
         }
       ]
     },
@@ -171,7 +328,13 @@
           "id": "2680:38369",
           "name": "Transaction",
           "kind": "section",
-          "frames": 4
+          "frames": 4,
+          "frame_names": [
+            "Transaction list",
+            "Transaction list",
+            "Transaction list/Filter",
+            "Transaction list/Filter/Datepicker"
+          ]
         }
       ]
     },
@@ -183,7 +346,18 @@
           "id": "3966:77351",
           "name": "Support Center",
           "kind": "section",
-          "frames": 9
+          "frames": 9,
+          "frame_names": [
+            "Support Center/First View",
+            "Support Center/List",
+            "Support/list/Filter",
+            "Support/list/Filter",
+            "Support Center/Start Chat/Disable",
+            "Support Center/Start Chat/filled issue detail",
+            "Support Center/chatting/Issue detail/OpenState",
+            "Support Center/after tap on start messaging",
+            "Support Center/chatting"
+          ]
         }
       ]
     },
@@ -195,7 +369,11 @@
           "id": "2131:22038",
           "name": "Notification",
           "kind": "section",
-          "frames": 2
+          "frames": 2,
+          "frame_names": [
+            "Notification Center",
+            "Tags"
+          ]
         }
       ]
     },
@@ -207,73 +385,110 @@
           "id": "4197:4568",
           "name": "Side bar",
           "kind": "frame",
-          "frames": 2
+          "frames": 2,
+          "frame_names": [
+            "Frame 2607",
+            "Sidebar"
+          ]
         },
         {
           "id": "4201:55455",
           "name": "Create Campaign- Without profile",
           "kind": "frame",
-          "frames": 1
+          "frames": 1,
+          "frame_names": [
+            "Frame 2701"
+          ]
         },
         {
           "id": "4219:11785",
           "name": "Create Campaign-With profile",
           "kind": "frame",
-          "frames": 1
+          "frames": 1,
+          "frame_names": [
+            "Frame 2726"
+          ]
         },
         {
           "id": "4220:17240",
           "name": "Create Campaign-Step 1",
           "kind": "frame",
-          "frames": 1
+          "frames": 1,
+          "frame_names": [
+            "Frame 2734"
+          ]
         },
         {
           "id": "4303:999",
           "name": "Create Campaign-Step 3",
           "kind": "frame",
-          "frames": 1
+          "frames": 1,
+          "frame_names": [
+            "Frame 2734"
+          ]
         },
         {
           "id": "4303:1081",
           "name": "Create Campaign-Step 4",
           "kind": "frame",
-          "frames": 1
+          "frames": 1,
+          "frame_names": [
+            "Frame 2734"
+          ]
         },
         {
           "id": "4226:58937",
           "name": "Create Campaign-Step 2",
           "kind": "frame",
-          "frames": 1
+          "frames": 1,
+          "frame_names": [
+            "Frame 2792"
+          ]
         },
         {
           "id": "4339:1782",
           "name": "Create Campaign-Step 7",
           "kind": "frame",
-          "frames": 1
+          "frames": 1,
+          "frame_names": [
+            "Frame 2801"
+          ]
         },
         {
           "id": "4348:54548",
           "name": "Create Campaign-Sponsorship & An individual",
           "kind": "frame",
-          "frames": 1
+          "frames": 1,
+          "frame_names": [
+            "Frame 2801"
+          ]
         },
         {
           "id": "4342:54432",
           "name": "Create Campaign-Step 8",
           "kind": "frame",
-          "frames": 1
+          "frames": 1,
+          "frame_names": [
+            "Frame 2801"
+          ]
         },
         {
           "id": "4304:1152",
           "name": "Create Campaign-Step 5",
           "kind": "frame",
-          "frames": 1
+          "frames": 1,
+          "frame_names": [
+            "Frame 2792"
+          ]
         },
         {
           "id": "4304:1513",
           "name": "Create Campaign-Step 6",
           "kind": "frame",
-          "frames": 1
+          "frames": 1,
+          "frame_names": [
+            "Frame 2792"
+          ]
         }
       ]
     },
@@ -285,13 +500,35 @@
           "id": "3665:67966",
           "name": "V01",
           "kind": "section",
-          "frames": 10
+          "frames": 10,
+          "frame_names": [
+            "Section 1",
+            "benchmark",
+            "Section 2",
+            "Message",
+            "Section 3",
+            "Section 4",
+            "Section 5",
+            "Free Scribbles Set",
+            "Full Preview",
+            "Sign In/Email"
+          ]
         },
         {
           "id": "3665:67968",
           "name": "V02",
           "kind": "section",
-          "frames": 8
+          "frames": 8,
+          "frame_names": [
+            "Dashboard/Home   ✅",
+            "Wallet  ✅",
+            "Sell ✅",
+            "Chat flow ✅",
+            "Address Book ✅",
+            "Frame 2770",
+            "Transaction list  ✅",
+            "Refund-Archive"
+          ]
         }
       ]
     },
@@ -303,25 +540,55 @@
           "id": "3556:88631",
           "name": "Prototype V01",
           "kind": "section",
-          "frames": 12
+          "frames": 12,
+          "frame_names": [
+            "Sign up",
+            "Dashboard-New user",
+            "Request",
+            "Pay",
+            "Wallet",
+            "Notification",
+            "Transaction",
+            "Message",
+            "V01",
+            "Request Archive",
+            "Archive-v02",
+            "Wire"
+          ]
         },
         {
           "id": "3556:102270",
           "name": "WireFramev00",
           "kind": "section",
-          "frames": 7
+          "frames": 7,
+          "frame_names": [
+            "Bill",
+            "Bill",
+            "Android Small - 19",
+            "Frame 2291",
+            "Frame 2306",
+            "Frame 2262",
+            "Section 1"
+          ]
         },
         {
           "id": "3964:76967",
           "name": "Ticket",
           "kind": "section",
-          "frames": 2
+          "frames": 2,
+          "frame_names": [
+            "Support Center/First View",
+            "Support Center/First View"
+          ]
         },
         {
           "id": "4001:61685",
           "name": "Messaging",
           "kind": "section",
-          "frames": 1
+          "frames": 1,
+          "frame_names": [
+            "Message"
+          ]
         }
       ]
     },
@@ -333,7 +600,8 @@
           "id": "1594:3357",
           "name": "Thumbnail",
           "kind": "frame",
-          "frames": 0
+          "frames": 0,
+          "frame_names": []
         }
       ]
     }
