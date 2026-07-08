@@ -1,0 +1,341 @@
+{
+  "file": "Dovizir/MVP",
+  "pages": [
+    {
+      "id": "1190:5019",
+      "name": "Sign In/Up",
+      "sections": [
+        {
+          "id": "2131:15190",
+          "name": "Sign up",
+          "kind": "section",
+          "frames": 9
+        }
+      ]
+    },
+    {
+      "id": "3597:31207",
+      "name": "Onboarding ✅",
+      "sections": [
+        {
+          "id": "3618:56972",
+          "name": "Onboarding",
+          "kind": "section",
+          "frames": 3
+        }
+      ]
+    },
+    {
+      "id": "1447:11144",
+      "name": "Deposit/Withdraw  ✅",
+      "sections": [
+        {
+          "id": "2131:21104",
+          "name": "Wallet",
+          "kind": "section",
+          "frames": 10
+        },
+        {
+          "id": "3572:17124",
+          "name": "Deposit",
+          "kind": "section",
+          "frames": 8
+        }
+      ]
+    },
+    {
+      "id": "1220:30617",
+      "name": "Dashboard/Home   ✅",
+      "sections": [
+        {
+          "id": "2617:9692",
+          "name": "home",
+          "kind": "section",
+          "frames": 3
+        },
+        {
+          "id": "3636:58371",
+          "name": "Sidebar",
+          "kind": "section",
+          "frames": 3
+        }
+      ]
+    },
+    {
+      "id": "3840:46288",
+      "name": "Sales Profile ✅",
+      "sections": [
+        {
+          "id": "3842:99029",
+          "name": "Create Sales Profile",
+          "kind": "section",
+          "frames": 4
+        },
+        {
+          "id": "3842:99111",
+          "name": "Business Profile",
+          "kind": "section",
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "id": "1362:25855",
+      "name": "Sell ✅",
+      "sections": [
+        {
+          "id": "4130:8059",
+          "name": "P2P-Seller",
+          "kind": "section",
+          "frames": 8
+        },
+        {
+          "id": "3842:95828",
+          "name": "Creat a bill",
+          "kind": "section",
+          "frames": 7
+        }
+      ]
+    },
+    {
+      "id": "3090:62470",
+      "name": "Chat flow ✅",
+      "sections": [
+        {
+          "id": "3222:31125",
+          "name": "Buyer chat Flow",
+          "kind": "section",
+          "frames": 11
+        },
+        {
+          "id": "3245:57898",
+          "name": "Seller Chat flow",
+          "kind": "section",
+          "frames": 12
+        }
+      ]
+    },
+    {
+      "id": "3245:57899",
+      "name": "Buy ✅",
+      "sections": [
+        {
+          "id": "3245:60054",
+          "name": "Buy USDT",
+          "kind": "section",
+          "frames": 4
+        }
+      ]
+    },
+    {
+      "id": "3098:64133",
+      "name": "Pay ✅",
+      "sections": [
+        {
+          "id": "3102:64574",
+          "name": "Scan and Pay/Scan",
+          "kind": "section",
+          "frames": 6
+        },
+        {
+          "id": "3535:69772",
+          "name": "Scan & pay",
+          "kind": "section",
+          "frames": 3
+        },
+        {
+          "id": "3539:70762",
+          "name": "Pay to addressbook or payment without bill",
+          "kind": "section",
+          "frames": 6
+        }
+      ]
+    },
+    {
+      "id": "3556:104447",
+      "name": "Address Book ✅",
+      "sections": [
+        {
+          "id": "3764:50000",
+          "name": "Address Book",
+          "kind": "section",
+          "frames": 10
+        }
+      ]
+    },
+    {
+      "id": "1584:9561",
+      "name": "Transaction list  ✅",
+      "sections": [
+        {
+          "id": "2680:38369",
+          "name": "Transaction",
+          "kind": "section",
+          "frames": 4
+        }
+      ]
+    },
+    {
+      "id": "3622:56993",
+      "name": "Support Center  ✅",
+      "sections": [
+        {
+          "id": "3966:77351",
+          "name": "Support Center",
+          "kind": "section",
+          "frames": 9
+        }
+      ]
+    },
+    {
+      "id": "1493:32783",
+      "name": "notification Center  ✅",
+      "sections": [
+        {
+          "id": "2131:22038",
+          "name": "Notification",
+          "kind": "section",
+          "frames": 2
+        }
+      ]
+    },
+    {
+      "id": "4197:926",
+      "name": "Charity",
+      "sections": [
+        {
+          "id": "4197:4568",
+          "name": "Side bar",
+          "kind": "frame",
+          "frames": 2
+        },
+        {
+          "id": "4201:55455",
+          "name": "Create Campaign- Without profile",
+          "kind": "frame",
+          "frames": 1
+        },
+        {
+          "id": "4219:11785",
+          "name": "Create Campaign-With profile",
+          "kind": "frame",
+          "frames": 1
+        },
+        {
+          "id": "4220:17240",
+          "name": "Create Campaign-Step 1",
+          "kind": "frame",
+          "frames": 1
+        },
+        {
+          "id": "4303:999",
+          "name": "Create Campaign-Step 3",
+          "kind": "frame",
+          "frames": 1
+        },
+        {
+          "id": "4303:1081",
+          "name": "Create Campaign-Step 4",
+          "kind": "frame",
+          "frames": 1
+        },
+        {
+          "id": "4226:58937",
+          "name": "Create Campaign-Step 2",
+          "kind": "frame",
+          "frames": 1
+        },
+        {
+          "id": "4339:1782",
+          "name": "Create Campaign-Step 7",
+          "kind": "frame",
+          "frames": 1
+        },
+        {
+          "id": "4348:54548",
+          "name": "Create Campaign-Sponsorship & An individual",
+          "kind": "frame",
+          "frames": 1
+        },
+        {
+          "id": "4342:54432",
+          "name": "Create Campaign-Step 8",
+          "kind": "frame",
+          "frames": 1
+        },
+        {
+          "id": "4304:1152",
+          "name": "Create Campaign-Step 5",
+          "kind": "frame",
+          "frames": 1
+        },
+        {
+          "id": "4304:1513",
+          "name": "Create Campaign-Step 6",
+          "kind": "frame",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "id": "216:17383",
+      "name": "Assets",
+      "sections": [
+        {
+          "id": "3665:67966",
+          "name": "V01",
+          "kind": "section",
+          "frames": 10
+        },
+        {
+          "id": "3665:67968",
+          "name": "V02",
+          "kind": "section",
+          "frames": 8
+        }
+      ]
+    },
+    {
+      "id": "1720:880",
+      "name": "Archive",
+      "sections": [
+        {
+          "id": "3556:88631",
+          "name": "Prototype V01",
+          "kind": "section",
+          "frames": 12
+        },
+        {
+          "id": "3556:102270",
+          "name": "WireFramev00",
+          "kind": "section",
+          "frames": 7
+        },
+        {
+          "id": "3964:76967",
+          "name": "Ticket",
+          "kind": "section",
+          "frames": 2
+        },
+        {
+          "id": "4001:61685",
+          "name": "Messaging",
+          "kind": "section",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "id": "1594:3228",
+      "name": "Thumbnail",
+      "sections": [
+        {
+          "id": "1594:3357",
+          "name": "Thumbnail",
+          "kind": "frame",
+          "frames": 0
+        }
+      ]
+    }
+  ]
+}
