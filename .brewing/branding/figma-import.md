@@ -1,5 +1,5 @@
 # Figma brand source — Dovizir/MVP
-(imported by dash-figma-import from https://www.figma.com/design/YrkJrzFAThjw9JSCfZeF4v/Dovizir-MVP?node-id=1190-5019 via document scan)
+(imported by dash-figma-import from https://www.figma.com/design/YrkJrzFAThjw9JSCfZeF4v/Dovizir-MVP?node-id=1190-5019&p=f&t=FbPfWjtmKAOvRYqu-0 via document scan)
 
 ## Colors (document scan)
 - #231F20 (used 2503x)
