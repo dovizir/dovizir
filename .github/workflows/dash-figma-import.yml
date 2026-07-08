@@ -1,4 +1,4 @@
-# dash: import Figma styles as a brand source (custody-free). v6
+# dash: import Figma styles as a brand source (custody-free). v7
 # Dispatched by dash; runs with YOUR FIGMA_TOKEN secret — dash never sees it.
 name: dash-figma-import
 on:
@@ -121,8 +121,9 @@ jobs:
             const sections = [];
             for (const child of (page.children || [])) {
               if (child.type === "SECTION" || child.type === "FRAME") {
-                const frames = (child.children || []).filter((f) => f.type === "FRAME" || f.type === "SECTION").length;
-                sections.push({ id: child.id, name: child.name, kind: child.type.toLowerCase(), frames });
+                const frameNodes = (child.children || []).filter((f) => f.type === "FRAME" || f.type === "SECTION");
+                sections.push({ id: child.id, name: child.name, kind: child.type.toLowerCase(), frames: frameNodes.length,
+                  frame_names: frameNodes.slice(0, 30).map((f) => f.name) });
               }
             }
             index.pages.push({ id: page.id, name: page.name, sections });
@@ -131,7 +132,7 @@ jobs:
           fs.mkdirSync(".brewing/branding", { recursive: true });
           fs.writeFileSync(".brewing/branding/figma-" + key + ".index.json", JSON.stringify(index, null, 2));
           fs.writeFileSync(".brewing/branding/figma-" + key + ".json", JSON.stringify(out, null, 2));
-          const md = ["# Figma brand source — " + out.file, "(deep dig by dash-figma-import " + "v6" + " from " + url + "; " + nodeCount + " nodes)", "",
+          const md = ["# Figma brand source — " + out.file, "(deep dig by dash-figma-import " + "v7" + " from " + url + "; " + nodeCount + " nodes)", "",
             "## Colors", ...out.colors.map((c2) => "- " + c2.hex + " (" + c2.uses + "x" + (c2.names.length ? "; on: " + c2.names.join(", ") : "") + ")"), "",
             "## Text matrix", ...out.text.map((t) => "- " + t.family + " " + (t.size ?? "?") + "px w" + (t.weight ?? "?") + (t.lh ? " lh" + t.lh : "") + " (" + t.uses + "x)"), "",
             "## Components", "sets: " + out.components.sets.length + " · variants: " + out.components.count + " · axes: " + JSON.stringify(out.components.variant_axes), ...out.components.sets.slice(0, 30).map((s) => "- " + s), "",
@@ -149,6 +150,6 @@ jobs:
           git config user.name "dash-figma-import"
           git config user.email "noreply@slowcook.dev"
           git add .brewing/branding/
-          git diff --cached --quiet || git commit -m "brand source: Figma deep dig (dash-figma-import v6)"
+          git diff --cached --quiet || git commit -m "brand source: Figma deep dig (dash-figma-import v7)"
           git pull --rebase origin HEAD || true
           git push
