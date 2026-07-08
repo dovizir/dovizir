@@ -1,5 +1,5 @@
 # Figma brand source — Dovizir/MVP
-(deep dig by dash-figma-import v4 from https://www.figma.com/design/YrkJrzFAThjw9JSCfZeF4v/Dovizir-MVP?node-id=1190-5019; 51588 nodes)
+(deep dig by dash-figma-import v4 from https://www.figma.com/design/YrkJrzFAThjw9JSCfZeF4v/Dovizir-MVP?node-id=3597-31207&p=f&t=Mf1cBdvPDbDr2KRB-0; 51588 nodes)
 
 ## Colors
 - #FFFFFF (6036x; on: Vector, Label, Button)
