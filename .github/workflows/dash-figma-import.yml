@@ -1,4 +1,4 @@
-# dash: import Figma published styles as a brand source (custody-free).
+# dash: import Figma styles as a brand source (custody-free). v2
 # Dispatched by dash; runs with YOUR FIGMA_TOKEN secret — dash never sees it.
 name: dash-figma-import
 on:
@@ -14,16 +14,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fetch published styles from Figma
+      - name: Fetch styles from Figma
         env:
           FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
           FIGMA_URL: ${{ inputs.figma_url }}
         run: |
           if [ -z "$FIGMA_TOKEN" ]; then
-            echo "::error::FIGMA_TOKEN secret is not set — add it in dash's Vault (or repo Settings → Secrets), then re-run."
+            echo "::error::FIGMA_TOKEN secret is not set — add it in dash's Vault, then re-run."
             exit 1
           fi
-          node -e '
+          cat > /tmp/figma-import.mjs <<'SCRIPT'
           const url = process.env.FIGMA_URL || "";
           const m = /figma\.com\/(?:file|design|board)\/([A-Za-z0-9]{10,})/.exec(url);
           if (!m) { console.error("::error::not a Figma file link: " + url); process.exit(1); }
@@ -34,37 +34,64 @@ jobs:
             if (!r.ok) { console.error("::error::figma " + p + " -> " + r.status); process.exit(1); }
             return r.json();
           };
-          (async () => {
-            const meta = await get("/files/" + key + "?depth=1");
-            const entries = Object.entries(meta.styles || {});
-            const fillIds = entries.filter(([,s]) => s.styleType === "FILL").map(([id]) => id);
-            const textIds = entries.filter(([,s]) => s.styleType === "TEXT").map(([id]) => id);
-            const ids = [...fillIds, ...textIds].slice(0, 60);
-            const colors = [], texts = [];
-            if (ids.length) {
-              const nodes = await get("/files/" + key + "/nodes?ids=" + encodeURIComponent(ids.join(",")));
-              const hex = (c) => "#" + [c.r, c.g, c.b].map((v) => Math.round(Math.max(0, Math.min(1, v)) * 255).toString(16).padStart(2, "0")).join("").toUpperCase();
-              for (const id of fillIds) {
-                const d = nodes.nodes?.[id]?.document;
-                const solid = (d?.fills || []).find((f) => f.type === "SOLID" && f.color);
-                if (d && solid) colors.push("- " + (d.name || "color") + ": " + hex(solid.color));
-              }
-              for (const id of textIds) {
-                const d = nodes.nodes?.[id]?.document;
-                if (d?.style?.fontFamily) texts.push("- " + (d.name || "text") + ": " + d.style.fontFamily + (d.style.fontSize ? " " + d.style.fontSize + "px" : "") + (d.style.fontWeight ? " w" + d.style.fontWeight : ""));
-              }
+          const hex = (c) => "#" + [c.r, c.g, c.b].map((v) => Math.round(Math.max(0, Math.min(1, v)) * 255).toString(16).padStart(2, "0")).join("").toUpperCase();
+          const colors = [], texts = [];
+          const meta = await get("/files/" + key + "?depth=1");
+          const entries = Object.entries(meta.styles || {});
+          const fillIds = entries.filter(([,s]) => s.styleType === "FILL").map(([id]) => id);
+          const textIds = entries.filter(([,s]) => s.styleType === "TEXT").map(([id]) => id);
+          let source = "published styles";
+          if (fillIds.length || textIds.length) {
+            const nodes = await get("/files/" + key + "/nodes?ids=" + encodeURIComponent([...fillIds, ...textIds].slice(0, 60).join(",")));
+            for (const id of fillIds) {
+              const d = nodes.nodes?.[id]?.document;
+              const solid = (d?.fills || []).find((f) => f.type === "SOLID" && f.color);
+              if (d && solid) colors.push("- " + (d.name || "color") + ": " + hex(solid.color));
             }
-            if (!colors.length && !texts.length) { console.error("::error::that file has no PUBLISHED styles — publish color/text styles in Figma, then re-run."); process.exit(1); }
-            const md = ["# Figma brand source — " + (meta.name || key), "(imported by dash-figma-import from " + url + ")", "", "## Colors (published styles)", ...colors, "", "## Text styles", ...texts, ""].join("\n");
-            require("fs").mkdirSync(".brewing/branding", { recursive: true });
-            require("fs").writeFileSync(".brewing/branding/figma-import.md", md);
-            console.log("wrote .brewing/branding/figma-import.md (" + colors.length + " colors, " + texts.length + " text styles)");
-          })();
-          '
+            for (const id of textIds) {
+              const d = nodes.nodes?.[id]?.document;
+              if (d?.style?.fontFamily) texts.push("- " + (d.name || "text") + ": " + d.style.fontFamily + (d.style.fontSize ? " " + d.style.fontSize + "px" : "") + (d.style.fontWeight ? " w" + d.style.fontWeight : ""));
+            }
+          }
+          if (!colors.length && !texts.length) {
+            // FALLBACK: no published styles (most real files) — scan the document.
+            source = "document scan";
+            const doc = await get("/files/" + key + "?depth=6");
+            const fillCount = new Map(), fontCount = new Map();
+            const walk = (n) => {
+              if (!n || typeof n !== "object") return;
+              if (n.visible !== false) {
+                for (const f of n.fills || []) {
+                  if (f.type === "SOLID" && f.color && (f.opacity ?? 1) > 0.2) {
+                    const h = hex(f.color);
+                    fillCount.set(h, (fillCount.get(h) || 0) + 1);
+                  }
+                }
+                if (n.type === "TEXT" && n.style?.fontFamily) {
+                  const k2 = n.style.fontFamily + (n.style.fontWeight ? " w" + n.style.fontWeight : "");
+                  fontCount.set(k2, (fontCount.get(k2) || 0) + 1);
+                }
+              }
+              for (const ch of n.children || []) walk(ch);
+            };
+            walk(doc.document);
+            const topFills = [...fillCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 14);
+            const topFonts = [...fontCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
+            for (const [h, n] of topFills) colors.push("- " + h + " (used " + n + "x)");
+            for (const [f, n] of topFonts) texts.push("- " + f + " (used " + n + "x)");
+          }
+          if (!colors.length && !texts.length) { console.error("::error::no styles or visible fills/text found in that file."); process.exit(1); }
+          const md = ["# Figma brand source — " + (meta.name || key), "(imported by dash-figma-import from " + url + " via " + source + ")", "", "## Colors (" + source + ")", ...colors, "", "## Text styles", ...texts, ""].join("\n");
+          const fs = await import("fs");
+          fs.mkdirSync(".brewing/branding", { recursive: true });
+          fs.writeFileSync(".brewing/branding/figma-import.md", md);
+          console.log("wrote .brewing/branding/figma-import.md via " + source + " (" + colors.length + " colors, " + texts.length + " text styles)");
+          SCRIPT
+          node /tmp/figma-import.mjs
       - name: Commit the brand source
         run: |
           git config user.name "dash-figma-import"
           git config user.email "noreply@slowcook.dev"
           git add .brewing/branding/figma-import.md
-          git diff --cached --quiet || git commit -m "brand source: Figma published styles (dash-figma-import)"
+          git diff --cached --quiet || git commit -m "brand source: Figma styles (dash-figma-import)"
           git push
