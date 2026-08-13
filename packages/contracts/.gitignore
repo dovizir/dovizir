@@ -1,2 +1,5 @@
 out/
 cache/
+# Per-run deploy artifacts (Deploy.s.sol output + forge broadcast logs).
+broadcast/
+deployments/
