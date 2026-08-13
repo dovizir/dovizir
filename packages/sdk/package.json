@@ -1,0 +1,18 @@
+{
+  "name": "@dovizir/sdk",
+  "version": "0.1.0",
+  "description": "Dovizir client SDK: generated contract ABIs (from forge build), typed address config, chain constants, and pure helpers (tranche ids, redeem fee split, EIP-712 transfer authorizations).",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "generate": "node scripts/generate-abis.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.4.0"
+  }
+}
