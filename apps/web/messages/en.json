@@ -32,7 +32,8 @@
     "home": "Home",
     "deposit": "Deposit",
     "send": "Send",
-    "redeem": "Redeem"
+    "redeem": "Redeem",
+    "notes": "Cash"
   },
   "home": {
     "title": "Home",
@@ -144,5 +145,123 @@
     "gasTankStub": "Stub",
     "gasTankHint": "Sponsored-gas balance for members' transactions",
     "gasTankPimlico": "Placeholder — mock balance. Needs the Pimlico paymaster integration (AA-SEAM)."
+  },
+  "notes": {
+    "hub": {
+      "title": "Offline cash",
+      "subtitle": "Turn your IOU into notes that spend hand-to-hand, with no network",
+      "demoTitle": "Guided demo",
+      "demoHint": "Pay offline, settle on-chain, and watch a double-spend get convicted",
+      "carve": "Carve",
+      "carveHint": "Lock IOU into spendable offline notes",
+      "pay": "Pay offline",
+      "payHint": "Spend a note by QR — no connection needed",
+      "receive": "Receive",
+      "receiveHint": "Take a note and verify it on the spot",
+      "reconcile": "Reconcile",
+      "reconcileHint": "Settle accepted notes on-chain",
+      "howTitle": "How offline notes work",
+      "how": "Your sarraf's IOU is locked on-chain into a batch of notes. Each note is a signed, verifiable claim you can hand to anyone — the recipient checks it fully offline (cert chain + your signature + the recipient binding). When either side is back online, the note settles on-chain to the recipient. Try to spend the same note twice and the chain convicts you: your collateral is seized and the honest victim is compensated."
+    },
+    "airplane": {
+      "on": "Airplane mode — offline",
+      "off": "Online",
+      "hint": "When offline, all network calls are refused — proving these steps need no connection"
+    },
+    "scan": {
+      "pickup": "Pick up from this device",
+      "camera": "Scan with camera",
+      "cameraSeam": "Camera scanning is the native (Capacitor) seam — paste or hand off between tabs for now"
+    },
+    "carve": {
+      "title": "Carve — cash to hand",
+      "subtitle": "Lock some of your IOU into offline notes you can spend anywhere",
+      "notReady": "Demo chain not prepared",
+      "notReadyHint": "Run: node apps/web/scripts/notes-demo-setup.mjs (needs a local anvil + deploy)",
+      "capLeft": "Offline capacity left: {amount} IOU",
+      "willSplit": "Splits into {count} notes",
+      "done": "Notes carved and locked on-chain",
+      "cta": "Carve into notes",
+      "yourCash": "Your offline cash",
+      "empty": "No notes yet — carve some above",
+      "expired": "Expired",
+      "expiresIn": "Expires in {time}",
+      "notesCount": "{spendable} of {total} notes spendable",
+      "offlineNote": "✓ These notes spend offline — no network needed until settlement",
+      "goPay": "Pay someone offline"
+    },
+    "pay": {
+      "title": "Pay offline",
+      "subtitle": "Spend a note against a seller's invoice — works with no connection",
+      "showToSeller": "Show this to the seller",
+      "doneOffline": "✓ Paid offline — no network was used",
+      "payAnother": "Pay another",
+      "scanInvoice": "Scan the seller's invoice",
+      "badInvoice": "Not a valid invoice QR",
+      "pickNote": "Pick a note to spend",
+      "noMatch": "No spendable note matches this amount — carve one first"
+    },
+    "receive": {
+      "title": "Receive offline",
+      "subtitle": "Charge a buyer and verify their note on the spot",
+      "createInvoice": "Create invoice QR",
+      "scanTranscript": "Scan the buyer's payment",
+      "verify": "Verify offline",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "storedPending": "Stored — settle it later under Reconcile"
+    },
+    "reconcile": {
+      "title": "Reconcile",
+      "subtitle": "Settle the notes you accepted, on-chain",
+      "offlineBlocked": "You're offline — reconnect to settle on-chain",
+      "empty": "Nothing to reconcile yet — accept a note under Receive",
+      "fastCheck": "Fast check (indexer)",
+      "settle": "Settle on-chain",
+      "convictedNote": "Double-spend convicted — you were compensated from the cheater's collateral and the insurance fund",
+      "status": {
+        "pending": "Pending",
+        "submitted": "Submitted",
+        "settled": "Settled",
+        "convicted": "Convicted"
+      }
+    },
+    "demo": {
+      "title": "Guided demo",
+      "subtitle": "Offline payment, on-chain settlement, and a double-spend conviction — click through it",
+      "notReady": "Demo chain not prepared",
+      "notReadyHint": "Start anvil (chain 84532), deploy, then run node apps/web/scripts/notes-demo-setup.mjs",
+      "s1": "Carve offline cash (online): lock 15,000 IOU into notes",
+      "s2": "Go offline (airplane mode on)",
+      "s3": "Buyer pays seller1 by QR — verified offline",
+      "s4": "Back online",
+      "s5": "Reconcile seller1 — settles on-chain",
+      "s6": "Buyer double-spends the SAME note to seller2 (offline)",
+      "s7": "Reconcile seller2 — the chain convicts the double-spend",
+      "carved": "Carved",
+      "locked": "Locked on-chain",
+      "serial": "Note serial",
+      "airplane": "Connectivity",
+      "paid": "Paid",
+      "offlineVerify": "Offline verify",
+      "network": "Network",
+      "none": "none used",
+      "settled": "Outcome",
+      "seller1Iou": "seller1 IOU balance",
+      "tx": "tx",
+      "doubleSpent": "Double-spent",
+      "sameSerial": "Same serial",
+      "convicted": "Double-spend convicted",
+      "cheater": "Cheating carver",
+      "victim": "Honest victim",
+      "madeWhole": "Victim made whole for 10,000, from:",
+      "fromSeized": "Seized collateral",
+      "fromInsurance": "Insurance fund",
+      "insuranceReserves": "Insurance reserves",
+      "running": "Running…",
+      "start": "Start the demo",
+      "next": "Next step",
+      "reset": "Reset"
+    }
   }
 }
