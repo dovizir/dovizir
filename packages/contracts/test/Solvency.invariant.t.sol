@@ -7,7 +7,6 @@ import {MockUsdt} from "../src/MockUsdt.sol";
 import {IouToken} from "../src/IouToken.sol";
 import {ReservePool} from "../src/ReservePool.sol";
 import {NoteVault} from "../src/NoteVault.sol";
-import {InsuranceFund} from "../src/InsuranceFund.sol";
 import {TranscriptLib} from "dovizir-acceptance/TranscriptLib.sol";
 
 /// Bounded-op handler for Arm A's solvency invariants. Complements the

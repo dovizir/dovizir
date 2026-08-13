@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {IReservePool, IIouToken, IMemberRegistry, ISarrafRegistry} from "dovizir-acceptance/interfaces/IDovizir.sol";
+import {IReservePool, IIouToken} from "dovizir-acceptance/interfaces/IDovizir.sol";
 import {InsuranceFund} from "./InsuranceFund.sol";
 import {SarrafRegistry} from "./SarrafRegistry.sol";
 import {MemberRegistry} from "./MemberRegistry.sol";
