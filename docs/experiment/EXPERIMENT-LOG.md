@@ -71,3 +71,14 @@ prompts, per-turn edit expectation, TS-first tooling) currently bound arm B
 more tightly than the model's capability does. Formal judging per PROTOCOL
 §4 requires arm B to close; options recorded in session log. Arm A's
 referee-green implementation remains unmerged pending adjudication.
+
+### Cost correction (2026-08-13, from platform billing)
+
+Arm B REAL spend: $16.23 billed on the dedicated key ($10.42 input /
+$4.23 output / $1.57 cache) — vs $0.00 across all slowcook cost surfaces
+(opus-5 absent from pricing table; finding §2 upgraded: budget caps were
+enforcing against $0.00 and could never trip). Orchestrator error
+acknowledged: earlier "≈$0.08" report quoted the broken ledger. Basis note
+for the eventual scoreboard: arm A = synthetic list-price from 277k tokens
+(subscription); arm B = billed USD. The $16.23 bought zero implementation
+progress (all spend in stalled orientation loops + testgen).
