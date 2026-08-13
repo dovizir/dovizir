@@ -1,0 +1,110 @@
+{
+  "common": {
+    "appName": "Dovizir",
+    "tagline": "Everyday P2P payments, backed 1:1",
+    "connect": "Connect wallet",
+    "disconnect": "Disconnect",
+    "connecting": "Connecting…",
+    "notConnected": "Connect a wallet to get started",
+    "loading": "Loading…",
+    "amount": "Amount",
+    "amountPlaceholder": "0.00",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "back": "Back",
+    "submitted": "Transaction submitted",
+    "confirmed": "Transaction confirmed",
+    "error": "Something went wrong",
+    "copied": "Copied",
+    "iou": "IOU",
+    "usdt": "USDT",
+    "notDeployed": {
+      "title": "Testnet not deployed yet",
+      "body": "The Dovizir contracts are not deployed on Base Sepolia yet. On-chain actions are disabled until addresses are configured."
+    },
+    "wrongNetwork": "Please switch to Base Sepolia"
+  },
+  "locale": {
+    "label": "Language",
+    "untranslated": "Not translated yet — showing English"
+  },
+  "nav": {
+    "home": "Home",
+    "deposit": "Deposit",
+    "send": "Send",
+    "redeem": "Redeem"
+  },
+  "home": {
+    "title": "Home",
+    "balanceLabel": "Your balance",
+    "balanceHint": "Backed 1:1 by USDT held at your sarraf",
+    "activityTitle": "Recent activity",
+    "activityEmpty": "No activity yet",
+    "activityReceived": "Received",
+    "activitySent": "Sent",
+    "quickDeposit": "Deposit",
+    "quickSend": "Send",
+    "quickRedeem": "Redeem"
+  },
+  "deposit": {
+    "title": "Deposit",
+    "subtitle": "Request a deposit from your sarraf",
+    "yourSarraf": "Your sarraf",
+    "noSarraf": "You are not a member of a sarraf yet. Ask a sarraf to add you.",
+    "request": "Request deposit",
+    "requested": "Request sent to your sarraf. Your balance updates once they issue.",
+    "howItWorksTitle": "How it works",
+    "howItWorks": "You hand cash or USDT to your sarraf. They deposit backing on-chain and issue you the same amount of IOU — always fully funded, never more than their backing.",
+    "onchainTitle": "Direct on-chain deposit",
+    "onchainHint": "For sarrafs: deposit USDT backing straight into the reserve pool.",
+    "approveAndDeposit": "Approve & deposit"
+  },
+  "send": {
+    "title": "Send",
+    "subtitle": "Send IOU to anyone, instantly",
+    "recipient": "Recipient",
+    "recipientPlaceholder": "0x… address or handle",
+    "invalidRecipient": "Enter a valid address",
+    "insufficient": "Not enough balance",
+    "zeroFee": "Zero fee",
+    "gasSponsored": "Gas sponsored — you pay nothing",
+    "methodDirect": "Direct transfer",
+    "methodDirectHint": "Sends on-chain from your wallet now",
+    "methodCourier": "Courier (sign & relay)",
+    "methodCourierHint": "Sign an offline authorization; anyone can relay it for you",
+    "signAuthorization": "Sign authorization",
+    "authorizationSigned": "Authorization signed. Share it with a courier to relay, or relay it yourself.",
+    "relayNow": "Relay now",
+    "sendNow": "Send"
+  },
+  "redeem": {
+    "title": "Redeem",
+    "subtitle": "Cash out IOU for USDT",
+    "fromSarraf": "Redeem from tranche",
+    "feeNote": "A {feeBps} redemption fee funds the insurance pool",
+    "youRedeem": "You redeem",
+    "fee": "Insurance fee ({feeBps})",
+    "youReceive": "You receive",
+    "redeemNow": "Redeem",
+    "exitHint": "Redemption is the exit door — everyday payments are free"
+  },
+  "friendly": {
+    "title": "Friendly transfer",
+    "badge": "1 free today",
+    "usedBadge": "Used today",
+    "body": "Every day, your first transfer to a friend is completely free — no gas, no fee, forever.",
+    "remaining": "{count, plural, =0 {No free friendly transfers left today} one {# free friendly transfer left today} other {# free friendly transfers left today}}",
+    "resetsAt": "Resets daily",
+    "cta": "Send a friendly transfer"
+  },
+  "pos": {
+    "title": "Seller terminal",
+    "subtitle": "Accept Dovizir IOU at the counter",
+    "comingSoon": "Charge, scan-to-pay and daily settlement land here."
+  },
+  "desk": {
+    "title": "Sarraf desk",
+    "subtitle": "Backing, issuance and member management",
+    "comingSoon": "Deposit backing, issue to members, and track your tranche here."
+  }
+}
