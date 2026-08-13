@@ -59,7 +59,10 @@ related_specs:
     note: Parent multifurcation story; owns arm comparison and is the filing surface for suspected suite bugs.
 proposals:
   auth:
-    status: pending
+    status: approved
+    approved_by: amin (PM, via orchestrator)
+    approved_at: "2026-08-13T11:20:00Z"
+    pm_amendment: Revert semantics authority is the frozen acceptance suite, not custom errors — the interfaces declare none. Match what the suite asserts; where unpinned, any revert is fine. Do not invent custom errors.
     proposed_by: refine-agent
     rationale: On-chain access control replaces the usual RLS framing; the concrete role set is fixed by `IDovizir.sol`, so this proposal states the enforcement discipline, not the role list.
     requirements:
@@ -76,7 +79,9 @@ proposals:
     proposed_by: refine-agent
     rationale: Events are part of the frozen interface surface and the suite may assert on them. Emitting anything beyond the declared events risks breaking arm-vs-arm comparability, so no additional instrumentation is proposed.
   infra:
-    status: pending
+    status: approved
+    approved_by: amin (PM, via orchestrator)
+    approved_at: "2026-08-13T11:20:00Z"
     proposed_by: refine-agent
     runtime: Foundry (`forge test`), local only
     deploy_target: None. M1 is local `forge test`; no live or testnet deployment in this story.
