@@ -27,6 +27,7 @@ import {
   keyFromPriv,
   sigValid,
   toHex,
+  u64be,
   utf8,
 } from "./support/helpers";
 
@@ -91,8 +92,16 @@ describe("golden: transcript-hash preimage", () => {
 
   it("golden file is self-consistent under noble keccak", () => {
     expect(keccakHex(fromHex(transcriptGolden.sigPreimage))).toBe(transcriptGolden.sigDigest);
+    // §5 amendment: sig preimage = serial ‖ invoiceHash ‖ u64be(expiry) ‖ batchRoot.
     expect(
-      toHex(concatBytes(fromHex(transcriptGolden.serials[0]), fromHex(transcriptGolden.invoiceHash))),
+      toHex(
+        concatBytes(
+          fromHex(transcriptGolden.serials[0]),
+          fromHex(transcriptGolden.invoiceHash),
+          u64be(NOTE_EXPIRY),
+          fromHex(transcriptGolden.batchRoot),
+        ),
+      ),
     ).toBe(transcriptGolden.sigPreimage);
     expect(transcriptGolden.invoiceHash).toBe(invoiceGolden.hash);
     expect(sigValid(transcriptGolden.signature, fromHex(transcriptGolden.sigDigest), CARVER.publicKey)).toBe(true);

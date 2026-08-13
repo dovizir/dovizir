@@ -13,7 +13,10 @@ pragma solidity ^0.8.24;
 ///    note is bound to, `amount` the value (mock-USDT-denominated IOU units,
 ///    6 decimals), `nonce` a recipient-chosen 32-byte value.
 ///  - invoiceHash = keccak256(abi.encode(INVOICE_TYPEHASH, recipient, amount, nonce))
-///  - spendDigest = keccak256(abi.encodePacked(serial, invoiceHash))
+///  - spendDigest = keccak256(abi.encodePacked(serial, invoiceHash, expiry, batchRoot))
+///    (AMENDED 2026-08-13, review §5: expiry + batchRoot are now signed so the
+///    carver's signature binds the note's freshness and the batch it belongs to;
+///    proof stays unsigned — it is verified against the now-signed batchRoot.)
 ///  - carverSig  = 65-byte {r,s,v} ECDSA signature by the carver over
 ///    spendDigest (RAW digest — no EIP-191/EIP-712 prefix; tests sign with
 ///    vm.sign(pk, spendDigest)).
@@ -38,8 +41,16 @@ library TranscriptLib {
         return keccak256(abi.encode(INVOICE_TYPEHASH, inv.recipient, inv.amount, inv.nonce));
     }
 
-    function spendDigest(bytes32 serial, bytes32 invoiceHash_) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(serial, invoiceHash_));
+    /// AMENDED (review §5): binds serial, invoice, note expiry, and the batch
+    /// root. `expiry` is the batch expiry (uint64); `batchRoot` the batch the
+    /// serial is proven against. Both sign into the digest so neither can be
+    /// swapped after the carver signs.
+    function spendDigest(bytes32 serial, bytes32 invoiceHash_, uint64 expiry, bytes32 batchRoot)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(abi.encodePacked(serial, invoiceHash_, expiry, batchRoot));
     }
 
     // ---------------------------------------------------------------- encoding

@@ -2,7 +2,7 @@
  * Area 5 — spendNote transcript construction + verifyTranscript happy path.
  * Pinned rules:
  *   transcript.signature = carver secp256k1 sig over
- *     keccak256(serial-bytes ‖ invoiceHash-bytes),
+ *     keccak256(serial ‖ invoiceHash ‖ u64be(expiry) ‖ batchRoot) (§5 amendment),
  *   64-byte compact r||s, RFC6979 deterministic, low-s.
  *   Expiry semantics: a note is valid iff now < expiry.
  */
@@ -13,6 +13,7 @@ import {
   fromHex,
   keccak_256,
   sigValid,
+  u64be,
 } from "./support/helpers";
 import {
   CARVER,
@@ -45,9 +46,12 @@ describe("spendNote: transcript construction", () => {
     expect(t.carver.toLowerCase()).toBe(CARVER.publicKey);
   });
 
-  it("signature is a 64-byte compact secp256k1 sig over keccak256(serial ‖ invoiceHash) by the carver", () => {
+  it("signature is a 64-byte compact secp256k1 sig over keccak256(serial ‖ invoiceHash ‖ expiry ‖ batchRoot) by the carver", () => {
     expect(t.signature).toMatch(/^0x[0-9a-f]{128}$/i);
-    const digest = keccak_256(concatBytes(fromHex(t.serial), fromHex(t.invoiceHash)));
+    // §5 amendment: expiry + batchRoot are signed into the digest.
+    const digest = keccak_256(
+      concatBytes(fromHex(t.serial), fromHex(t.invoiceHash), u64be(t.expiry), fromHex(t.batchRoot)),
+    );
     expect(sigValid(t.signature, digest, CARVER.publicKey)).toBe(true);
   });
 });

@@ -8,7 +8,13 @@ src = "src"
 test = "test"
 out = "out"
 libs = ["../contracts/lib"]
-remappings = ["forge-std/=../contracts/lib/forge-std/src/"]
+remappings = [
+    "forge-std/=../contracts/lib/forge-std/src/",
+    # Arm A (additive): implementation contracts for src/arm/ArmADeployer.sol,
+    # and the alias those contracts use to import this project's frozen spec.
+    "arm-a/=../contracts/src/",
+    "dovizir-acceptance/=src/",
+]
 # Repo convention: paris (no PUSH0 / no transient-storage dependence).
 evm_version = "paris"
 optimizer = true

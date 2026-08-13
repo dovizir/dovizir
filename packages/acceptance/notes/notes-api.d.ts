@@ -13,18 +13,31 @@
  * v0 scope: non-blind notes (carver identity is public), one hop, fixed
  * denominations per batch. CFN identity-shares and divisibility are v1.
  *
- * PINNED SEMANTICS (adjudicated 2026-08-13, pre-freeze — see notes/README.md):
+ * PINNED SEMANTICS (adjudicated 2026-08-13, pre-freeze — see notes/README.md;
+ * AMENDED 2026-08-13 post-adversarial-review, §§5–8):
  * - Merkle: commutative sorted-pair keccak256 (OZ MerkleProof-compatible);
- *   single-leaf batch root == leaf with empty proof.
+ *   single-leaf batch root == leaf with empty proof. (§8: leaf/interior domain
+ *   separation is DELIBERATELY NOT added — it would break OZ compatibility and
+ *   desync the TS/Solidity pin; accepted as-is, not exploitable in v0.)
  * - Signatures: 64-byte compact r‖s, RFC6979 deterministic, low-s.
+ * - Spend signature scope (§5, AMENDED): the carver signs
+ *   keccak256(serial ‖ invoiceHash ‖ uint64-be(expiry) ‖ batchRoot). expiry and
+ *   batchRoot are SIGNED (previously unsigned); the proof stays unsigned and is
+ *   verified against the now-signed batchRoot.
+ * - Cert cap chaining (§7): verifyCertChain requires
+ *   memberCert.capLimit <= sarrafCert.capLimit, else BAD_CERT_CHAIN.
  * - Expiry boundary (certs AND notes): valid iff now < expiry.
  * - VALUE_MISMATCH means transcript.value != invoice.amount (value-vs-proof
  *   tampering surfaces as BAD_PROOF since the leaf binds the value).
  * - canonicalize: bigint 0n → "0x0" minimal hex; absent optionals omitted;
- *   hex lowercased.
- * - ReconcileTracker: identity = canonical bytes (deep clone == identical);
- *   invalid submissions throw Error(reason); conviction.transcripts =
- *   [original, current]; value == capLimit is allowed.
+ *   strings serialized verbatim (§8, AMENDED: hex-looking free text such as a
+ *   `memo` is NO LONGER case-folded — byte fields are lowercased at their typed
+ *   construction sites, so distinct-case memos never collide).
+ * - ReconcileTracker: identity = SIGNED material serial ‖ invoiceHash ‖
+ *   signature (§6, AMENDED from "canonical bytes"), so a mutated UNSIGNED field
+ *   is idempotent/accepted, never a conviction; invalid submissions throw
+ *   Error(reason); conviction.transcripts = [original, current]; value ==
+ *   capLimit is allowed.
  */
 
 export type Hex = `0x${string}`;
@@ -66,8 +79,9 @@ export interface Transcript {
   invoiceHash: Hex;   // keccak256(canonical(invoice)) — recipient binding
   invoice: Invoice;   // carried in full so reconciliation is self-contained
   carver: Hex;        // carver public key
-  signature: Hex;     // carver secp256k1 sig over keccak256(serial ‖ invoiceHash)
-  expiry: number;     // copied from batch; verifiers reject after this
+  signature: Hex;     // carver secp256k1 sig over
+                      // keccak256(serial ‖ invoiceHash ‖ uint64-be(expiry) ‖ batchRoot) (§5)
+  expiry: number;     // copied from batch; SIGNED (§5); verifiers reject after this
 }
 
 export type CertRole = "sarraf" | "member";

@@ -28,6 +28,10 @@ export function u32be(n: number): Uint8Array {
   return b;
 }
 
+export function u64be(n: number): Uint8Array {
+  return hexToBytes(BigInt(n).toString(16).padStart(16, "0"));
+}
+
 export function u256be(v: bigint): Uint8Array {
   return hexToBytes(v.toString(16).padStart(64, "0"));
 }

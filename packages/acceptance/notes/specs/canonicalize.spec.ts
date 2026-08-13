@@ -1,9 +1,11 @@
 /**
  * Area 1 — canonicalize / hashInvoice: the deterministic JSON wire format.
- * Rules under test (frozen header of notes-api.d.ts):
+ * Rules under test (frozen header of notes-api.d.ts; §8 amendment):
  *   UTF-8, object keys sorted lexicographically (recursively), bigints as
- *   0x-hex strings, byte fields as lowercase 0x-hex; hashes are keccak-256
- *   over the UTF-8 bytes of the canonical serialization.
+ *   0x-hex strings, strings serialized VERBATIM (byte fields are lowercased at
+ *   their typed construction sites, NOT by the serializer, so hex-looking free
+ *   text such as a memo is preserved); hashes are keccak-256 over the UTF-8
+ *   bytes of the canonical serialization.
  */
 import { describe, expect, it } from "vitest";
 import { canonicalize, hashInvoice, type Invoice } from "@dovizir/notes";
@@ -30,8 +32,11 @@ describe("canonicalize: deterministic JSON serializer", () => {
     expect(canonicalize({ v: 0n })).toBe('{"v":"0x0"}');
   });
 
-  it("passes byte fields through as lowercase 0x-hex", () => {
-    expect(canonicalize({ sig: "0xDEADbeef" })).toBe('{"sig":"0xdeadbeef"}');
+  it("serializes strings verbatim — no case-folding of hex-looking values (§8)", () => {
+    // AMENDED (§8): the serializer no longer lowercases hex-looking strings.
+    // Real byte fields are lowercased at their typed construction sites.
+    expect(canonicalize({ sig: "0xDEADbeef" })).toBe('{"sig":"0xDEADbeef"}');
+    expect(canonicalize({ sig: "0xdeadbeef" })).toBe('{"sig":"0xdeadbeef"}');
   });
 
   it("preserves array element order (proofs are positional)", () => {
@@ -44,8 +49,13 @@ describe("canonicalize: deterministic JSON serializer", () => {
     expect(canonicalize({ memo: "tea ☕ چای" })).toBe('{"memo":"tea ☕ چای"}');
   });
 
+  it("does NOT case-fold a hex-looking memo (§8: distinct-case memos stay distinct)", () => {
+    expect(canonicalize({ memo: "0xABCDEF" })).toBe('{"memo":"0xABCDEF"}');
+    expect(canonicalize({ memo: "0xABCDEF" })).not.toBe(canonicalize({ memo: "0xabcdef" }));
+  });
+
   it("produces byte-identical output for key-order permutations of the same object", () => {
-    const a = canonicalize({ x: 1n, y: "0xAB", z: [1, 2] });
+    const a = canonicalize({ x: 1n, y: "0xab", z: [1, 2] });
     const b = canonicalize({ z: [1, 2], y: "0xab", x: 1n });
     expect(a).toBe(b);
   });

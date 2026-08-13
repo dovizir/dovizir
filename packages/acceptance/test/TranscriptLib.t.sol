@@ -80,19 +80,24 @@ contract TranscriptLibTest is Test {
         assertTrue(TranscriptLib.invoiceHash(inv) != h, "nonce is committed");
     }
 
-    /// The spend digest binds serial AND invoice — either change alters it.
-    function test_spendDigest_bindsSerialAndInvoice() public pure {
+    /// The spend digest binds serial, invoice, expiry AND batchRoot — any
+    /// change alters it (§5 amendment adds expiry + batchRoot binding).
+    function test_spendDigest_bindsSerialInvoiceExpiryAndRoot() public pure {
         TranscriptLib.Invoice memory inv =
             TranscriptLib.Invoice({recipient: address(0xBEEF), amount: 1e6, nonce: "n"});
-        bytes32 d = TranscriptLib.spendDigest("serial-1", TranscriptLib.invoiceHash(inv));
-        assertTrue(
-            TranscriptLib.spendDigest("serial-2", TranscriptLib.invoiceHash(inv)) != d,
-            "serial is bound"
-        );
+        bytes32 ih = TranscriptLib.invoiceHash(inv);
+        uint64 exp = 1000;
+        bytes32 root = keccak256("root-1");
+        bytes32 d = TranscriptLib.spendDigest("serial-1", ih, exp, root);
+        assertTrue(TranscriptLib.spendDigest("serial-2", ih, exp, root) != d, "serial is bound");
         inv.recipient = address(0xCAFE);
         assertTrue(
-            TranscriptLib.spendDigest("serial-1", TranscriptLib.invoiceHash(inv)) != d,
+            TranscriptLib.spendDigest("serial-1", TranscriptLib.invoiceHash(inv), exp, root) != d,
             "recipient binding: invoice is bound"
+        );
+        assertTrue(TranscriptLib.spendDigest("serial-1", ih, exp + 1, root) != d, "expiry is bound");
+        assertTrue(
+            TranscriptLib.spendDigest("serial-1", ih, exp, keccak256("root-2")) != d, "batchRoot is bound"
         );
     }
 }

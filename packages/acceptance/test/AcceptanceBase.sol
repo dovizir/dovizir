@@ -196,15 +196,21 @@ abstract contract AcceptanceBase is Test {
     }
 
     /// Build the canonical transcript + carver signature for spending `serial`
-    /// to `recipient` (TranscriptLib is the frozen encoding).
-    function _spend(bytes32 serial, address recipient, uint256 amount, bytes32 invNonce, uint256 carverPk)
-        internal
-        pure
-        returns (bytes memory transcript, bytes memory carverSig)
-    {
+    /// (in batch `batchRoot`, expiry `noteExpiry`) to `recipient`. TranscriptLib
+    /// is the frozen encoding; §5 amendment: the digest now signs expiry +
+    /// batchRoot, so the helper threads the batch's root and expiry.
+    function _spend(
+        bytes32 serial,
+        address recipient,
+        uint256 amount,
+        bytes32 invNonce,
+        uint256 carverPk,
+        bytes32 batchRoot,
+        uint64 noteExpiry
+    ) internal pure returns (bytes memory transcript, bytes memory carverSig) {
         TranscriptLib.Invoice memory inv =
             TranscriptLib.Invoice({recipient: recipient, amount: amount, nonce: invNonce});
         transcript = TranscriptLib.encodeTranscript(inv);
-        carverSig = _sign(carverPk, TranscriptLib.spendDigest(serial, inv.invoiceHash()));
+        carverSig = _sign(carverPk, TranscriptLib.spendDigest(serial, inv.invoiceHash(), noteExpiry, batchRoot));
     }
 }
