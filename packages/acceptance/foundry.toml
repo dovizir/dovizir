@@ -1,0 +1,25 @@
+# Dovizir REFEREE acceptance suite — standalone Foundry project.
+# Both experiment arms run THIS project unmodified except for pointing
+# DOVIZIR_DEPLOYER at their own IAcceptanceDeployer implementation
+# (see README.md). Do not edit as part of an arm.
+
+[profile.default]
+src = "src"
+test = "test"
+out = "out"
+libs = ["../contracts/lib"]
+remappings = ["forge-std/=../contracts/lib/forge-std/src/"]
+# Repo convention: paris (no PUSH0 / no transient-storage dependence).
+evm_version = "paris"
+optimizer = true
+optimizer_runs = 200
+
+[profile.default.fuzz]
+runs = 256
+
+[profile.default.invariant]
+runs = 64
+depth = 32
+# Handler ops guard their own preconditions; reverts inside the target are
+# tolerated (a revert is never how an arm "passes" — invariants assert state).
+fail_on_revert = false
