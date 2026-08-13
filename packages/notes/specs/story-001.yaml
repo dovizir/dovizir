@@ -1,0 +1,64 @@
+$schema: ./spec.schema.json
+story_id: "001"
+title: "Arm B: pure-TypeScript @dovizir/notes conforming to the pinned notes-api.d.ts contract"
+status: active
+created_at: 2026-08-13T10:59:22.791Z
+supersedes: []
+superseded_by: null
+estimate: medium
+source_issue: "#11"
+refined_by: slowcook-refine@0.28.7
+actors:
+  - name: Arm B implementer
+    notes: Writes the @dovizir/notes TypeScript package; may only modify files inside that package.
+  - name: Acceptance harness (CI)
+    notes: Runs the shared 95-spec vitest suite with `DOVIZIR_NOTES_IMPL` aliased to the Arm B package; is the sole arbiter of green.
+preconditions:
+  - "`packages/acceptance/notes/notes-api.d.ts` exists and carries the pinned semantics header; it is read-only for this story."
+  - The shared acceptance suite under `packages/acceptance/notes/**` contains 95 vitest specs and is read-only for this story.
+  - The `DOVIZIR_NOTES_IMPL` alias mechanism already resolves an implementation package into the shared suite; no harness changes are required.
+  - "Parent issue #9 (multifurcation split) is the escalation surface for any suspected contract or spec defect."
+  - "`@noble/curves` and `@noble/hashes` are named in the pinned `.d.ts` header and are installable at the pinned versions the sibling arm uses."
+invariants:
+  - "`git diff` against `packages/acceptance/**` is empty after the story: the contract `.d.ts` and all 95 specs are never edited, renamed, or re-pinned by Arm B."
+  - The set of runtime `dependencies` in the Arm B `package.json` is a subset of `{"@noble/curves", "@noble/hashes"}`. Any other package appears only under `devDependencies`.
+  - The set of exported names from the Arm B package entrypoint is exactly equal to the set of exported names declared in `packages/acceptance/notes/notes-api.d.ts` — no additions, no omissions, no renames.
+  - The Arm B entrypoint type-checks as assignable to the pinned `notes-api.d.ts` module surface (a compile-time conformance check, e.g. an `import type` + `satisfies`-style assertion file, is part of the build).
+  - '`tsconfig` for the package sets `"strict": true`; no `any` appears in any exported type position; no `@ts-expect-error` or `@ts-ignore` appears under `src/`.'
+  - No module in `src/` performs filesystem, network, `Date.now()`/`new Date()`, or `Math.random()`/`crypto.getRandomValues` access unless a pinned signature requires that capability; where required, the capability is taken as a parameter or injected dependency so specs stay deterministic.
+  - Errors surfaced by the implementation match the error type, shape, and message text the pinned specs assert; no spec-asserted error is swallowed, wrapped, or coerced to a return value.
+  - The shared suite run contains zero `.skip`, `.only`, `.todo`, or `.failing` markers introduced by Arm B; the pass count reported by vitest is exactly 95 of 95.
+  - Own unit tests live inside the Arm B package directory only (e.g. `packages/notes-ts/src/**/*.test.ts`); they never import from or mutate `packages/acceptance/**` fixtures.
+  - "A suspected spec or contract defect is resolved by filing on #9 and implementing to the pinned text as written — never by changing the spec, skipping it, or special-casing it."
+acceptance_scenarios:
+  - Given the Arm B package is built and `DOVIZIR_NOTES_IMPL` resolves to it, When the shared acceptance suite runs, Then vitest reports 95 passed / 0 failed / 0 skipped.
+  - Given the repository at the story's head commit, When `git diff --stat -- packages/acceptance/` is run against the base commit, Then the output is empty.
+  - Given the Arm B `package.json`, When its runtime `dependencies` are enumerated, Then every entry is one of `@noble/curves` or `@noble/hashes`.
+  - "Given a conformance file that imports the pinned `notes-api.d.ts` module type and asserts the Arm B entrypoint against it, When `tsc --noEmit` runs under `strict: true`, Then it exits 0 with no suppression comments in `src/`."
+  - Given the Arm B entrypoint, When its exported names are compared to the pinned `.d.ts` export list, Then the two sets are equal — an extra convenience export causes the check to fail.
+  - Given an acceptance spec that asserts a thrown error for invalid input, When that input is passed to the Arm B implementation, Then the same error type and message are thrown rather than a sentinel value or silent default.
+  - Given a pinned signature that requires randomness or a timestamp, When the corresponding spec runs twice with the same injected source, Then the outputs are byte-identical — no ambient clock or global RNG is consulted.
+  - "Given an acceptance spec whose text appears ambiguous or wrong, When Arm B encounters it, Then an issue is filed on #9 and the implementation follows the pinned text as written; the spec is not skipped and 95/95 remains required."
+non_goals:
+  - "Editing, re-pinning, or extending `packages/acceptance/notes/notes-api.d.ts` or any of the 95 shared specs — contract changes escalate to #9."
+  - Any change to Arm A or to the shared harness / `DOVIZIR_NOTES_IMPL` alias mechanism.
+  - Adding exports, helpers, or convenience APIs beyond the pinned surface, even if they would be useful downstream.
+  - "Performance tuning, bundle-size optimization, or benchmarking — comparison metrics between arms are #9's scope, not this story's."
+  - Publishing the package to a registry, versioning policy, or changelog.
+  - New tests under `packages/acceptance/**`; the shared 95-spec suite is the authoritative harness (own unit tests inside the Arm B package are in scope and encouraged).
+proposals:
+  perf_budget:
+    status: deferred
+    proposed_by: refine-agent
+    rationale: "Correctness-only is the bar for Arm B; #9 owns any cross-arm comparison metrics (throughput, bundle size). Inventing a budget the sibling arm isn't held to would distort the comparison."
+  observability:
+    status: deferred
+    proposed_by: refine-agent
+    rationale: Library-only package with no runtime service surface; the acceptance suite is the observability surface for this story.
+  infra:
+    status: deferred
+    proposed_by: refine-agent
+    rationale: Fits the existing monorepo + vitest stack; the `DOVIZIR_NOTES_IMPL` alias already exists and needs no new runtime capability.
+cost:
+  total_usd: 0
+  last_updated: 2026-08-13T10:59:22.791Z
