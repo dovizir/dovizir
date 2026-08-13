@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "slowcook_version": "0.28.7",
+  "recorded_at": "2026-08-13T11:34:37.692Z",
+  "story_id": "002",
+  "tests": [
+    {
+      "id": "tests/integration/story-002.test.ts > story-002 — Arm B against the frozen Dovizir acceptance suite > preconditions (frozen surfaces are present) > the frozen interface, libraries, README and foundry.toml all exist under packages/acceptance/",
+      "file": "tests/integration/story-002.test.ts"
+    },
+    {
+      "id": "tests/integration/story-002.test.ts > story-002 — Arm B against the frozen Dovizir acceptance suite > acceptance scenarios > Given branch arm-b/m1 with all six contracts and ArmBDeployer implemented, When DOVIZIR_DEPLOYER selects Arm B and forge test runs the suite with zero suite edits, Then the run is wired to succeed (static preconditions for exit 0)",
+      "file": "tests/integration/story-002.test.ts"
+    },
+    {
+      "id": "tests/integration/story-002.test.ts > story-002 — Arm B against the frozen Dovizir acceptance suite > acceptance scenarios > Given the story is complete, When git diff is taken over packages/acceptance/ against the pre-story state, Then the only changes are appended remapping lines in foundry.toml and the added file src/arm/ArmBDeployer.sol",
+      "file": "tests/integration/story-002.test.ts"
+    },
+    {
+      "id": "tests/integration/story-002.test.ts > story-002 — Arm B against the frozen Dovizir acceptance suite > acceptance scenarios > Given a test process that calls the Arm B deployer twice, When both invocations complete, Then the two returned address sets are disjoint (deployer holds no cross-invocation state and constructs fresh instances)",
+      "file": "tests/integration/story-002.test.ts"
+    },
+    {
+      "id": "tests/integration/story-002.test.ts > story-002 — Arm B against the frozen Dovizir acceptance suite > acceptance scenarios > Given each address returned by the Arm B deployer, When the suite casts it to its declared interface and calls each function, Then every declared function is implemented (no selector-not-found)",
+      "file": "tests/integration/story-002.test.ts"
+    },
+    {
+      "id": "tests/integration/story-002.test.ts > story-002 — Arm B against the frozen Dovizir acceptance suite > acceptance scenarios > Given a caller holding none of the required roles, When an access-gated external function is called, Then it reverts with the exact custom error declared in IDovizir.sol (never a bare string revert)",
+      "file": "tests/integration/story-002.test.ts"
+    },
+    {
+      "id": "tests/integration/story-002.test.ts > story-002 — Arm B against the frozen Dovizir acceptance suite > acceptance scenarios > Given identical inputs, When Arm B produces transcript bytes and TranscriptLib is invoked directly, Then the bytes are identical (Arm B calls TranscriptLib and never reimplements it)",
+      "file": "tests/integration/story-002.test.ts"
+    },
+    {
+      "id": "tests/integration/story-002.test.ts > story-002 — Arm B against the frozen Dovizir acceptance suite > acceptance scenarios > Given identical inputs, When Arm B produces an auth payload/digest and AuthLib is invoked directly, Then the results are identical (Arm B calls AuthLib and never reimplements it)",
+      "file": "tests/integration/story-002.test.ts"
+    },
+    {
+      "id": "tests/integration/story-002.test.ts > story-002 — Arm B against the frozen Dovizir acceptance suite > acceptance scenarios > Given the implementer believes a frozen-suite assertion is wrong, When they act on that belief, Then the suite files remain byte-identical and the implementation follows the interface text",
+      "file": "tests/integration/story-002.test.ts"
+    },
+    {
+      "id": "tests/integration/story-002.test.ts > story-002 — Arm B against the frozen Dovizir acceptance suite > invariants > exactly six concrete contracts exist, one per IDovizir interface, each declaring `is I<Name>`",
+      "file": "tests/integration/story-002.test.ts"
+    },
+    {
+      "id": "tests/integration/story-002.test.ts > story-002 — Arm B against the frozen Dovizir acceptance suite > invariants > concrete contract names drop the leading `I` unless IDovizir.sol's adjudication comments name them otherwise",
+      "file": "tests/integration/story-002.test.ts"
+    },
+    {
+      "id": "tests/integration/story-002.test.ts > story-002 — Arm B against the frozen Dovizir acceptance suite > invariants > changes to packages/acceptance/foundry.toml are strictly additive",
+      "file": "tests/integration/story-002.test.ts"
+    },
+    {
+      "id": "tests/integration/story-002.test.ts > story-002 — Arm B against the frozen Dovizir acceptance suite > invariants > ArmBDeployer conforms to the deployer plug-in shape and exposes all six deployed addresses to the caller",
+      "file": "tests/integration/story-002.test.ts"
+    },
+    {
+      "id": "tests/integration/story-002.test.ts > story-002 — Arm B against the frozen Dovizir acceptance suite > invariants > ArmBDeployer performs deployment and wiring only — it declares no domain behaviour the suite could exercise as one of the six",
+      "file": "tests/integration/story-002.test.ts"
+    },
+    {
+      "id": "tests/integration/story-002.test.ts > story-002 — Arm B against the frozen Dovizir acceptance suite > invariants > Arm B emits exactly the events declared in IDovizir.sol and introduces no additional events",
+      "file": "tests/integration/story-002.test.ts"
+    },
+    {
+      "id": "tests/integration/story-002.test.ts > story-002 — Arm B against the frozen Dovizir acceptance suite > invariants > Arm B sources declare a Solidity pragma identical to the frozen interface's, so suite and arm compile under one forge invocation",
+      "file": "tests/integration/story-002.test.ts"
+    },
+    {
+      "id": "tests/integration/story-002.test.ts > story-002 — Arm B against the frozen Dovizir acceptance suite > invariants > the suite stays arm-agnostic — no acceptance source references Arm B except through the DOVIZIR_DEPLOYER indirection",
+      "file": "tests/integration/story-002.test.ts"
+    },
+    {
+      "id": "tests/schema/story-002-column-presence.test.ts > story-002 column presence (code → schema) > every literal .from(t).select(...) column reference exists in supabase/migrations/",
+      "file": "tests/schema/story-002-column-presence.test.ts"
+    }
+  ],
+  "suites": [
+    {
+      "suite": "backend",
+      "command": "npx vitest list",
+      "test_count": 18
+    }
+  ]
+}
