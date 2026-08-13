@@ -82,3 +82,14 @@ acknowledged: earlier "≈$0.08" report quoted the broken ledger. Basis note
 for the eventual scoreboard: arm A = synthetic list-price from 277k tokens
 (subscription); arm B = billed USD. The $16.23 bought zero implementation
 progress (all spend in stalled orientation loops + testgen).
+
+## 2026-08-13 — Experiment SUSPENDED (operator decision)
+
+Arm B stopped mid-repair-cycle after the turn-round-cap fix produced the
+first real edit (notes iter 3, +236/-12, ratchet-reverted, loop functional)
+but a third private pricing table in brew (agent.ts:330) left budget caps
+dead during live spend. All brew processes killed; no further arm-B spend.
+Slowcook enters a repair cycle against HANDOVER-dovizir-experiment-fixes.md
+(13 findings + 8 radical prescriptions R1–R8, delivered to the slowcook dev
+repo). Round 2 (M2 scope) planned post-repairs. Arm A's referee-verified
+implementation stands, unmerged, pending adjudication.
