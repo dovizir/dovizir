@@ -38,6 +38,11 @@ contract InsuranceFund is IInsuranceFund {
     uint256 public seizedIouOverseeingShare;
     uint256 public seizedIouMaintenanceShare;
 
+    /// FIX #2 (defense-in-depth): a serial-attributed claim is honored at most
+    /// once, so even a caller path that bypasses the NoteVault's `convicted`
+    /// guard can never drain the fund by replaying one convicted serial.
+    mapping(bytes32 => bool) public claimedSerial;
+
     event SeizureExcessReceived(uint256 amount);
 
     constructor(IUsdtLike usdt_) {
@@ -93,6 +98,8 @@ contract InsuranceFund is IInsuranceFund {
     /// @notice Serial-attributed claim used by the NoteVault's double-spend
     /// path so ClaimPaid carries the convicted note serial.
     function payClaimForSerial(address victim, uint256 amount, bytes32 noteSerial) external {
+        require(!claimedSerial[noteSerial], "InsuranceFund: serial already claimed");
+        claimedSerial[noteSerial] = true;
         _payClaim(victim, amount, noteSerial);
     }
 

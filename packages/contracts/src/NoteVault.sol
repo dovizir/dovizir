@@ -15,23 +15,39 @@ import {InsuranceFund} from "./InsuranceFund.sol";
 /// and refund transfer back out. No vault minting is needed, so invariant (a)
 /// (outstanding == circulating + Σ lockedOf) holds structurally.
 ///
-/// Double-spend handling (frozen spec addition #6):
+/// Double-spend handling (frozen spec addition #6; hardened 2026-08-13 after
+/// adversarial review — see docs/experiment/REVIEW-FINDINGS-M1.md):
 ///  - a second CARVER-SIGNED transcript for a spent serial with a different
-///    invoice convicts: the carver's ENTIRE remaining locked value — across
-///    all their batches — is seized (lockedOf → 0), the victim is made whole
-///    for exactly the invoice amount (carver-tranche IOU first, then USDT via
-///    InsuranceFund.payClaim for any shortfall), and seizure excess goes to
-///    the InsuranceFund under its 50/50 split bookkeeping (adjudication
-///    2026-08-13);
+///    invoice convicts: the carver's remaining locked value IN THE CONVICTED
+///    BATCH'S TRANCHE is seized, the victim is made whole for at most the
+///    serial's ORIGINAL first-spend amount (carver-tranche IOU first, then USDT
+///    via InsuranceFund.payClaim for any shortfall), and seizure excess goes to
+///    the InsuranceFund under its 50/50 split bookkeeping;
 ///  - a byte-identical resubmission is NOT a double-spend: it reverts with
 ///    ALREADY_RECONCILED (canonical behavior);
+///  - a serial can be convicted AT MOST ONCE: a second conviction attempt on an
+///    already-convicted serial reverts (ALREADY_CONVICTED) — this closes the
+///    unbounded-drain replay and the reentrancy-amplification findings;
 ///  - a conflicting transcript NOT signed by the carver reverts without
 ///    conviction.
 ///
-/// Cross-batch seizure is O(1) via a per-carver seizure epoch: each batch
-/// records the carver's epoch at carve time; a conviction bumps the carver's
-/// epoch, instantly zeroing the effective remainder of every pre-existing
-/// batch without enumeration.
+/// FIX #1 (amount bound): the payout on the spent-serial branch is capped at
+/// `firstSpendAmount[serial]` — what the note was actually worth at first
+/// spend — so a carver-chosen conviction invoice amount can never drive the
+/// compensation.
+///
+/// FIX #4 (tranche-scoped seizure): locked value and the seizure epoch are
+/// tracked per (carver, tranche) rather than aggregated. A conviction seizes
+/// and zeroes only the convicted batch's tranche, so it can never revert for
+/// lack of balance in an unrelated tranche, and refundExpired still returns
+/// untouched tranches' value. Cross-tranche seizure within one tranche stays
+/// O(1) via the per-(carver,tranche) epoch: each batch records that epoch at
+/// carve time; a conviction bumps it, instantly zeroing every pre-existing
+/// batch in the same tranche without enumeration.
+///
+/// FIX #3 (CEI + guard): _convict performs all state writes (convicted flag,
+/// epoch bump, locked bookkeeping) BEFORE any external call, and reconcile is
+/// non-reentrant.
 contract NoteVault is INoteVault {
     // ------------------------------------------------------------- constants
     /// M1 uniform base cap (referee floor: >= 50_000e6).
@@ -42,7 +58,7 @@ contract NoteVault is INoteVault {
         address carver;
         address sarraf; // sponsor at carve time — the locked tranche
         uint64 expiry;
-        uint64 seizureEpoch; // carver's epoch when carved
+        uint64 seizureEpoch; // (carver,tranche) epoch when carved
         bool refunded;
         uint256 remaining; // raw remainder; effective 0 if epoch is stale
     }
@@ -52,11 +68,33 @@ contract NoteVault is INoteVault {
     InsuranceFund public immutable insuranceFund;
 
     mapping(bytes32 => Batch) internal _batches;
+    /// Aggregate locked value per member (across all tranches): backs the cap
+    /// check and the lockedOf view.
     mapping(address => uint256) internal _lockedOf;
-    mapping(address => uint64) public seizureEpochOf;
+    /// FIX #4: locked value per (carver, tranche) — the seizure unit.
+    mapping(address => mapping(address => uint256)) internal _lockedInTranche;
+    /// FIX #4: seizure epoch per (carver, tranche). A conviction bumps only the
+    /// convicted tranche's epoch, leaving other tranches spendable/refundable.
+    mapping(address => mapping(address => uint64)) public seizureEpochOf;
     mapping(bytes32 => bool) internal _spent;
     /// serial => invoiceHash accepted at first presentation (byte-identity key).
     mapping(bytes32 => bytes32) public acceptedInvoiceHash;
+    /// FIX #1: serial => amount paid out at its FIRST spend — the ceiling on any
+    /// double-spend compensation for that serial.
+    mapping(bytes32 => uint256) public firstSpendAmount;
+    /// FIX #2: serial => already convicted. A convicted serial can never be
+    /// convicted again (anti-replay).
+    mapping(bytes32 => bool) public convicted;
+
+    /// FIX #3: minimal non-reentrancy guard (paris EVM — storage, not transient).
+    uint256 private _entered;
+
+    modifier nonReentrant() {
+        require(_entered == 0, "NoteVault: reentrant");
+        _entered = 1;
+        _;
+        _entered = 0;
+    }
 
     constructor(IouToken iou_, IMemberRegistry memberRegistry_, InsuranceFund insuranceFund_) {
         require(
@@ -109,11 +147,12 @@ contract NoteVault is INoteVault {
             carver: msg.sender,
             sarraf: sarraf,
             expiry: expiry,
-            seizureEpoch: seizureEpochOf[msg.sender],
+            seizureEpoch: seizureEpochOf[msg.sender][sarraf],
             refunded: false,
             remaining: amount
         });
         _lockedOf[msg.sender] += amount;
+        _lockedInTranche[msg.sender][sarraf] += amount;
         // Escrow the sponsor-tranche IOU (vault is a pre-approved operator).
         iou.safeTransferFrom(msg.sender, address(this), uint256(uint160(sarraf)), amount, "");
         emit Carved(msg.sender, batchRoot, amount, expiry);
@@ -128,14 +167,17 @@ contract NoteVault is INoteVault {
         bytes32[] calldata proof,
         bytes calldata transcript,
         bytes calldata carverSig
-    ) external {
+    ) external nonReentrant {
         Batch storage b = _batches[batchRoot];
         require(b.carver != address(0), "NoteVault: unknown batch");
         require(TranscriptLib.verify(batchRoot, serial, proof), "NoteVault: bad proof");
 
         TranscriptLib.Invoice memory inv = TranscriptLib.decodeTranscript(transcript);
         bytes32 invHash = TranscriptLib.invoiceHash(inv);
-        bytes32 digest = TranscriptLib.spendDigest(serial, invHash);
+        // FIX #5: expiry + batchRoot are signed into the digest, so the carver's
+        // signature binds the batch this spend belongs to (proof stays unsigned —
+        // it is checked against the now-signed batchRoot).
+        bytes32 digest = TranscriptLib.spendDigest(serial, invHash, b.expiry, batchRoot);
         require(_recover(digest, carverSig) == b.carver, "NoteVault: bad signature");
         require(inv.recipient != address(0), "NoteVault: zero recipient");
 
@@ -144,6 +186,8 @@ contract NoteVault is INoteVault {
                 // Re-broadcast of the accepted transcript: never a conviction.
                 revert("ALREADY_RECONCILED");
             }
+            // FIX #2: a serial is convicted at most once.
+            require(!convicted[serial], "ALREADY_CONVICTED");
             _convict(b, serial, inv);
             return;
         }
@@ -156,32 +200,49 @@ contract NoteVault is INoteVault {
 
         _spent[serial] = true;
         acceptedInvoiceHash[serial] = invHash;
+        firstSpendAmount[serial] = inv.amount; // FIX #1: record the note's worth
         b.remaining = remaining - inv.amount;
         _lockedOf[b.carver] -= inv.amount;
+        _lockedInTranche[b.carver][b.sarraf] -= inv.amount;
         iou.safeTransferFrom(address(this), inv.recipient, uint256(uint160(b.sarraf)), inv.amount, "");
         emit NoteReconciled(serial, inv.recipient, inv.amount);
     }
 
-    /// @dev Conviction: seize the carver's entire remaining locked value,
-    /// compensate the victim exactly the invoice amount (IOU first, insurance
-    /// shortfall second), route excess to the InsuranceFund.
+    /// @dev Conviction: seize the carver's remaining locked value IN THE
+    /// CONVICTED BATCH'S TRANCHE (FIX #4), compensate the victim at most the
+    /// serial's original first-spend amount (FIX #1) — IOU first, insurance
+    /// shortfall second — and route excess to the InsuranceFund. All state
+    /// writes precede every external call (FIX #3, CEI).
     function _convict(Batch storage b, bytes32 serial, TranscriptLib.Invoice memory inv) internal {
         address carver = b.carver;
-        uint256 seized = _lockedOf[carver];
-        _lockedOf[carver] = 0;
-        // Bump the epoch: every batch carved before this instant is drained.
-        seizureEpochOf[carver] += 1;
+        address sarraf = b.sarraf;
 
-        uint256 trancheId = uint256(uint160(b.sarraf));
-        uint256 comp = seized < inv.amount ? seized : inv.amount;
+        // FIX #1: the victim of a double-spend is owed at most what the note was
+        // worth at its first spend — never a carver-chosen conviction amount.
+        uint256 owed = inv.amount;
+        uint256 recorded = firstSpendAmount[serial];
+        if (owed > recorded) owed = recorded;
+
+        // FIX #4: seize only this (carver, tranche)'s locked value.
+        uint256 seized = _lockedInTranche[carver][sarraf];
+        uint256 comp = seized < owed ? seized : owed;
+        uint256 shortfall = owed - comp;
+        uint256 excess = seized - comp;
+
+        // ---- FIX #3: state writes BEFORE any external call ----
+        convicted[serial] = true; // FIX #2: anti-replay
+        _lockedInTranche[carver][sarraf] = 0;
+        _lockedOf[carver] -= seized;
+        seizureEpochOf[carver][sarraf] += 1; // zero every batch in this tranche
+
+        // ---- external calls AFTER state ----
+        uint256 trancheId = uint256(uint160(sarraf));
         if (comp > 0) {
             iou.safeTransferFrom(address(this), inv.recipient, trancheId, comp, "");
         }
-        uint256 shortfall = inv.amount - comp;
         if (shortfall > 0) {
             insuranceFund.payClaimForSerial(inv.recipient, shortfall, serial);
         }
-        uint256 excess = seized - comp;
         if (excess > 0) {
             iou.safeTransferFrom(address(this), address(insuranceFund), trancheId, excess, "");
             insuranceFund.recordSeizedIou(excess);
@@ -203,6 +264,7 @@ contract NoteVault is INoteVault {
         b.refunded = true;
         b.remaining = 0;
         _lockedOf[b.carver] -= remaining;
+        _lockedInTranche[b.carver][b.sarraf] -= remaining;
         iou.safeTransferFrom(address(this), b.carver, uint256(uint160(b.sarraf)), remaining, "");
         emit ExpiredRefunded(batchRoot, remaining);
     }
@@ -211,7 +273,7 @@ contract NoteVault is INoteVault {
 
     function _effectiveRemaining(Batch storage b) internal view returns (uint256) {
         if (b.refunded) return 0;
-        if (b.seizureEpoch < seizureEpochOf[b.carver]) return 0; // seized
+        if (b.seizureEpoch < seizureEpochOf[b.carver][b.sarraf]) return 0; // tranche seized
         return b.remaining;
     }
 

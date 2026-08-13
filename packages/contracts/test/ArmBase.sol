@@ -117,14 +117,21 @@ abstract contract ArmBase is Test {
         }
     }
 
-    function _spend(bytes32 serial, address recipient, uint256 amount, bytes32 invNonce, uint256 carverPk)
-        internal
-        pure
-        returns (bytes memory transcript, bytes memory carverSig)
-    {
+    /// §5 amendment: the spend digest now signs expiry + batchRoot, so the
+    /// helper threads the batch's root and expiry.
+    function _spend(
+        bytes32 serial,
+        address recipient,
+        uint256 amount,
+        bytes32 invNonce,
+        uint256 carverPk,
+        bytes32 batchRoot,
+        uint64 noteExpiry
+    ) internal pure returns (bytes memory transcript, bytes memory carverSig) {
         TranscriptLib.Invoice memory inv =
             TranscriptLib.Invoice({recipient: recipient, amount: amount, nonce: invNonce});
         transcript = TranscriptLib.encodeTranscript(inv);
-        carverSig = _sign(carverPk, TranscriptLib.spendDigest(serial, TranscriptLib.invoiceHash(inv)));
+        carverSig =
+            _sign(carverPk, TranscriptLib.spendDigest(serial, TranscriptLib.invoiceHash(inv), noteExpiry, batchRoot));
     }
 }

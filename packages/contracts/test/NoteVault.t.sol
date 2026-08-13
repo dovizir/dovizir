@@ -42,7 +42,7 @@ contract NoteVaultArmTest is ArmBase {
         uint256 amount,
         bytes32 nonce
     ) internal {
-        (bytes memory transcript, bytes memory sig) = _spend(serials[idx], recipient, amount, nonce, memberA1Pk);
+        (bytes memory transcript, bytes memory sig) = _spend(serials[idx], recipient, amount, nonce, memberA1Pk, root, expiry);
         vault.reconcile(root, serials[idx], TranscriptLib.computeProof(serials, idx), transcript, sig);
     }
 
@@ -87,14 +87,14 @@ contract NoteVaultArmTest is ArmBase {
         _carve(rootA, 10_000e6);
         vm.warp(uint256(expiry)); // notes valid iff now < expiry
         (bytes memory transcript, bytes memory sig) =
-            _spend(serialsA[0], recipient1, 1_000e6, "late", memberA1Pk);
+            _spend(serialsA[0], recipient1, 1_000e6, "late", memberA1Pk, rootA, expiry);
         vm.expectRevert(bytes("NoteVault: note expired"));
         vault.reconcile(rootA, serialsA[0], TranscriptLib.computeProof(serialsA, 0), transcript, sig);
     }
 
     function test_reconcile_unknownBatch_reverts() public {
         (bytes memory transcript, bytes memory sig) =
-            _spend(serialsA[0], recipient1, 1_000e6, "nobatch", memberA1Pk);
+            _spend(serialsA[0], recipient1, 1_000e6, "nobatch", memberA1Pk, rootA, expiry);
         vm.expectRevert(bytes("NoteVault: unknown batch"));
         vault.reconcile(rootA, serialsA[0], TranscriptLib.computeProof(serialsA, 0), transcript, sig);
     }
@@ -108,7 +108,7 @@ contract NoteVaultArmTest is ArmBase {
         assertEq(vault.lockedOf(memberA1), 45_000e6);
 
         // Conflicting spend of serialsA[0] convicts and seizes BOTH batches.
-        (bytes memory t2, bytes memory s2) = _spend(serialsA[0], recipient2, 6_000e6, "second", memberA1Pk);
+        (bytes memory t2, bytes memory s2) = _spend(serialsA[0], recipient2, 6_000e6, "second", memberA1Pk, rootA, expiry);
         vault.reconcile(rootA, serialsA[0], TranscriptLib.computeProof(serialsA, 0), t2, s2);
 
         assertEq(vault.lockedOf(memberA1), 0, "all locked value seized");
@@ -116,7 +116,7 @@ contract NoteVaultArmTest is ArmBase {
         assertEq(vault.remainingOf(rootB), 0, "sibling batch drained by the epoch bump");
 
         // The sibling batch can no longer pay out.
-        (bytes memory t3, bytes memory s3) = _spend(serialsB[0], recipient1, 1e6, "afterwards", memberA1Pk);
+        (bytes memory t3, bytes memory s3) = _spend(serialsB[0], recipient1, 1e6, "afterwards", memberA1Pk, rootB, expiry);
         vm.expectRevert(bytes("NoteVault: exceeds locked value"));
         vault.reconcile(rootB, serialsB[0], TranscriptLib.computeProof(serialsB, 0), t3, s3);
 
@@ -130,7 +130,7 @@ contract NoteVaultArmTest is ArmBase {
         _carve(rootA, 20_000e6);
         _reconcile(rootA, serialsA, 1, recipient1, 5_000e6, "first");
 
-        (bytes memory t2, bytes memory s2) = _spend(serialsA[1], recipient2, 4_999e6, "second", memberA1Pk);
+        (bytes memory t2, bytes memory s2) = _spend(serialsA[1], recipient2, 4_999e6, "second", memberA1Pk, rootA, expiry);
         vault.reconcile(rootA, serialsA[1], TranscriptLib.computeProof(serialsA, 1), t2, s2);
 
         // Seized 15_000e6; victim compensated 4_999e6; excess 10_001e6 to the fund.
@@ -155,7 +155,7 @@ contract NoteVaultArmTest is ArmBase {
         _carve(rootA, 10_000e6);
         _reconcile(rootA, serialsA, 0, recipient1, 10_000e6, "drain"); // locked -> 0
 
-        (bytes memory t2, bytes memory s2) = _spend(serialsA[0], recipient2, 8_000e6, "conflict", memberA1Pk);
+        (bytes memory t2, bytes memory s2) = _spend(serialsA[0], recipient2, 8_000e6, "conflict", memberA1Pk, rootA, expiry);
         vault.reconcile(rootA, serialsA[0], TranscriptLib.computeProof(serialsA, 0), t2, s2);
 
         assertEq(usdt.balanceOf(recipient2), 8_000e6, "victim paid fully from insurance");
@@ -166,9 +166,9 @@ contract NoteVaultArmTest is ArmBase {
     function test_carveAfterSeizure_freshEpochWorksNormally() public {
         _carve(rootA, 10_000e6);
         _reconcile(rootA, serialsA, 0, recipient1, 1_000e6, "one");
-        (bytes memory t2, bytes memory s2) = _spend(serialsA[0], recipient2, 500e6, "two", memberA1Pk);
+        (bytes memory t2, bytes memory s2) = _spend(serialsA[0], recipient2, 500e6, "two", memberA1Pk, rootA, expiry);
         vault.reconcile(rootA, serialsA[0], TranscriptLib.computeProof(serialsA, 0), t2, s2); // conviction
-        assertEq(vault.seizureEpochOf(memberA1), 1);
+        assertEq(vault.seizureEpochOf(memberA1, sarrafA), 1);
 
         // A new batch carved after the conviction is unaffected by it.
         _carve(rootB, 5_000e6);
@@ -177,17 +177,18 @@ contract NoteVaultArmTest is ArmBase {
         assertEq(vault.remainingOf(rootB), 3_000e6, "post-seizure batch reconciles normally");
     }
 
-    /// The convicted serial's evidence key survives: a THIRD conflicting
-    /// presentation convicts again (idempotent seizure of zero) rather than
-    /// paying out.
+    /// Anti-replay (review §2): once a serial is convicted, a THIRD conflicting
+    /// presentation is rejected outright (ALREADY_CONVICTED) — no further
+    /// seizure, no further payout. The revert protects the fund from replayed
+    /// convictions.
     function test_thirdConflictingPresentation_paysNothingMore() public {
         _carve(rootA, 10_000e6);
         _reconcile(rootA, serialsA, 0, recipient1, 1_000e6, "one");
-        (bytes memory t2, bytes memory s2) = _spend(serialsA[0], recipient2, 500e6, "two", memberA1Pk);
+        (bytes memory t2, bytes memory s2) = _spend(serialsA[0], recipient2, 500e6, "two", memberA1Pk, rootA, expiry);
         vault.reconcile(rootA, serialsA[0], TranscriptLib.computeProof(serialsA, 0), t2, s2);
 
         uint256 fundIouBefore = iou.balanceOf(address(fund), _id(sarrafA));
-        (bytes memory t3, bytes memory s3) = _spend(serialsA[0], outsider, 700e6, "three", memberA1Pk);
+        (bytes memory t3, bytes memory s3) = _spend(serialsA[0], outsider, 700e6, "three", memberA1Pk, rootA, expiry);
         vm.expectRevert(); // nothing left to seize and no reserves: claim reverts
         vault.reconcile(rootA, serialsA[0], TranscriptLib.computeProof(serialsA, 0), t3, s3);
         assertEq(iou.balanceOf(address(fund), _id(sarrafA)), fundIouBefore, "no further value movement");

@@ -38,7 +38,7 @@ contract NoteVaultTest is AcceptanceBase {
     /// Reconcile serials[idx] to `recipient` for `amount`, relayed by `relayer`.
     function _reconcile(uint256 idx, address recipient, uint256 amount, bytes32 invNonce) internal {
         (bytes memory transcript, bytes memory sig) =
-            _spend(serials[idx], recipient, amount, invNonce, memberA1Pk);
+            _spend(serials[idx], recipient, amount, invNonce, memberA1Pk, root, expiry);
         vm.prank(relayer);
         vault.reconcile(root, serials[idx], TranscriptLib.computeProof(serials, idx), transcript, sig);
     }
@@ -111,7 +111,7 @@ contract NoteVaultTest is AcceptanceBase {
         _carve(50_000e6);
 
         (bytes memory transcript, bytes memory sig) =
-            _spend(serials[1], recipient1, 10_000e6, "inv-1", memberA1Pk);
+            _spend(serials[1], recipient1, 10_000e6, "inv-1", memberA1Pk, root, expiry);
 
         vm.expectEmit(true, true, true, true, address(vault));
         emit INoteVault.NoteReconciled(serials[1], recipient1, 10_000e6);
@@ -129,7 +129,7 @@ contract NoteVaultTest is AcceptanceBase {
     function test_reconcile_relayableByAnyone_paysBoundRecipientOnly() public {
         _carve(50_000e6);
         (bytes memory transcript, bytes memory sig) =
-            _spend(serials[0], recipient1, 5_000e6, "inv-relay", memberA1Pk);
+            _spend(serials[0], recipient1, 5_000e6, "inv-relay", memberA1Pk, root, expiry);
 
         vm.prank(attacker); // hostile relayer changes nothing
         vault.reconcile(root, serials[0], TranscriptLib.computeProof(serials, 0), transcript, sig);
@@ -144,7 +144,7 @@ contract NoteVaultTest is AcceptanceBase {
     function test_reconcile_tamperedRecipient_reverts() public {
         _carve(50_000e6);
         // Carver signed an invoice bound to recipient1...
-        (, bytes memory sig) = _spend(serials[0], recipient1, 5_000e6, "inv-bind", memberA1Pk);
+        (, bytes memory sig) = _spend(serials[0], recipient1, 5_000e6, "inv-bind", memberA1Pk, root, expiry);
         // ...but the presented transcript names the attacker.
         bytes memory tampered = TranscriptLib.encodeTranscript(
             TranscriptLib.Invoice({recipient: attacker, amount: 5_000e6, nonce: "inv-bind"})
@@ -165,7 +165,7 @@ contract NoteVaultTest is AcceptanceBase {
         _carve(50_000e6);
         bytes32 foreign = keccak256("not-in-batch");
         (bytes memory transcript, bytes memory sig) =
-            _spend(foreign, recipient1, 5_000e6, "inv-foreign", memberA1Pk);
+            _spend(foreign, recipient1, 5_000e6, "inv-foreign", memberA1Pk, root, expiry);
 
         vm.prank(relayer);
         vm.expectRevert();
@@ -180,7 +180,7 @@ contract NoteVaultTest is AcceptanceBase {
     function test_reconcile_nonCarverSignature_reverts() public {
         _carve(50_000e6);
         (bytes memory transcript, bytes memory sig) =
-            _spend(serials[0], recipient1, 5_000e6, "inv-forge", attackerPk); // wrong key
+            _spend(serials[0], recipient1, 5_000e6, "inv-forge", attackerPk, root, expiry); // wrong key
 
         vm.prank(relayer);
         vm.expectRevert();
@@ -195,7 +195,7 @@ contract NoteVaultTest is AcceptanceBase {
     function test_reconcile_amountAboveRemainingLocked_reverts() public {
         _carve(50_000e6);
         (bytes memory transcript, bytes memory sig) =
-            _spend(serials[0], recipient1, 50_000e6 + 1, "inv-over", memberA1Pk);
+            _spend(serials[0], recipient1, 50_000e6 + 1, "inv-over", memberA1Pk, root, expiry);
 
         vm.prank(relayer);
         vm.expectRevert();
@@ -212,7 +212,7 @@ contract NoteVaultTest is AcceptanceBase {
     function test_reconcile_byteIdenticalResubmission_neverConvictsOrPaysTwice() public {
         _carve(50_000e6);
         (bytes memory transcript, bytes memory sig) =
-            _spend(serials[2], recipient1, 10_000e6, "inv-dup", memberA1Pk);
+            _spend(serials[2], recipient1, 10_000e6, "inv-dup", memberA1Pk, root, expiry);
         bytes32[] memory proof = TranscriptLib.computeProof(serials, 2);
         vm.prank(relayer);
         vault.reconcile(root, serials[2], proof, transcript, sig);
@@ -248,15 +248,21 @@ contract NoteVaultTest is AcceptanceBase {
     /// PROTOCOL.md §1: a SECOND carver-signed transcript for the same serial
     /// with a DIFFERENT invoice is a double-spend. It convicts the carver
     /// (event names carver + later victim), seizes the carver's remaining
-    /// locked value (all of it — lockedOf drops to zero), and the victim is
-    /// made whole for the invoice amount without touching the InsuranceFund
+    /// locked value in the batch's tranche (all of it here — lockedOf drops to
+    /// zero), and the victim is made whole WITHOUT touching the InsuranceFund
     /// when seizure covers it.
+    ///
+    /// AMENDED (review §1, 2026-08-13): the compensation is bounded by the
+    /// serial's ORIGINAL first-spend amount (10_000e6 here), NOT the
+    /// carver-chosen conviction invoice (12_000e6). A double-spend victim is
+    /// owed at most what the note was worth — a carver can no longer set the
+    /// payout by inflating the conflicting invoice.
     function test_reconcile_doubleSpend_convictsCarver_seizureCoversVictim() public {
         _carve(50_000e6);
         _reconcile(3, recipient1, 10_000e6, "inv-first"); // legitimate spend; 40k remains locked
 
         (bytes memory transcript2, bytes memory sig2) =
-            _spend(serials[3], recipient2, 12_000e6, "inv-second", memberA1Pk); // same serial, new invoice
+            _spend(serials[3], recipient2, 12_000e6, "inv-second", memberA1Pk, root, expiry); // same serial, new invoice
         uint256 victimIouBefore = iou1155().balanceOf(recipient2, _id(sarrafA));
         uint256 victimUsdtBefore = usdt.balanceOf(recipient2);
         uint256 reservesBefore = fund.totalReserves();
@@ -268,7 +274,7 @@ contract NoteVaultTest is AcceptanceBase {
 
         uint256 victimGain = (iou1155().balanceOf(recipient2, _id(sarrafA)) - victimIouBefore)
             + (usdt.balanceOf(recipient2) - victimUsdtBefore);
-        assertEq(victimGain, 12_000e6, "victim compensated exactly the invoice amount");
+        assertEq(victimGain, 10_000e6, "victim compensated at most the note's first-spend worth (review 1)");
         assertEq(vault.lockedOf(memberA1), 0, "carver's remaining locked value fully seized");
         assertEq(fund.totalReserves(), reservesBefore, "seizure covered it: insurance untouched");
     }
@@ -289,7 +295,7 @@ contract NoteVaultTest is AcceptanceBase {
 
         // Double-spend of serials[0]: 12k invoice, only 5k seizable => 7k claim.
         (bytes memory transcript2, bytes memory sig2) =
-            _spend(serials[0], recipient2, 12_000e6, "inv-b", memberA1Pk);
+            _spend(serials[0], recipient2, 12_000e6, "inv-b", memberA1Pk, root, expiry);
         uint256 victimIouBefore = iou1155().balanceOf(recipient2, _id(sarrafA));
         uint256 victimUsdtBefore = usdt.balanceOf(recipient2);
 
@@ -313,7 +319,7 @@ contract NoteVaultTest is AcceptanceBase {
         _reconcile(1, recipient1, 10_000e6, "inv-x");
 
         (bytes memory transcript2, bytes memory sig2) =
-            _spend(serials[1], recipient2, 12_000e6, "inv-y", attackerPk); // forged
+            _spend(serials[1], recipient2, 12_000e6, "inv-y", attackerPk, root, expiry); // forged
         uint256 reservesBefore = fund.totalReserves();
 
         vm.recordLogs();

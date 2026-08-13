@@ -130,7 +130,7 @@ contract SolvencyHandler is Test {
             nonce: keccak256(abi.encode("inv", b.root, b.spent))
         });
         (uint8 v, bytes32 r, bytes32 s) =
-            vm.sign(b.pk, TranscriptLib.spendDigest(serial, TranscriptLib.invoiceHash(inv)));
+            vm.sign(b.pk, TranscriptLib.spendDigest(serial, TranscriptLib.invoiceHash(inv), b.expiry, b.root));
         vault.reconcile(
             b.root,
             serial,

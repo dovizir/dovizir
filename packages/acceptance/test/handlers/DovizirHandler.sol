@@ -195,7 +195,8 @@ contract DovizirHandler is Test {
         });
         bytes memory transcript = TranscriptLib.encodeTranscript(inv);
         bytes memory sig = _sign(
-            memberPks[batch.memberIdx], TranscriptLib.spendDigest(serial, TranscriptLib.invoiceHash(inv))
+            memberPks[batch.memberIdx],
+            TranscriptLib.spendDigest(serial, TranscriptLib.invoiceHash(inv), batch.expiry, batch.root)
         );
         bytes32[] memory proof = TranscriptLib.computeProof(batch.serials, batch.spentCount);
 
