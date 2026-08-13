@@ -32,3 +32,25 @@
 - Arm B (slowcook + Opus 5 on rewo): toolchain staged at
   /root/slowcook-experiment (slowcook 0.28.7 + stack-solidity built from
   source). BLOCKED on dedicated ANTHROPIC_API_KEY — launches when provided.
+
+## 2026-08-13 — Arm A closed (verified)
+
+- Branch arm-a/m1 @ 1f1aa46, 5 clean commits. Referee: Foundry 78/78,
+  notes 95/95 — BOTH re-run and confirmed independently by the orchestrator.
+  Arm reports first-run green after implementation. Own suites: 61 Foundry
+  (4 solvency invariants) + 61 vitest; own-tests-only coverage 96.5% lines.
+  Gas baselines committed (reconcile 285k, conviction 415k, migrate 666k).
+- Cost (build-agent tokens): 277,392. Orchestration overhead logged
+  separately at judging.
+- Design notes for judges: vault escrow-custody (no mint path used),
+  O(1) cross-batch seizure via per-carver epochs, checkpointed exact TWAB,
+  ownerless post-init wiring, low-s guard on 3009 sigs.
+- §5 CANDIDATE (arm-raised): adjudication comment "seizure excess → fund
+  50/50" conflicts with frozen test asserting totalReserves() unchanged on
+  covered seizure. Arm satisfied the test; excess held as parallel seized-IOU
+  buckets. Judges to rule; candidate referee erratum for round 2.
+- Third-conflicting-transcript behavior (re-conviction can re-draw insurance)
+  flagged by the arm itself for adversarial review.
+
+Arm B: staged on rewo, STILL BLOCKED on ANTHROPIC_API_KEY. Judging deferred
+until arm B closes per PROTOCOL §6.
