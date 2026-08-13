@@ -45,6 +45,19 @@ export function u32be(n: number): Uint8Array {
   return b;
 }
 
+/** uint64 big-endian (8 bytes) — mirrors the Solidity uint64 `expiry` packing
+ * in TranscriptLib.spendDigest (review §5). */
+export function u64be(n: number): Uint8Array {
+  if (!Number.isInteger(n) || n < 0 || n > Number.MAX_SAFE_INTEGER) {
+    throw new Error(`u64be: out of range: ${n}`);
+  }
+  const b = new Uint8Array(8);
+  const dv = new DataView(b.buffer);
+  dv.setUint32(0, Math.floor(n / 0x1_0000_0000), false);
+  dv.setUint32(4, n >>> 0, false);
+  return b;
+}
+
 export function u256be(v: bigint): Uint8Array {
   if (typeof v !== "bigint" || v < 0n || v >= 1n << 256n) {
     throw new Error(`u256be: out of range: ${String(v)}`);

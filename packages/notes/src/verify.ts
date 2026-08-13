@@ -6,7 +6,8 @@
  *   carver is the member cert's subject (BAD_CERT_CHAIN) ->
  *   note freshness, valid iff now < expiry (EXPIRED_NOTE) ->
  *   invoiceHash consistency (MALFORMED — hash does not commit the invoice) ->
- *   carver signature over keccak256(serial ‖ invoiceHash) (BAD_SIGNATURE) ->
+ *   carver signature over keccak256(serial ‖ invoiceHash ‖ expiry ‖ batchRoot)
+ *     (BAD_SIGNATURE; review §5 — expiry + batchRoot are signed) ->
  *   merkle proof of (serial, value) against batchRoot (BAD_PROOF) ->
  *   recipient binding (RECIPIENT_MISMATCH) ->
  *   value == invoice.amount (VALUE_MISMATCH, referee pin #7) ->
@@ -86,7 +87,7 @@ export function verifyTranscript(args: {
       return bad("MALFORMED");
     }
 
-    if (!verifyDigest(t.signature, spendDigest(t.serial, t.invoiceHash), t.carver)) {
+    if (!verifyDigest(t.signature, spendDigest(t.serial, t.invoiceHash, t.expiry, t.batchRoot), t.carver)) {
       return bad("BAD_SIGNATURE");
     }
 

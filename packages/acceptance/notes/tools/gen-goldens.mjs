@@ -23,6 +23,7 @@ const utf8 = (s) => new TextEncoder().encode(s);
 const keccakHex = (b) => toHex(keccak_256(b));
 const pub = (priv) => toHex(secp256k1.getPublicKey(fromHex(priv), true));
 const u32be = (n) => fromHex(n.toString(16).padStart(8, "0"));
+const u64be = (n) => fromHex(BigInt(n).toString(16).padStart(16, "0"));
 const u256be = (v) => fromHex(v.toString(16).padStart(64, "0"));
 const sign = (priv, digest) =>
   `0x${secp256k1.sign(digest, fromHex(priv)).toCompactHex()}`;
@@ -92,7 +93,10 @@ const leaves = denominations.map((v, i) =>
   keccak_256(concatBytes(fromHex(serials[i]), u256be(v))),
 );
 const batchRoot = toHex(pairHash(leaves[0], leaves[1]));
-const sigPreimage = toHex(concatBytes(fromHex(serials[0]), fromHex(invoiceHash)));
+// §5 amendment: the carver signs serial ‖ invoiceHash ‖ u64be(expiry) ‖ batchRoot.
+const sigPreimage = toHex(
+  concatBytes(fromHex(serials[0]), fromHex(invoiceHash), u64be(NOTE_EXPIRY), fromHex(batchRoot)),
+);
 const sigDigest = keccak_256(fromHex(sigPreimage));
 const transcriptSignature = sign(CARVER_PRIV, sigDigest);
 

@@ -4,12 +4,15 @@
  *  - UTF-8 output, hashed/signed over the UTF-8 bytes of this serialization;
  *  - object keys sorted lexicographically, recursively;
  *  - bigints as minimal lowercase 0x-hex strings (0n -> "0x0");
- *  - strings matching ^0x[0-9a-fA-F]+$ are lowercased (byte fields);
- *  - other strings serialize per JSON.stringify with raw UTF-8 (no \u
- *    escaping of non-ASCII);
+ *  - strings serialize verbatim per JSON.stringify with raw UTF-8 (no \u
+ *    escaping of non-ASCII). AMENDED (review §8): the serializer no longer
+ *    case-folds hex-looking strings. Byte fields are the typed `Hex` fields,
+ *    which are already lowercased at their construction sites (normHex); a
+ *    free-text `memo` that merely LOOKS like hex (e.g. "0xABCDEF") is preserved
+ *    verbatim, so distinct-case memos no longer collide to the same commitment;
  *  - undefined-valued keys are omitted (no null placeholders).
  */
-import { HEX_STRING_RE, keccakHex, utf8 } from "./bytes.js";
+import { keccakHex, utf8 } from "./bytes.js";
 import type { Hex } from "./types.js";
 
 export function canonicalize(value: unknown): string {
@@ -19,7 +22,7 @@ export function canonicalize(value: unknown): string {
     return JSON.stringify(`0x${abs}`);
   }
   if (typeof value === "string") {
-    return JSON.stringify(HEX_STRING_RE.test(value) ? value.toLowerCase() : value);
+    return JSON.stringify(value);
   }
   if (value === null || typeof value === "boolean") return JSON.stringify(value);
   if (typeof value === "number") {

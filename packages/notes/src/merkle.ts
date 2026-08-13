@@ -4,6 +4,13 @@
  *  - serial = keccak256(batchSalt ‖ uint32-be(index));
  *  - interior nodes: commutative sorted-pair keccak-256 (OpenZeppelin
  *    MerkleProof compatible);
+ *  - review §8 (leaf/interior domain separation): DELIBERATELY NOT added.
+ *    Tagging leaves vs. interior nodes would break the frozen OZ-MerkleProof
+ *    compatibility pin and desync from the Solidity TranscriptLib (which stays
+ *    OZ-compatible), so it is accepted as-is. It is not third-party-exploitable
+ *    in v0 — a spend needs the carver signature and batchRoot is carver-asserted,
+ *    never a trusted anchor — and would only matter if batchRoot ever became a
+ *    registered anchor.
  *  - single-leaf batch: root == leaf, empty proof;
  *  - odd trailing node promoted unchanged (unpinned; matches the EVM-side
  *    TranscriptLib so tooling can share batches).

@@ -45,8 +45,8 @@ export interface Transcript {
   invoiceHash: Hex; // keccak256(canonical(invoice)) — recipient binding
   invoice: Invoice; // carried in full so reconciliation is self-contained
   carver: Hex; // carver public key
-  signature: Hex; // carver secp256k1 sig over keccak256(serial ‖ invoiceHash)
-  expiry: number; // copied from batch; verifiers reject after this
+  signature: Hex; // carver sig over keccak256(serial ‖ invoiceHash ‖ u64be(expiry) ‖ batchRoot) (§5)
+  expiry: number; // copied from batch; SIGNED (§5); verifiers reject after this
 }
 
 export type CertRole = "sarraf" | "member";

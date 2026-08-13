@@ -26,6 +26,7 @@ import {
   keyFromPriv,
   signDigest,
   toHex,
+  u64be,
 } from "./helpers";
 
 export const T0 = 1_777_000_000; // fixed "now" for all specs (unix seconds)
@@ -140,11 +141,12 @@ export function check(
 }
 
 /** Referee-side re-signing of a (possibly tampered) transcript with a key we
- * hold — used to isolate single verification failures. Pins the signing rule:
- * sig over keccak256(serial-bytes ‖ invoiceHash-bytes), 64-byte compact. */
+ * hold — used to isolate single verification failures. Pins the signing rule
+ * (§5 amendment): sig over
+ * keccak256(serial ‖ invoiceHash ‖ u64be(expiry) ‖ batchRoot), 64-byte compact. */
 export function resign(t: Transcript, privKey: Hex): Hex {
   const digest = keccak_256(
-    concatBytes(fromHex(t.serial), fromHex(t.invoiceHash)),
+    concatBytes(fromHex(t.serial), fromHex(t.invoiceHash), u64be(t.expiry), fromHex(t.batchRoot)),
   );
   return signDigest(privKey, digest);
 }

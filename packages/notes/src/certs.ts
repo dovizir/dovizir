@@ -5,7 +5,9 @@
  *  - expiry boundary: valid iff now < expiry (now == expiry is already expired);
  *  - a signature that does not verify against the cert's OWN `issuer` field
  *    -> BAD_SIGNATURE; broken linkage (issuer is not the presented parent,
- *    wrong role) -> BAD_CERT_CHAIN (referee pin #9).
+ *    wrong role) -> BAD_CERT_CHAIN (referee pin #9);
+ *  - cap chaining (review §7): memberCert.capLimit must be <= sarrafCert.capLimit,
+ *    else BAD_CERT_CHAIN — a sarraf cannot mint a member cap above its own.
  */
 import { isHexBytes, utf8, keccak_256 } from "./bytes.js";
 import { canonicalize } from "./canonicalize.js";
@@ -97,6 +99,9 @@ export function verifyCertChain(args: {
     ) {
       return bad("BAD_CERT_CHAIN");
     }
+    // 4. Cap chaining (review §7): a sarraf cannot grant a member more offline
+    //    cap than the root granted the sarraf itself.
+    if (memberCert.capLimit > sarrafCert.capLimit) return bad("BAD_CERT_CHAIN");
     return { valid: true };
   } catch {
     return bad("MALFORMED");

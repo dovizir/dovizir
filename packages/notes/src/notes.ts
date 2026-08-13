@@ -1,7 +1,7 @@
 /**
  * Note-side flows: carveBatch, createInvoice, hashInvoice, spendNote.
  */
-import { concatBytes, fromHex, isHexBytes, keccak_256, normHex, randomHex, toHex, u32be } from "./bytes.js";
+import { concatBytes, fromHex, isHexBytes, keccak_256, normHex, randomHex, toHex, u32be, u64be } from "./bytes.js";
 import { canonicalize, hashCanonical } from "./canonicalize.js";
 import { signDigest } from "./crypto.js";
 import { buildMerkle, leafOf } from "./merkle.js";
@@ -75,9 +75,22 @@ export function hashInvoice(invoice: Invoice): Hex {
   return hashCanonical(invoice);
 }
 
-/** The signed spend digest: keccak256(serial-bytes ‖ invoiceHash-bytes). */
-export function spendDigest(serial: Hex, invoiceHash: Hex): Uint8Array {
-  return keccak_256(concatBytes(fromHex(serial), fromHex(invoiceHash)));
+/**
+ * The signed spend digest (AMENDED — review §5):
+ *   keccak256(serial ‖ invoiceHash ‖ u64be(expiry) ‖ batchRoot).
+ * `expiry` and `batchRoot` are now signed so neither the note's freshness nor
+ * the batch it belongs to can be swapped after the carver signs (the proof
+ * stays unsigned — it is verified against the now-signed batchRoot).
+ */
+export function spendDigest(
+  serial: Hex,
+  invoiceHash: Hex,
+  expiry: number,
+  batchRoot: Hex,
+): Uint8Array {
+  return keccak_256(
+    concatBytes(fromHex(serial), fromHex(invoiceHash), u64be(expiry), fromHex(batchRoot)),
+  );
 }
 
 export function spendNote(args: {
@@ -94,11 +107,15 @@ export function spendNote(args: {
   }
   const invoiceHash = hashInvoice(invoice);
   const serial = normHex(note.serial);
-  const signature = signDigest(carver.privateKey, spendDigest(serial, invoiceHash));
+  const batchRoot = normHex(batch.batchRoot);
+  const signature = signDigest(
+    carver.privateKey,
+    spendDigest(serial, invoiceHash, batch.expiry, batchRoot),
+  );
   return {
     serial,
     value: note.value,
-    batchRoot: normHex(batch.batchRoot),
+    batchRoot,
     proof: note.proof.map((p) => normHex(p)),
     invoiceHash,
     invoice: structuredClone(invoice),

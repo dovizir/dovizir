@@ -40,9 +40,12 @@ describe("canonicalize edges", () => {
     expect(canonicalize({ a: [{ z: 1, y: 2 }, 3n] })).toBe('{"a":[{"y":2,"z":1},"0x3"]}');
   });
 
-  it("distinguishes hex-looking strings from prose", () => {
+  it("serializes strings verbatim, without case-folding hex-looking values (§8)", () => {
+    // AMENDED (review §8): the serializer no longer lowercases hex-looking
+    // strings; byte fields are lowercased at their typed construction sites, so
+    // hex-looking free text (e.g. a memo) is preserved verbatim.
     expect(canonicalize({ s: "0xZZ" })).toBe('{"s":"0xZZ"}'); // not hex: untouched
-    expect(canonicalize({ s: "0xAB" })).toBe('{"s":"0xab"}');
+    expect(canonicalize({ s: "0xAB" })).toBe('{"s":"0xAB"}'); // preserved verbatim
   });
 
   it("escapes JSON control characters but not UTF-8", () => {
