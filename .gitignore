@@ -18,3 +18,4 @@ contracts/lib/
 # artifacts (other toolchains)
 artifacts/
 typechain-types/
+.claude/

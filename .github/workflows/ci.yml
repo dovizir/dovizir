@@ -14,19 +14,20 @@ jobs:
         with:
           node-version: 20
           cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile || true
-      - run: pnpm -r -w lint || true
-      - run: pnpm -r -w typecheck || true
-      - run: pnpm -r -w test || true
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r lint
+      - run: pnpm -r typecheck
+      - run: pnpm -r test
 
   foundry:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with: { submodules: recursive }
       - name: Install Foundry
-        run: curl -L https://foundry.paradigm.xyz | bash && ~/.foundry/bin/foundryup
+        uses: foundry-rs/foundry-toolchain@v1
       - name: Build & Test
-        working-directory: contracts
+        working-directory: packages/contracts
         run: |
-          ~/.foundry/bin/forge build
-          ~/.foundry/bin/forge test -vv
+          forge build
+          forge test -vv
