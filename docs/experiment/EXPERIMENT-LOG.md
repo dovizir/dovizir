@@ -54,3 +54,20 @@
 
 Arm B: staged on rewo, STILL BLOCKED on ANTHROPIC_API_KEY. Judging deferred
 until arm B closes per PROTOCOL §6.
+
+## 2026-08-13 — Arm B: harness-blocked at brew; round 1 paused for adjudication
+
+Arm B pipeline: refine ✓ (2 stories, PM Q&A), testgen ✓ (manifests; PR-step
++ vitest-only-for-solidity issues), manifest ✓ (with operator rewrite), brew
+✗ — driver (claude-opus-5) never reached a first edit on either story:
+fresh-context iterations re-pay full orientation each turn and end with
+empty final text. Slowcook fixes produced en route (setUp-collapse expansion
+2f742c9, read-only stall cap 26cbce8, + 13-finding handover doc). Operator
+interventions: 8. Arm B spend: ~$0.08 refine (subscription) + $0 brew
+(never edited).
+
+INTERIM (not final) reading, n=1: the harness's assumptions (webapp-shaped
+prompts, per-turn edit expectation, TS-first tooling) currently bound arm B
+more tightly than the model's capability does. Formal judging per PROTOCOL
+§4 requires arm B to close; options recorded in session log. Arm A's
+referee-green implementation remains unmerged pending adjudication.
