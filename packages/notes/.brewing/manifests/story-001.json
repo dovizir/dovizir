@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "slowcook_version": "0.28.7",
+  "recorded_at": "2026-08-13T11:32:05.338Z",
+  "story_id": "001",
+  "tests": [
+    {
+      "id": "tests/integration/story-001.test.ts > Story 001 — Arm B @dovizir/notes conformance to the pinned contract > Given the Arm B entrypoint, When its exported names are compared to the pinned .d.ts export list, Then the two sets are equal",
+      "file": "tests/integration/story-001.test.ts"
+    },
+    {
+      "id": "tests/integration/story-001.test.ts > Story 001 — Arm B @dovizir/notes conformance to the pinned contract > Given the Arm B package.json, When its runtime dependencies are enumerated, Then every entry is @noble/curves or @noble/hashes",
+      "file": "tests/integration/story-001.test.ts"
+    },
+    {
+      "id": "tests/integration/story-001.test.ts > Story 001 — Arm B @dovizir/notes conformance to the pinned contract > Given a pinned signature that requires randomness or a timestamp, When src/ is inspected, Then no module consults an ambient clock, global RNG, filesystem, or network",
+      "file": "tests/integration/story-001.test.ts"
+    },
+    {
+      "id": "tests/integration/story-001.test.ts > Story 001 — Arm B @dovizir/notes conformance to the pinned contract > Given the package under strict TypeScript, When src/ is scanned, Then strict is enabled and no type-suppression comment is present",
+      "file": "tests/integration/story-001.test.ts"
+    },
+    {
+      "id": "tests/integration/story-001.test.ts > Story 001 — Arm B @dovizir/notes conformance to the pinned contract > Given the shared acceptance suite, When it is scanned for test markers, Then no .skip / .only / .todo / .failing marker is present",
+      "file": "tests/integration/story-001.test.ts"
+    },
+    {
+      "id": "tests/integration/story-001.test.ts > Story 001 — Arm B @dovizir/notes conformance to the pinned contract > Given the Arm B package's own unit tests, When their contents are inspected, Then none reach into packages/acceptance",
+      "file": "tests/integration/story-001.test.ts"
+    },
+    {
+      "id": "tests/schema/story-001-column-presence.test.ts > story-001 column presence (code → schema) > every literal .from(t).select(...) column reference exists in supabase/migrations/",
+      "file": "tests/schema/story-001-column-presence.test.ts"
+    }
+  ],
+  "suites": [
+    {
+      "suite": "backend",
+      "command": "npx vitest list",
+      "test_count": 7
+    }
+  ]
+}
