@@ -11,6 +11,9 @@ remappings = [
 evm_version = "paris"
 optimizer = true
 optimizer_runs = 200
+# Deploy tooling (script/Deploy.s.sol) writes the address map + NEXT_PUBLIC_*
+# block to deployments/. Scoped write access; does not affect protocol code.
+fs_permissions = [{ access = "read-write", path = "./deployments" }]
 
 [profile.default.fuzz]
 runs = 512
