@@ -1,0 +1,11 @@
+{
+  "inputs": {
+    "recipient": "0x032c0b7cf95324a07d05398b240174dc0c2be444d96b159aa6c7f7b1e668680991",
+    "amount": "5000000",
+    "nonce": "0x0badc0de0badc0de0badc0de0badc0de0badc0de0badc0de0badc0de0badc0de",
+    "memo": "tea ☕",
+    "createdAt": 1776999700
+  },
+  "canonical": "{\"amount\":\"0x4c4b40\",\"createdAt\":1776999700,\"memo\":\"tea ☕\",\"nonce\":\"0x0badc0de0badc0de0badc0de0badc0de0badc0de0badc0de0badc0de0badc0de\",\"recipient\":\"0x032c0b7cf95324a07d05398b240174dc0c2be444d96b159aa6c7f7b1e668680991\"}",
+  "hash": "0x8f76933d664a854a2ff71935042e824a39cd7a8de94a54fd1089f02895b6d512"
+}
