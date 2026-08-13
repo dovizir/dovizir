@@ -1,0 +1,10 @@
+$schema: ./index.schema.json
+schema_version: 1
+stories:
+  "001":
+    title: "Arm B: pure-TypeScript @dovizir/notes conforming to the pinned notes-api.d.ts contract"
+    status: active
+    source_issue: "#11"
+    summary: Given the Arm B package is built and `DOVIZIR_NOTES_IMPL` resolves to it, When the shared acceptance suite runs, Then vitest reports 95 passed / 0 failed / 0 sk
+    supersedes: []
+    superseded_by: null

@@ -1,0 +1,24 @@
+{
+  "$schema": "./stack.schema.json",
+  "$doc": "Project-level stack configuration consumed by slowcook (@slowcook-ai/stack-ts). Tells the harness how to discover and run tests. Only include suites that are actually runnable — slowcook refuses to record an incomplete manifest.",
+  "language": "typescript",
+  "package_manager": "npm",
+  "test": {
+    "backend": {
+      "runner": "vitest",
+      "run_command": "npx vitest run",
+      "discover_command": "npx vitest list",
+      "reporter_format": "vitest-list-lines"
+    },
+    "acceptance": {
+      "runner": "playwright",
+      "run_command": "ACCEPTANCE=1 npx playwright test",
+      "discover_command": "npx playwright test --list",
+      "reporter_format": "playwright-list"
+    }
+  },
+  "lint": {
+    "lint_command": "npm run lint",
+    "typecheck_command": "npm run typecheck"
+  }
+}
