@@ -29,7 +29,8 @@ interface IIouToken {
 
     function authorizationState(address from, bytes32 nonce) external view returns (bool used);
 
-    /// Mint/burn are pool-only.
+    /// Mint/burn restricted to authorized protocol contracts (pool AND vault —
+    /// reconcile mints recipient IOU; adjudicated 2026-08-13). Never user-callable.
     function mint(address to, uint256 trancheId, uint256 amount) external;
     function burn(address from, uint256 trancheId, uint256 amount) external;
 
@@ -55,7 +56,7 @@ interface IReservePool {
     /// Sarraf deposits USDT (mock ERC-20) into their tranche backing and may
     /// mint IOUs of their own tranche 1:1 against it. NO unfunded issuance in
     /// M1 (act-3 headroom is out of scope; CreditOracle is written but not enforced).
-    function deposit(uint256 usdtAmount) external; // caller = certified Sarraf
+    function deposit(uint256 usdtAmount) external; // OPEN to any address (certification REQUIRES deposit TWAB — gating here would deadlock bootstrap; adjudicated 2026-08-13)
     function issue(address to, uint256 amount) external; // caller = certified Sarraf; to = their member
     /// Redeem burns holder's IOUs of tranche `sarraf`; charges redemption fee
     /// (fee goes to InsuranceFund); releases USDT to holder.
@@ -128,6 +129,10 @@ interface INoteVault {
     function refundExpired(bytes32 batchRoot) external;
 
     function isSpent(bytes32 serial) external view returns (bool);
+    /// M1: uniform base cap, arm-chosen value but >= 50_000e6 in the
+    /// acceptance environment. Double-spend seizure excess (locked value
+    /// beyond victim compensation) is credited to the InsuranceFund under the
+    /// standard 50/50 split (adjudicated 2026-08-13; unasserted in round 1).
     function capOf(address member) external view returns (uint256);
     function lockedOf(address member) external view returns (uint256);
 
