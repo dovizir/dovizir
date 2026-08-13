@@ -5,4 +5,5 @@ export * from "./use-friendly-tx";
 export * from "./use-iou-balance";
 export * from "./use-redeem";
 export * from "./use-sarraf";
+export * from "./use-sarraf-book";
 export * from "./use-send";
