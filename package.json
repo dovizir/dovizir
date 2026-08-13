@@ -4,7 +4,7 @@
     "workspaces": ["apps/*", "services/*", "packages/*"],
     "engines": { "node": ">=20" },
     "scripts": {
-      "lint": "eslint . --ext .ts,.tsx || true",
+      "lint": "eslint . --ext .ts,.tsx",
       "typecheck": "tsc -p tsconfig.base.json --noEmit",
       "test": "vitest run",
       "dev:web": "pnpm --filter @dovizir/web dev",
