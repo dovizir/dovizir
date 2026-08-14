@@ -34,26 +34,52 @@ The natural money-changer terms:
 Rate = local-currency units per 1 USDT-IOU. All rates are per (Sarraf, fiat
 currency) pair.
 
-## 2. Exchange rates — off-chain signed quotes (DECIDED)
+## 2. Exchange rates — manual day rates, signed (DECIDED, revised 2026-08-14)
 
-Rates change per-second like a real sarrafi board, so they are **off-chain**,
-posted by the Sarraf as EIP-712-signed quotes, served live by the indexer.
-An order references a quote hash so the agreed rate is provable in a dispute.
+**In the PoC, Sarrafs set rates MANUALLY — typically a day rate**, changed by
+hand when they choose (not sub-second). This simplifies the layer: no short-TTL
+expiry clock. A Sarraf's rate is a signed record valid **until superseded**.
 
 ```
-RateQuote (EIP-712, signed by the Sarraf):
-  sarraf:     address
-  fiat:       string   // "IRR" | "TRY" | "USD" | ...
-  buyRate:    string   // fiat per 1 USDT the Sarraf PAYS to buy USDT from you
-  sellRate:   string   // fiat per 1 USDT the Sarraf CHARGES to sell USDT to you
+RateRecord (EIP-712, signed by the Sarraf):
+  sarraf:       address
+  fiat:         string   // "IRR" | "TRY" | ...
+  buyRate:      string   // fiat per 1 USDT the Sarraf PAYS to buy USDT from you
+  sellRate:     string   // fiat per 1 USDT the Sarraf CHARGES to sell USDT to you
   minUsdt / maxUsdt: string
-  validUntil: uint64   // short TTL (e.g. 60–300s) — quotes expire fast
-  nonce:      uint64
+  effectiveFrom: uint64  // valid until the Sarraf posts a newer record
+  nonce:        uint64
 ```
-- Indexer stores/serves the latest valid signed quote per (Sarraf, fiat).
-- Rates board (consumer + desk) reads them; stale/expired quotes are hidden.
-- No gas; a Sarraf can re-quote every few seconds. The signature makes a quote
-  non-repudiable evidence in a dispute.
+- Off-chain (default): indexer stores/serves the current record per (Sarraf,
+  fiat). Rates board (consumer + desk) reads it. Sarraf updates it from the desk.
+- An **order snapshots the rate record at creation** (by hash) so the agreed
+  rate is provable in a dispute — the one property that matters is preserved.
+- Because updates are daily, **on-chain rate posting is also viable** (once/day
+  gas is trivial, fully auditable) — kept as an option; off-chain is default
+  only because it spares the Sarraf a wallet tx just to change a number.
+
+### 2a. Pricing SDK / API (POST-PoC, designed-for)
+
+The rate record above is agnostic to *who produced the numbers* — a human
+typing them or an algorithm computing them yield the identical signed record.
+So a professional-pricing layer slots in without changing anything downstream:
+
+```
+reference mid  ──►  Sarraf pricing policy  ──►  buy/sell  ──►  signed RateRecord
+(PriceSource)      (spread, skew, caps,          (computed)     (same format as §2)
+                    manual override)
+```
+- **`PriceSource`**: pluggable reference mid per corridor — USDT/IRR from a
+  market feed, or composed (USDT/USD ≈ 1 × IRR/USD FX feed).
+- **Pricing policy**: `spread` (width around mid), `skew` (shift mid to manage
+  inventory — long USDT ⇒ skew to favor selling), floors/caps, manual override.
+- **SDK/agent**: computes `buy/sell = f(reference, spread, skew)` and auto-posts
+  the signed record at the Sarraf's chosen cadence.
+- Product gradient: a corner-shop Sarraf types one number a day; a professional
+  desk wires a feed + spread model for near-realtime prices — same rail, same
+  format. The pricing SDK + reference feeds are a defensibility angle (keep
+  sophisticated Sarrafs on Dovizir's tooling). Out of PoC scope; the format is
+  built so it needs no change when this lands.
 
 ## 3. Direct ramp with a Sarraf (Part A — NO new contract)
 
