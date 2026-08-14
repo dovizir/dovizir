@@ -1,12 +1,34 @@
-// @slowcook-stub story-001
-//
-// Minimal placeholder entrypoint for the Arm B `@dovizir/notes` package, so the
-// tier-1 conformance tests can resolve and import it before the real
-// implementation lands. Brewing's ratchet replaces the body.
-//
-// The pinned contract lives in `packages/acceptance/notes/notes-api.d.ts` and is
-// read-only for this story: this module must export exactly the names that file
-// declares — no additions, no omissions, no renames. An empty export list is the
-// honest starting state; the conformance test reports the exact missing names.
+/**
+ * Arm B `@dovizir/notes` entrypoint.
+ *
+ * The exported surface is exactly the pinned contract in
+ * `packages/acceptance/notes/notes-api.d.ts` — ten value exports and eleven
+ * type-only exports, no additions, no omissions, no renames. The pinned file is
+ * read-only for this story; contract changes escalate to #9.
+ */
 
-export {};
+export { canonicalize } from "./canonical";
+export {
+  carveBatch,
+  createInvoice,
+  generateKeyPair,
+  hashInvoice,
+  issueCert,
+  ReconcileTracker,
+  spendNote,
+  verifyCertChain,
+  verifyTranscript,
+} from "./notes";
+export type {
+  Cert,
+  CertRole,
+  Conviction,
+  Hex,
+  Invoice,
+  KeyPair,
+  Note,
+  NoteBatch,
+  ReconcileOutcome,
+  Transcript,
+  VerifyResult,
+} from "./types";
