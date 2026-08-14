@@ -34,29 +34,60 @@ The natural money-changer terms:
 Rate = local-currency units per 1 USDT-IOU. All rates are per (Sarraf, fiat
 currency) pair.
 
-## 2. Exchange rates — manual day rates, signed (DECIDED, revised 2026-08-14)
+## 2. Exchange rates — INDICATIVE day rates + firm RFQ (DECIDED, revised 2026-08-14)
 
-**In the PoC, Sarrafs set rates MANUALLY — typically a day rate**, changed by
-hand when they choose (not sub-second). This simplifies the layer: no short-TTL
-expiry clock. A Sarraf's rate is a signed record valid **until superseded**.
+Two tiers, matching real dealer/OTC practice:
+
+**Tier 1 — indicative board rate (guidance only).** Sarrafs set rates MANUALLY,
+typically once a day. The board rate is displayed everywhere clearly labeled
+**"indicative / daily guidance — request a quote for the real price"**. It is
+NOT executable and NOT a firm offer. A signed record, valid until the Sarraf
+posts a newer one:
 
 ```
-RateRecord (EIP-712, signed by the Sarraf):
+IndicativeRate (EIP-712, signed by the Sarraf):
   sarraf:       address
   fiat:         string   // "IRR" | "TRY" | ...
   buyRate:      string   // fiat per 1 USDT the Sarraf PAYS to buy USDT from you
   sellRate:     string   // fiat per 1 USDT the Sarraf CHARGES to sell USDT to you
   minUsdt / maxUsdt: string
-  effectiveFrom: uint64  // valid until the Sarraf posts a newer record
+  effectiveFrom: uint64  // valid until superseded
   nonce:        uint64
 ```
-- Off-chain (default): indexer stores/serves the current record per (Sarraf,
-  fiat). Rates board (consumer + desk) reads it. Sarraf updates it from the desk.
-- An **order snapshots the rate record at creation** (by hash) so the agreed
-  rate is provable in a dispute — the one property that matters is preserved.
-- Because updates are daily, **on-chain rate posting is also viable** (once/day
-  gas is trivial, fully auditable) — kept as an option; off-chain is default
-  only because it spares the Sarraf a wallet tx just to change a number.
+- Off-chain (default): indexer serves the current record per (Sarraf, fiat);
+  Sarraf updates from the desk. On-chain posting is also viable at daily cadence
+  (auditable, trivial gas) — off-chain default only to spare a wallet tx.
+
+**Tier 2 — firm price via RFQ (the executable price).** The real price is given
+**after a customer RFQ**. The customer requests a quote for a specific trade;
+the Sarraf returns a firm, short-lived signed quote for THAT trade; the customer
+accepts within the TTL and the ramp executes against it.
+
+```
+RFQ (customer → Sarraf):        direction (on/off-ramp), fiat, usdtAmount OR fiatAmount
+FirmQuote (EIP-712, Sarraf →):  sarraf, customer, direction, usdtAmount, fiatAmount,
+                                 validUntil (short, e.g. 60–300s), quoteId, nonce
+```
+- **The firm price is a function of order SIZE.** This is the core reason RFQ
+  exists: the indicative board rate is for standard/small size; a large order
+  moves the Sarraf's inventory and is priced differently (wider spread), split,
+  or declined. The RFQ carries the amount precisely so the Sarraf can price to
+  size. The indicative board may show size-tiered guidance (e.g. a rate band for
+  `<min`, `min–max`, and "RFQ for larger"), and `minUsdt/maxUsdt` on the
+  IndicativeRate bound where the board number even applies.
+- The **FirmQuote (not the indicative board rate) is what the order snapshots**
+  for dispute evidence — it's the size-specific price both sides actually agreed.
+- In the PoC the Sarraf answers RFQs manually from the desk (the indicative
+  rate pre-fills their response; they adjust for size/timing and send). The
+  post-PoC pricing SDK (§2a) can auto-answer RFQs from the reference+spread model,
+  including a size/impact curve.
+- This is why a manual day rate is safe to show: it's guidance; nobody trades on
+  a stale number — the firm price is struck per trade, for that size, at request
+  time.
+
+Note: P2P orders (§4) are inherently firm — the maker posts a take-it-or-leave-it
+price (using the indicative board as their own guidance), so P2P needs no RFQ
+round; the posted order price is the firm offer the taker accepts.
 
 ### 2a. Pricing SDK / API (POST-PoC, designed-for)
 
