@@ -1,0 +1,10 @@
+$schema: ./index.schema.json
+schema_version: 1
+stories:
+  "001":
+    title: "Arm B: implement the six frozen IDovizir contracts plus ArmBDeployer so the shared forge acceptance suite passes unchanged"
+    status: active
+    source_issue: "#10"
+    summary: Given branch `arm-b/m1` with Arm B's six contracts and `ArmBDeployer` in place, When `DOVIZIR_DEPLOYER=<Arm B selector> forge test` is run from `packages/accept
+    supersedes: []
+    superseded_by: null

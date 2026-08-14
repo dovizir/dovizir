@@ -1,0 +1,86 @@
+$schema: ./spec.schema.json
+story_id: "001"
+title: "Arm B: implement the six frozen IDovizir contracts plus ArmBDeployer so the shared forge acceptance suite passes unchanged"
+status: active
+created_at: 2026-08-13T10:59:22.713Z
+supersedes: []
+superseded_by: null
+estimate: large
+source_issue: "#10"
+refined_by: slowcook-refine@0.28.7
+actors:
+  - name: Arm B implementer
+    notes: Writes Solidity under this arm's own `src/`, plus the single allowed file `packages/acceptance/src/arm/ArmBDeployer.sol`.
+  - name: Shared acceptance suite
+    notes: Arm-agnostic forge suite under `packages/acceptance/`. Frozen. Instantiates an arm's deployer via the `DOVIZIR_DEPLOYER` env-var indirection documented in `packages/acceptance/README.md`.
+preconditions:
+  - Working clone is on branch `arm-b/m1`.
+  - "`ARM-B-BRIEF.md` exists at repo root and is the governing brief for this arm."
+  - "`packages/acceptance/src/interfaces/IDovizir.sol` exists and declares the six frozen interfaces, including the dated adjudication comments that carry binding semantics."
+  - "`packages/acceptance/src/TranscriptLib.sol` and `packages/acceptance/src/AuthLib.sol` exist and are the frozen EVM encodings."
+  - "`packages/acceptance/README.md` documents the deployer plug-in pattern and the `DOVIZIR_DEPLOYER` selection mechanism."
+  - Foundry is installed; `forge test` runs locally. No live or testnet deployment is available or required in M1.
+  - This spec deliberately REFERENCES `IDovizir.sol` rather than transcribing its six interface names and signatures, so the frozen file stays the single source of truth. The implementer reads contract-level semantics (function signatures, revert conditions, events, dated adjudication comments) directly from that file at implementation time; any transcription here would be a second, driftable copy.
+invariants:
+  - Every interface declared in `packages/acceptance/src/interfaces/IDovizir.sol` (six total) has exactly one concrete implementation contract in Arm B's `src/`, declared with `is <IInterfaceName>`, and the project compiles under `forge build` with zero errors.
+  - Behavioral semantics are taken from the interface text in `IDovizir.sol`, INCLUDING its dated adjudication comments. Where an adjudication comment and the surrounding NatSpec conflict, the later-dated adjudication comment wins.
+  - "Where a suite assertion appears to contradict the interface text, the interface text is implemented as written; the discrepancy is filed as a comment on #9. The suite is never edited to accommodate the implementation."
+  - "No file under `packages/acceptance/` is modified except: (a) additive remapping lines appended to `packages/acceptance/foundry.toml`, and (b) the newly added `packages/acceptance/src/arm/ArmBDeployer.sol`. Existing lines in `foundry.toml` are not rewritten or reordered."
+  - Arm B source declares no `library` or `contract` named `TranscriptLib` or `AuthLib`, and defines no local re-encoding of transcript or auth bytes. All transcript encoding calls resolve to `packages/acceptance/src/TranscriptLib.sol`; all auth checks resolve to `packages/acceptance/src/AuthLib.sol`.
+  - "`ArmBDeployer` implements the deployer plug-in surface documented in `packages/acceptance/README.md`, and is resolved by the suite when `DOVIZIR_DEPLOYER` names it."
+  - "`ArmBDeployer`'s deploy entrypoint returns a non-zero address for each of the six interfaces, and each returned address has non-empty `code`."
+  - "`ArmBDeployer` performs deployment only. It declares no business logic, no storage that the six contracts read, and no state-mutating external functions beyond its deploy entrypoint."
+  - Every auth-gated external function reverts on an unauthorized caller with the error declared by the corresponding interface, and mutates no storage on that path.
+  - "`DOVIZIR_DEPLOYER=<Arm B selector> forge test` inside `packages/acceptance/` exits 0 with zero failing tests and zero skipped tests."
+acceptance_scenarios:
+  - Given branch `arm-b/m1` with Arm B's six contracts and `ArmBDeployer` in place, When `DOVIZIR_DEPLOYER=<Arm B selector> forge test` is run from `packages/acceptance/`, Then the process exits 0 and the summary reports zero failed and zero skipped tests.
+  - Given the frozen suite as it exists on `arm-b/m1` before implementation, When `git diff --stat -- packages/acceptance/` is inspected after implementation, Then the only entries are added remapping lines in `foundry.toml` and the new file `src/arm/ArmBDeployer.sol` — no other file under `packages/acceptance/` appears.
+  - Given `DOVIZIR_DEPLOYER` selects Arm B, When the suite's `setUp` runs, Then `ArmBDeployer` returns six non-zero addresses, and for each returned address the deployed code satisfies the corresponding `IDovizir` interface's function selectors.
+  - Given an unauthorized caller (an address not permitted by the auth rules the interface text states), When that caller invokes an auth-gated external function on any of the six contracts, Then the call reverts with the interface-declared error and no storage slot on the target contract changes.
+  - Given identical input arguments, When Arm B encodes a transcript, Then the resulting bytes are byte-identical to `TranscriptLib`'s output for those arguments — proving the encoding was called, not reimplemented.
+  - "Given a suite assertion that appears to contradict the interface text in `IDovizir.sol`, When the implementer hits it, Then the interface text is implemented as written, a comment describing the suspected suite bug is filed on #9, and the suite files remain byte-identical."
+  - Given `DOVIZIR_DEPLOYER` is set to Arm B, When `forge build` runs at the repo root, Then it succeeds with zero compilation errors and no warnings introduced by Arm B sources that were absent before.
+non_goals:
+  - "Implementing Arm A. Arm A is a sibling story under #9 and is out of scope here."
+  - "Editing, extending, refactoring, or 'fixing' the frozen acceptance suite, the `IDovizir` interfaces, `TranscriptLib`, or `AuthLib`. Suspected bugs are filed on #9, not patched."
+  - Reimplementing transcript or auth encodings inside Arm B for any reason — including performance, readability, or convenience.
+  - Live, testnet, or mainnet deployment. M1 green is local `forge test` only.
+  - Gas optimization or benchmarking passes. Correctness against the frozen suite is the only bar in M1.
+  - "The arm-selection, comparison, or reporting harness itself — that lives with #9."
+  - Upgradeability, proxies, or admin migration paths, unless the interface text explicitly declares them.
+  - Adding new test tiers, fuzz campaigns, or invariant suites beyond what the frozen acceptance suite already contains.
+related_specs:
+  - id: "#9"
+    relationship: related
+    note: Parent multifurcation issue. Owns the arm-comparison harness and is the filing surface for suspected acceptance-suite bugs. Arm A is its sibling story.
+proposals:
+  auth:
+    status: pending
+    proposed_by: refine-agent
+    rationale: On-chain access control, not RLS. The rules are already fixed by the frozen interfaces and AuthLib; this block records that Arm B defers to them rather than inventing its own.
+    requirements:
+      - Authorization checks route through `packages/acceptance/src/AuthLib.sol`. Arm B declares no bespoke auth modifier, role registry, or owner check that duplicates AuthLib's semantics.
+      - Each auth-gated external function reverts with the error the interface declares, on the unauthorized path, before any storage write.
+      - "`ArmBDeployer` itself is unauthenticated — it is a test-time deploy helper, holds no privileged state, and grants itself no role on the deployed contracts beyond what the interface text requires."
+  perf_budget:
+    status: deferred
+    proposed_by: refine-agent
+    rationale: "No gas or latency budget in M1; correctness against the frozen suite is the only bar. Gas comparison between arms, if wanted, belongs to #9's comparison harness, not to either arm's implementation."
+  observability:
+    status: deferred
+    proposed_by: refine-agent
+    rationale: The event surface is fully fixed by the frozen `IDovizir` interfaces — Arm B emits exactly those events and adds none. There is no off-chain logging or metrics surface in an M1 local-forge story.
+  infra:
+    status: pending
+    proposed_by: refine-agent
+    rationale: "`ArmBDeployer` plus the `DOVIZIR_DEPLOYER` plug-in point is new build/runtime wiring, so it gets an explicit reviewable block rather than being buried in prose."
+    runtime: Foundry / forge local EVM
+    deploy_target: Local `forge test` only. PM confirmed no live or testnet deployment in M1.
+    notes: |
+      Wiring consists of exactly two touches inside packages/acceptance/:
+        1. Additive remapping entries in packages/acceptance/foundry.toml so the suite can resolve Arm B's src/ path.
+        2. packages/acceptance/src/arm/ArmBDeployer.sol implementing the deployer plug-in surface from packages/acceptance/README.md.
+      Selection at test time is via the DOVIZIR_DEPLOYER env var, per the acceptance README. No CI job, container, or external service is introduced by this story.
+cost:
+  total_usd: 0
+  last_updated: 2026-08-13T10:59:22.713Z
