@@ -8,6 +8,11 @@ export const escrowAbi = [
         "name": "iou_",
         "type": "address",
         "internalType": "contract IEscrowIou"
+      },
+      {
+        "name": "backstopArbiter_",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "stateMutability": "nonpayable"
@@ -15,6 +20,19 @@ export const escrowAbi = [
   {
     "type": "function",
     "name": "CONFIRM_WINDOW",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "DISPUTE_TIMEOUT",
     "inputs": [],
     "outputs": [
       {
@@ -61,6 +79,19 @@ export const escrowAbi = [
         "internalType": "uint256"
       }
     ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "backstopArbiter",
+    "inputs": [],
     "outputs": [
       {
         "name": "",
@@ -179,6 +210,25 @@ export const escrowAbi = [
   },
   {
     "type": "function",
+    "name": "disputeDeadline",
+    "inputs": [
+      {
+        "name": "orderId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "fillOrder",
     "inputs": [
       {
@@ -257,9 +307,19 @@ export const escrowAbi = [
             "internalType": "uint64"
           },
           {
+            "name": "disputedAt",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
             "name": "status",
             "type": "uint8",
             "internalType": "enum Escrow.Status"
+          },
+          {
+            "name": "paying",
+            "type": "bool",
+            "internalType": "bool"
           },
           {
             "name": "fiat",
@@ -283,6 +343,19 @@ export const escrowAbi = [
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "markPaying",
+    "inputs": [
+      {
+        "name": "orderId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -682,6 +755,25 @@ export const escrowAbi = [
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "PayingMarked",
+    "inputs": [
+      {
+        "name": "orderId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "taker",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
       }
     ],
     "anonymous": false

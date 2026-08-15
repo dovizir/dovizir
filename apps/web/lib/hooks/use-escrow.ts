@@ -27,6 +27,7 @@ export function useEscrow() {
   type EscrowFn =
     | "createOrder"
     | "fillOrder"
+    | "markPaying"
     | "claimFiatPaid"
     | "confirmReceived"
     | "cancel"
@@ -106,6 +107,8 @@ export function useEscrow() {
   }
 
   const fillOrder = (orderId: string) => send("fillOrder", [BigInt(orderId)]);
+  /** Taker commits to sending fiat, freezing the maker's post-deadline cancel. */
+  const markPaying = (orderId: string) => send("markPaying", [BigInt(orderId)]);
   const claimFiatPaid = (orderId: string, receiptHash: Hex) =>
     send("claimFiatPaid", [BigInt(orderId), receiptHash]);
   const confirmReceived = (orderId: string) => send("confirmReceived", [BigInt(orderId)]);
@@ -117,6 +120,7 @@ export function useEscrow() {
   return {
     createOrder,
     fillOrder,
+    markPaying,
     claimFiatPaid,
     confirmReceived,
     cancel,
