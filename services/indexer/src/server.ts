@@ -29,6 +29,8 @@ import { allEvents } from "./db.js";
 import { buildSources, runSyncLoop } from "./sync.js";
 import { memberView, sarrafView, snapshot } from "./store.js";
 import { networkStats, sarrafPnl } from "./derive.js";
+import { initRampSchema } from "./ramp-store.js";
+import { registerRampRoutes } from "./ramp-routes.js";
 
 const addr = z.string().regex(/^0x[0-9a-fA-F]{40}$/, "expected a 20-byte hex address");
 const serialSubmit = z.object({
@@ -39,7 +41,8 @@ const serialSubmit = z.object({
 async function main() {
   const cfg = await loadConfig();
   const db = openDb(cfg.dbPath);
-  const app = Fastify({ logger: false });
+  initRampSchema(db);
+  const app = Fastify({ logger: false, bodyLimit: 12 * 1024 * 1024 });
   await app.register(cors, { origin: true });
 
   const configured = addressesConfigured(cfg);
@@ -98,6 +101,9 @@ async function main() {
     if (!row) return { serial, status: "unknown" as const };
     return row;
   });
+
+  // Fiat-ramp product layer: rates, RFQ, on/off-ramp orders + receipt evidence.
+  registerRampRoutes(app, { db, chainId: cfg.chainId });
 
   app.post("/serials", async (req, reply) => {
     const parsed = serialSubmit.safeParse(req.body);
