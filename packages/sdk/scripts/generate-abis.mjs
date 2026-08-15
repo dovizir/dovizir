@@ -22,6 +22,7 @@ const CONTRACTS = {
   InsuranceFund: "insuranceFundAbi",
   SarrafRegistry: "sarrafRegistryAbi",
   NoteVault: "noteVaultAbi",
+  Escrow: "escrowAbi",
   MockUsdt: "mockUsdtAbi",
 };
 

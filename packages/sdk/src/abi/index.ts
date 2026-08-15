@@ -4,4 +4,5 @@ export { reservePoolAbi } from "./ReservePool";
 export { insuranceFundAbi } from "./InsuranceFund";
 export { sarrafRegistryAbi } from "./SarrafRegistry";
 export { noteVaultAbi } from "./NoteVault";
+export { escrowAbi } from "./Escrow";
 export { mockUsdtAbi } from "./MockUsdt";

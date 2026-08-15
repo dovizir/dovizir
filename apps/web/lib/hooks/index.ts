@@ -1,6 +1,7 @@
 export * from "./use-activity";
 export * from "./use-addresses";
 export * from "./use-deposit";
+export * from "./use-escrow";
 export * from "./use-friendly-tx";
 export * from "./use-iou-balance";
 export * from "./use-issue";

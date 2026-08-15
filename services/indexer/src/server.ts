@@ -31,6 +31,8 @@ import { memberView, sarrafView, snapshot } from "./store.js";
 import { networkStats, sarrafPnl } from "./derive.js";
 import { initRampSchema } from "./ramp-store.js";
 import { registerRampRoutes } from "./ramp-routes.js";
+import { initP2pSchema } from "./p2p-store.js";
+import { registerP2pRoutes } from "./p2p-routes.js";
 
 const addr = z.string().regex(/^0x[0-9a-fA-F]{40}$/, "expected a 20-byte hex address");
 const serialSubmit = z.object({
@@ -42,6 +44,7 @@ async function main() {
   const cfg = await loadConfig();
   const db = openDb(cfg.dbPath);
   initRampSchema(db);
+  initP2pSchema(db);
   const app = Fastify({ logger: false, bodyLimit: 12 * 1024 * 1024 });
   await app.register(cors, { origin: true });
 
@@ -104,6 +107,9 @@ async function main() {
 
   // Fiat-ramp product layer: rates, RFQ, on/off-ramp orders + receipt evidence.
   registerRampRoutes(app, { db, chainId: cfg.chainId });
+
+  // P2P escrow order book (fiat-ramp §4): escrow-event mirror + receipt/chat/bank.
+  registerP2pRoutes(app, { db });
 
   app.post("/serials", async (req, reply) => {
     const parsed = serialSubmit.safeParse(req.body);

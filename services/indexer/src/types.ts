@@ -17,7 +17,8 @@ export type ContractName =
   | "insuranceFund"
   | "sarrafRegistry"
   | "memberRegistry"
-  | "noteVault";
+  | "noteVault"
+  | "escrow";
 
 /** A backing-change checkpoint used by the TWAB integral. */
 export interface Checkpoint {

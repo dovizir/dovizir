@@ -10,6 +10,7 @@ import {MemberRegistry} from "../src/MemberRegistry.sol";
 import {InsuranceFund, IUsdtLike} from "../src/InsuranceFund.sol";
 import {ReservePool, IUsdt} from "../src/ReservePool.sol";
 import {NoteVault} from "../src/NoteVault.sol";
+import {Escrow, IEscrowIou} from "../src/Escrow.sol";
 import {IIouToken} from "dovizir-acceptance/interfaces/IDovizir.sol";
 
 /// @title Deploy — full Dovizir M1 system deploy + init wiring (real broadcast)
@@ -45,15 +46,22 @@ contract Deploy is Script {
         InsuranceFund fund;
         ReservePool pool;
         NoteVault vault;
+        Escrow escrow;
     }
 
     function run() external returns (System memory sys) {
         // Deployer key: prefer PRIVATE_KEY env; otherwise fall back to the
         // --private-key / --sender the caller passed to `forge script`.
         uint256 pk = vm.envOr("PRIVATE_KEY", uint256(0));
+        // The deployer/maintainer address doubles as the escrow's backstop
+        // arbiter (fiat-ramp §4): a fallback dispute resolver that can only act
+        // after DISPUTE_TIMEOUT, so no dispute is ever permanently stranded.
+        address deployer;
         if (pk != 0) {
+            deployer = vm.addr(pk);
             vm.startBroadcast(pk);
         } else {
+            deployer = msg.sender;
             vm.startBroadcast();
         }
 
@@ -83,6 +91,12 @@ contract Deploy is Script {
         sys.memberRegistry.init(address(sys.pool));
         sys.fund.init(address(sys.pool), address(sys.vault));
 
+        // 4. P2P escrow (fiat-ramp Part B). Permissionless: it holds no
+        //    privileged role — makers `setApprovalForAll(escrow)` and lock IOU
+        //    themselves; the arbiter is derived from the tranche at resolve
+        //    time. It only needs the IOU address to custody + release tranches.
+        sys.escrow = new Escrow(IEscrowIou(address(sys.iou)), deployer);
+
         vm.stopBroadcast();
 
         _report(sys);
@@ -99,6 +113,8 @@ contract Deploy is Script {
         console2.log("InsuranceFund    ", address(sys.fund));
         console2.log("ReservePool      ", address(sys.pool));
         console2.log("NoteVault        ", address(sys.vault));
+        console2.log("Escrow           ", address(sys.escrow));
+        console2.log("Escrow.backstop  ", sys.escrow.backstopArbiter());
     }
 
     function _write(System memory sys) internal {
@@ -113,7 +129,8 @@ contract Deploy is Script {
         vm.serializeAddress(obj, "memberRegistry", address(sys.memberRegistry));
         vm.serializeAddress(obj, "insuranceFund", address(sys.fund));
         vm.serializeAddress(obj, "reservePool", address(sys.pool));
-        string memory json = vm.serializeAddress(obj, "noteVault", address(sys.vault));
+        vm.serializeAddress(obj, "noteVault", address(sys.vault));
+        string memory json = vm.serializeAddress(obj, "escrow", address(sys.escrow));
         string memory jsonPath = string.concat("deployments/", chainId, ".json");
         vm.writeJson(json, jsonPath);
         console2.log("wrote", jsonPath);
@@ -128,7 +145,8 @@ contract Deploy is Script {
             "NEXT_PUBLIC_MEMBER_REGISTRY_ADDRESS=", vm.toString(address(sys.memberRegistry)), "\n",
             "NEXT_PUBLIC_INSURANCE_FUND_ADDRESS=", vm.toString(address(sys.fund)), "\n",
             "NEXT_PUBLIC_RESERVE_POOL_ADDRESS=", vm.toString(address(sys.pool)), "\n",
-            "NEXT_PUBLIC_NOTE_VAULT_ADDRESS=", vm.toString(address(sys.vault)), "\n"
+            "NEXT_PUBLIC_NOTE_VAULT_ADDRESS=", vm.toString(address(sys.vault)), "\n",
+            "NEXT_PUBLIC_ESCROW_ADDRESS=", vm.toString(address(sys.escrow)), "\n"
         );
         string memory envPath = string.concat("deployments/", chainId, ".env");
         vm.writeFile(envPath, env);
