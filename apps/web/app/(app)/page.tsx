@@ -12,6 +12,7 @@ import { useActivity, useIouBalance } from "@/lib/hooks";
 export default function HomePage() {
   const t = useTranslations("home");
   const tCommon = useTranslations("common");
+  const tRamp = useTranslations("ramp.nav");
   const { isConnected } = useAccount();
   const { total, isLoading } = useIouBalance();
   const activity = useActivity();
@@ -49,6 +50,27 @@ export default function HomePage() {
           className="rounded-md bg-surface p-lg text-center text-sm font-medium text-foreground shadow-sm"
         >
           {t("quickRedeem")}
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-3 gap-md">
+        <Link
+          href="/rates"
+          className="rounded-md bg-surface p-lg text-center text-sm font-medium text-foreground shadow-sm"
+        >
+          {tRamp("rates")}
+        </Link>
+        <Link
+          href="/cash-in"
+          className="rounded-md bg-surface p-lg text-center text-sm font-medium text-foreground shadow-sm"
+        >
+          {tRamp("cashIn")}
+        </Link>
+        <Link
+          href="/cash-out"
+          className="rounded-md bg-surface p-lg text-center text-sm font-medium text-foreground shadow-sm"
+        >
+          {tRamp("cashOut")}
         </Link>
       </div>
 

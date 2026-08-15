@@ -18,6 +18,8 @@
     "copied": "Copied",
     "iou": "IOU",
     "usdt": "USDT",
+    "unit": "USDT-IOU",
+    "unitDescriptor": "USDT-backed credit",
     "notDeployed": {
       "title": "Testnet not deployed yet",
       "body": "The Dovizir contracts are not deployed on Base Sepolia yet. On-chain actions are disabled until addresses are configured."
@@ -89,6 +91,93 @@
     "redeemNow": "Redeem",
     "exitHint": "Redemption is the exit door — everyday payments are free"
   },
+  "ramp": {
+    "nav": {
+      "rates": "Rates",
+      "cashIn": "Cash in",
+      "cashOut": "Cash out"
+    },
+    "direction": {
+      "onRamp": "Cash in",
+      "offRamp": "Cash out"
+    },
+    "board": {
+      "title": "Exchange rates",
+      "subtitle": "Per-sarraf buy/sell for each corridor",
+      "indicative": "Indicative · daily guidance",
+      "indicativeNote": "Indicative daily guidance — request a quote for the real price. The firm price depends on your order size.",
+      "buyRate": "Buy rate",
+      "buyHint": "sarraf pays you to buy USDT",
+      "sellRate": "Sell rate",
+      "sellHint": "sarraf charges to sell you USDT",
+      "perUnit": "per 1 {unit}",
+      "size": "Size band",
+      "sizeHint": "{min}–{max} {unit} · larger: request a quote",
+      "updated": "Updated",
+      "empty": "No rates published yet",
+      "requestQuote": "Request a quote",
+      "cashIn": "Cash in",
+      "cashOut": "Cash out"
+    },
+    "status": {
+      "OPEN": "Open",
+      "QUOTED": "Quoted",
+      "FIAT_CLAIMED": "Receipt uploaded",
+      "IOU_SENT": "Credit sent",
+      "SETTLED": "Settled",
+      "REJECTED": "Rejected"
+    },
+    "cashIn": {
+      "title": "Cash in",
+      "subtitle": "Pay local currency, receive {unit}",
+      "pickSarraf": "Sarraf",
+      "amount": "Amount to receive",
+      "indicativeQuote": "Indicative: ~{fiat} {fiatCode} at the sell rate",
+      "requestQuote": "Request firm quote",
+      "quotePending": "Waiting for the sarraf's firm quote…",
+      "firmQuote": "Firm quote",
+      "youPay": "You pay",
+      "youReceive": "You receive",
+      "validFor": "Valid for {seconds}s",
+      "expired": "Quote expired — request a new one",
+      "accept": "Accept quote",
+      "payTitle": "Pay the sarraf",
+      "payHint": "Transfer the amount to this account, then upload your receipt.",
+      "bankDetails": "Sarraf bank details",
+      "bankPending": "Waiting for the sarraf to share bank details…",
+      "uploadReceipt": "Upload bank receipt",
+      "receiptUploaded": "Receipt uploaded — waiting for the sarraf to confirm and issue.",
+      "settled": "Done — {unit} credited to your wallet.",
+      "creditReceived": "Credited"
+    },
+    "cashOut": {
+      "title": "Cash out",
+      "subtitle": "Send {unit}, receive local currency",
+      "amount": "Amount to send",
+      "indicativeQuote": "Indicative: ~{fiat} {fiatCode} at the buy rate",
+      "requestQuote": "Request firm quote",
+      "firmQuote": "Firm quote",
+      "youSend": "You send",
+      "youReceive": "You receive",
+      "accept": "Accept quote",
+      "yourBank": "Your bank details",
+      "yourBankHint": "Where the sarraf should pay your local currency.",
+      "yourBankPlaceholder": "Bank / card number, account name",
+      "sendIou": "Send {unit} on-chain",
+      "iouSent": "Sent — waiting for the sarraf to pay you and upload the receipt.",
+      "settled": "Done — the sarraf paid your account. Receipt on file.",
+      "viewReceipt": "View payout receipt"
+    },
+    "common": {
+      "quoteId": "Quote",
+      "order": "Order",
+      "requestFailed": "Request failed",
+      "requesting": "Requesting…",
+      "connectFirst": "Connect a wallet to continue",
+      "noSarrafRate": "This sarraf has no published rate for this corridor.",
+      "chooseCorridor": "Corridor"
+    }
+  },
   "friendly": {
     "title": "Friendly transfer",
     "badge": "1 free today",
@@ -145,6 +234,74 @@
     "gasTankStub": "Stub",
     "gasTankHint": "Sponsored-gas balance for members' transactions",
     "gasTankPimlico": "Placeholder — mock balance. Needs the Pimlico paymaster integration (AA-SEAM)."
+  },
+  "deskRamp": {
+    "nav": {
+      "book": "Book",
+      "rates": "Rates",
+      "rfq": "RFQ inbox",
+      "orders": "Orders"
+    },
+    "rates": {
+      "title": "Set indicative rates",
+      "subtitle": "Daily guidance board rate per corridor — signed, valid until you post a newer one.",
+      "corridor": "Corridor",
+      "buyRate": "Buy rate (fiat per {unit})",
+      "sellRate": "Sell rate (fiat per {unit})",
+      "minUsdt": "Min {unit}",
+      "maxUsdt": "Max {unit}",
+      "current": "Current",
+      "none": "Not set",
+      "sign": "Sign & publish",
+      "publishing": "Publishing…",
+      "published": "Published — this is the new guidance for {fiat}.",
+      "signHint": "Signs an IndicativeRate with your desk wallet, then posts it to the indexer."
+    },
+    "rfq": {
+      "title": "RFQ inbox",
+      "subtitle": "Customer quote requests. The firm price is yours to set — indicative pre-fills, adjust for size.",
+      "empty": "No open requests",
+      "pending": "Pending",
+      "quoted": "Quoted",
+      "customer": "Customer",
+      "wants": "Wants",
+      "usdtAmount": "{unit} amount",
+      "fiatAmount": "Fiat amount",
+      "suggested": "Suggested (indicative)",
+      "yourFiat": "Your firm fiat price",
+      "ttl": "Valid for (s)",
+      "sendQuote": "Sign & send quote",
+      "sending": "Sending…",
+      "sent": "Quote sent — valid {ttl}s.",
+      "noRate": "No indicative rate for this corridor — set one first."
+    },
+    "orders": {
+      "title": "Order console",
+      "subtitle": "Pending on/off-ramp orders. Review the fiat evidence, then confirm.",
+      "empty": "No orders yet",
+      "customer": "Customer",
+      "direction": "Direction",
+      "amount": "Amount",
+      "fiat": "Fiat",
+      "status": "Status",
+      "agreedQuote": "Agreed firm quote",
+      "receipt": "Fiat receipt",
+      "viewReceipt": "View receipt",
+      "noReceipt": "No receipt uploaded yet",
+      "receiptHash": "Receipt hash",
+      "setBank": "Share your bank details",
+      "bankPlaceholder": "Bank / card number, account name",
+      "saveBank": "Share details",
+      "customerBank": "Customer bank details",
+      "confirmIssue": "Confirm & issue",
+      "issuing": "Issuing on-chain…",
+      "confirmPayOut": "Confirm payout receipt",
+      "reject": "Reject",
+      "settled": "Settled",
+      "verifyManual": "Manual review: eyeball the receipt against the agreed amount before confirming.",
+      "waitingIou": "Waiting for the customer to send {unit} on-chain.",
+      "waitingReceipt": "Waiting for the customer's fiat receipt."
+    }
   },
   "notes": {
     "hub": {

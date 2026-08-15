@@ -108,6 +108,10 @@ importers:
         version: 1.6.1(@types/node@20.19.11)(lightningcss@1.30.1)
 
   packages/sdk:
+    dependencies:
+      viem:
+        specifier: ^2.9.0
+        version: 2.35.1(bufferutil@4.0.9)(typescript@5.9.2)(utf-8-validate@5.0.10)(zod@3.25.76)
     devDependencies:
       '@types/node':
         specifier: ^20.10.0

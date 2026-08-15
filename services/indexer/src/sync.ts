@@ -24,6 +24,8 @@ import {
   upsertEvents,
 } from "./db.js";
 import type { ContractName, IndexedEvent } from "./types.js";
+import { applyOrderEvent } from "./ramp.js";
+import { findClaimedOnRampOrder, updateOrder } from "./ramp-store.js";
 
 interface Source {
   name: ContractName;
@@ -122,6 +124,7 @@ export async function syncOnce(deps: SyncDeps): Promise<bigint> {
     if (batch.length) {
       upsertEvents(db, batch);
       reconcileSerials(db, batch);
+      settleOnRampOrders(db, batch);
     }
   }
 
@@ -141,6 +144,24 @@ function reconcileSerials(db: DB, batch: IndexedEvent[]): void {
     } else if (e.event === "DoubleSpendConvicted") {
       markSerialSettled(db, e.args.serial, "convicted", e.txHash, undefined, e.args.victim);
     }
+  }
+}
+
+/**
+ * Link the on-chain Issued(sarraf, to, amount) event to the off-chain on-ramp
+ * order it closes: a FIAT_CLAIMED order whose Sarraf just issued IOU to the
+ * customer for the agreed amount advances to SETTLED (fiat-ramp.md §3). The
+ * Sarraf's desk "confirm" also settles it; whichever lands first wins and the
+ * other is a no-op (guarded on the FIAT_CLAIMED status inside the finder).
+ */
+function settleOnRampOrders(db: DB, batch: IndexedEvent[]): void {
+  const now = Math.floor(Date.now() / 1000);
+  for (const e of batch) {
+    if (e.contract !== "reservePool" || e.event !== "Issued") continue;
+    const order = findClaimedOnRampOrder(db, e.args.sarraf, e.args.to, e.args.amount);
+    if (!order) continue;
+    const next = applyOrderEvent(order.direction, order.status, "ISSUE_CONFIRMED");
+    updateOrder(db, order.id, { status: next, issueTx: e.txHash }, now);
   }
 }
 
