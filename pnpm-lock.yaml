@@ -29,6 +29,9 @@ importers:
       '@dovizir/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@slowcook-ai/review-overlay':
+        specifier: 0.25.6
+        version: 0.25.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@tanstack/react-query':
         specifier: ^5.85.5
         version: 5.85.5(react@19.1.0)
@@ -1193,6 +1196,13 @@ packages:
 
   '@sinclair/typebox@0.27.8':
     resolution: {integrity: sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==}
+
+  '@slowcook-ai/review-overlay@0.25.6':
+    resolution: {integrity: sha512-SFul9G9z2sljxr5Xa9Kpl7eAg6tPoFlpK2zJDrST82Bj4T0B4p5z/VMAqrJ/wa0W8cAunvZzp2riMXSi13FUKA==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      react: '>=19'
+      react-dom: '>=19'
 
   '@socket.io/component-emitter@3.1.2':
     resolution: {integrity: sha512-9BCxFwvbGg/RsZK9tjXd8s4UcwR0MWeFQ1XEKIQVVvAGJyINdrqKMcTRyLoK8Rse1GjzLV9cwjWV1olXRWEXVA==}
@@ -5362,6 +5372,11 @@ snapshots:
       '@scure/base': 1.2.6
 
   '@sinclair/typebox@0.27.8': {}
+
+  '@slowcook-ai/review-overlay@0.25.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
+    dependencies:
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
 
   '@socket.io/component-emitter@3.1.2': {}
 

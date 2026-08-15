@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { dirOf } from "@/i18n/config";
 import { Providers } from "./providers";
+import { ReviewOverlay } from "@/components/review-overlay";
 import "./globals.css";
 
 // Design-system type: Roboto body, Inter headings, Vazirmatn for Farsi/RTL.
@@ -43,6 +44,7 @@ export default async function RootLayout({
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>{children}</Providers>
+          <ReviewOverlay />
         </NextIntlClientProvider>
       </body>
     </html>
