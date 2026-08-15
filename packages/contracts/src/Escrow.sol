@@ -46,7 +46,15 @@ contract Escrow {
     uint64 public constant MAX_PAYMENT_WINDOW = 30 days;
     /// Fixed maker-confirm window after the receipt is claimed. Bounded and
     /// not caller-settable so a maker cannot grief with a zero/absurd value.
+    /// Also gates a TAKER's dispute: a taker may only escalate a claimed order
+    /// once this window has elapsed, so the maker always gets their chance to
+    /// confirm first (stops the instant fill→claim→dispute griefing lock).
     uint64 public constant CONFIRM_WINDOW = 2 days;
+    /// Backstop window after a dispute is raised. The tranche Sarraf may resolve
+    /// at ANY time; the protocol backstop arbiter may resolve ONLY after this
+    /// timeout, so a dispute can never be permanently stranded by an absent
+    /// Sarraf. It is a fallback human resolver, NOT an auto-default to a side.
+    uint64 public constant DISPUTE_TIMEOUT = 7 days;
 
     // --------------------------------------------------------------- types
 
@@ -73,7 +81,9 @@ contract Escrow {
         uint64 paymentWindow; // taker's fiat-payment window (bounded)
         uint64 matchedAt; //     fill timestamp (0 until MATCHED)
         uint64 fiatClaimedAt; // receipt timestamp (0 until FIAT_CLAIMED)
+        uint64 disputedAt; //    dispute timestamp (0 until DISPUTED); backstop clock
         Status status;
+        bool paying; //          taker has committed to paying (markPaying); freezes cancel
         string fiat; //          currency code, e.g. "IRR" | "TRY"
     }
 
@@ -81,16 +91,25 @@ contract Escrow {
 
     IEscrowIou public immutable iou;
 
+    /// Protocol backstop arbiter — a human/trusted fallback resolver set at
+    /// deploy. It can resolve a dispute ONLY after {DISPUTE_TIMEOUT} elapses, so
+    /// funds are never permanently stranded if the tranche Sarraf goes absent.
+    address public immutable backstopArbiter;
+
     uint256 public nextOrderId;
     mapping(uint256 => Order) internal _orders;
 
     /// Reentrancy guard (1 = unlocked, 2 = locked).
     uint256 private _lock = 1;
 
-    /// Custody gate for {onERC1155Received}: set to the tranche id + 1 during a
-    /// createOrder deposit and cleared immediately after, so the escrow accepts
-    /// ONLY the inbound transfer it just initiated. `0` = accept nothing.
-    uint256 private _expectedDeposit;
+    /// Custody gate for {onERC1155Received}: a non-wrapping two-field sentinel.
+    /// During a createOrder deposit `_expecting` is set true and `_expectedId`
+    /// to the tranche id, both cleared immediately after — so the escrow accepts
+    /// ONLY the inbound transfer it just initiated. Using a bool (not `id + 1`)
+    /// avoids the wrap where tranche id == type(uint256).max would forge a "0 =
+    /// expect nothing" gate and let a stray deposit through.
+    bool private _expecting;
+    uint256 private _expectedId;
 
     // ---------------------------------------------------------------- events
 
@@ -106,6 +125,7 @@ contract Escrow {
         uint64 paymentWindow
     );
     event OrderFilled(uint256 indexed orderId, address indexed taker, uint64 paymentDeadline);
+    event PayingMarked(uint256 indexed orderId, address indexed taker);
     event FiatClaimed(uint256 indexed orderId, address indexed taker, bytes32 receiptHash, uint64 confirmDeadline);
     event OrderSettled(uint256 indexed orderId, address indexed taker, uint256 usdtAmount);
     event OrderRefunded(uint256 indexed orderId, address indexed maker, uint256 usdtAmount);
@@ -125,9 +145,11 @@ contract Escrow {
 
     // ------------------------------------------------------------- construction
 
-    constructor(IEscrowIou iou_) {
+    constructor(IEscrowIou iou_, address backstopArbiter_) {
         require(address(iou_) != address(0), "Escrow: zero iou");
+        require(backstopArbiter_ != address(0), "Escrow: zero backstop");
         iou = iou_;
+        backstopArbiter = backstopArbiter_;
     }
 
     // --------------------------------------------------------------- lifecycle
@@ -150,6 +172,7 @@ contract Escrow {
         require(usdtAmount > 0, "Escrow: zero amount");
         require(fiatAmount > 0, "Escrow: zero fiat amount");
         require(bytes(fiat).length > 0, "Escrow: empty fiat");
+        require(quoteHash != bytes32(0), "Escrow: zero quote");
         require(
             paymentWindow >= MIN_PAYMENT_WINDOW && paymentWindow <= MAX_PAYMENT_WINDOW,
             "Escrow: bad payment window"
@@ -177,9 +200,11 @@ contract Escrow {
         );
 
         // Interaction last. Gate {onERC1155Received} to exactly this deposit.
-        _expectedDeposit = trancheId + 1;
+        _expecting = true;
+        _expectedId = trancheId;
         iou.safeTransferFrom(msg.sender, address(this), trancheId, usdtAmount, "");
-        _expectedDeposit = 0;
+        _expecting = false;
+        _expectedId = 0;
     }
 
     /// @notice Taker accepts an OPEN order. One active fill per order: the
@@ -217,6 +242,22 @@ contract Escrow {
         emit FiatClaimed(orderId, msg.sender, receiptHash, uint64(block.timestamp) + CONFIRM_WINDOW);
     }
 
+    /// @notice Taker signals they have committed to sending the fiat, freezing
+    /// the maker's post-deadline {cancel} so a maker cannot cancel-vs-claim race
+    /// them out of the IOU after real fiat has been sent but before the receipt
+    /// is uploaded. Callable only by the taker while MATCHED. This is not itself
+    /// a maker-lock: if the taker marks-paying but never claims within the
+    /// payment window, the maker's exit becomes {raiseDispute} (backstop-
+    /// resolvable) rather than a silent refund.
+    function markPaying(uint256 orderId) external nonReentrant {
+        Order storage o = _orders[orderId];
+        require(o.status == Status.Matched, "Escrow: not matched");
+        require(msg.sender == o.taker, "Escrow: only taker");
+
+        o.paying = true;
+        emit PayingMarked(orderId, msg.sender);
+    }
+
     /// @notice Maker confirms the fiat arrived → IOU releases to the taker.
     /// @dev CEI: status is set terminal BEFORE the transfer, so the receiver
     /// callback cannot re-enter into any further state change.
@@ -232,14 +273,18 @@ contract Escrow {
     }
 
     /// @notice Maker reclaims the IOU. Allowed pre-fill (OPEN), or after the
-    /// payment window elapses while still MATCHED with no receipt claimed. Once
-    /// the taker has claimed a receipt (FIAT_CLAIMED) this path is closed — the
-    /// maker must confirm or dispute.
+    /// payment window elapses while still MATCHED with no receipt claimed AND the
+    /// taker has not signalled {markPaying}. Once the taker has claimed a receipt
+    /// (FIAT_CLAIMED) or committed to paying this silent-refund path is closed —
+    /// the maker must confirm or {raiseDispute}. This blocks the cancel-vs-claim
+    /// race where a maker reclaims the IOU right at the deadline after the taker
+    /// already sent real fiat but before the receipt landed on-chain.
     function cancel(uint256 orderId) external nonReentrant {
         Order storage o = _orders[orderId];
         require(msg.sender == o.maker, "Escrow: only maker");
         bool prefill = o.status == Status.Open;
         bool timedOut = o.status == Status.Matched
+            && !o.paying
             && block.timestamp > uint256(o.matchedAt) + uint256(o.paymentWindow);
         require(prefill || timedOut, "Escrow: not cancelable");
 
@@ -249,21 +294,49 @@ contract Escrow {
         iou.safeTransferFrom(address(this), o.maker, o.trancheId, o.usdtAmount, "");
     }
 
-    /// @notice Escalate a paid order to the arbiter. Either party may raise once
-    /// the receipt is claimed (the taker's typical trigger is the confirm window
-    /// elapsing with no confirmation; the maker's is a receipt they dispute).
+    /// @notice Escalate an order to the arbiter. Two entrances:
+    ///  - FIAT_CLAIMED (normal): the MAKER may raise at any time (choosing
+    ///    arbitration on their own order is not griefing); the TAKER may raise
+    ///    only after the maker-confirm window elapses. That gate wires up the
+    ///    previously-dead CONFIRM_WINDOW: it stops the instant fill→claim(garbage
+    ///    hash)→dispute lock and the front-run of a clean {confirmReceived}.
+    ///  - MATCHED + markPaying (maker's stalled-taker exit): once the taker has
+    ///    committed to paying, {cancel} is frozen; if the payment window then
+    ///    elapses with no receipt, the MAKER escalates here instead of a silent
+    ///    refund. Combined with the backstop this is always resolvable.
     function raiseDispute(uint256 orderId) external nonReentrant {
         Order storage o = _orders[orderId];
-        require(o.status == Status.FiatClaimed, "Escrow: not claimed");
+
+        bool claimed = o.status == Status.FiatClaimed;
+        // Maker's exit when a committed taker stalls past the payment window.
+        bool stalledExit = o.status == Status.Matched
+            && msg.sender == o.maker
+            && o.paying
+            && block.timestamp > uint256(o.matchedAt) + uint256(o.paymentWindow);
+        require(claimed || stalledExit, "Escrow: not claimed");
+
         require(msg.sender == o.maker || msg.sender == o.taker, "Escrow: not party");
 
+        // Fix: a TAKER must wait out the maker's confirm window before escalating
+        // a claimed order; the maker faces no such gate on their own order.
+        if (claimed && msg.sender == o.taker) {
+            require(
+                block.timestamp >= uint256(o.fiatClaimedAt) + uint256(CONFIRM_WINDOW),
+                "Escrow: confirm window open"
+            );
+        }
+
         o.status = Status.Disputed;
+        o.disputedAt = uint64(block.timestamp);
         emit DisputeRaised(orderId, msg.sender);
     }
 
-    /// @notice The tranche's issuing Sarraf decides a dispute. The caller is
-    /// checked against the arbiter RECOMPUTED from the tranche id, so authority
-    /// is cryptographically bound to the tranche and cannot be spoofed.
+    /// @notice Decide a dispute. Two authorized resolvers:
+    ///  - the tranche's issuing Sarraf (arbiter RECOMPUTED from the tranche id,
+    ///    so authority is cryptographically bound and unspoofable) — ANY time;
+    ///  - the protocol {backstopArbiter} — ONLY after `disputedAt +
+    ///    DISPUTE_TIMEOUT`, so an absent Sarraf can never permanently strand the
+    ///    funds. This is a fallback human resolver, not an auto-default.
     /// `toTaker` releases the IOU to the taker; otherwise it refunds the maker.
     /// @dev CEI + reentrancy guarded; terminal on completion (no double-resolve).
     function resolve(uint256 orderId, bool toTaker) external nonReentrant {
@@ -271,7 +344,16 @@ contract Escrow {
         require(o.status == Status.Disputed, "Escrow: not disputed");
 
         address arbiter = address(uint160(o.trancheId));
-        require(msg.sender == arbiter, "Escrow: not arbiter");
+        if (msg.sender == arbiter) {
+            // Primary arbiter (the tranche Sarraf) — may resolve at any time.
+        } else if (msg.sender == backstopArbiter) {
+            require(
+                block.timestamp >= uint256(o.disputedAt) + uint256(DISPUTE_TIMEOUT),
+                "Escrow: backstop too early"
+            );
+        } else {
+            revert("Escrow: not arbiter");
+        }
         // Self-deal guard #3 (belt-and-braces; also enforced at create + fill).
         require(arbiter != o.maker && arbiter != o.taker, "Escrow: arbiter self-deal");
 
@@ -283,7 +365,7 @@ contract Escrow {
             o.status = Status.ResolvedMaker;
             beneficiary = o.maker;
         }
-        emit DisputeResolved(orderId, arbiter, toTaker, beneficiary, o.usdtAmount);
+        emit DisputeResolved(orderId, msg.sender, toTaker, beneficiary, o.usdtAmount);
 
         iou.safeTransferFrom(address(this), beneficiary, o.trancheId, o.usdtAmount, "");
     }
@@ -310,11 +392,19 @@ contract Escrow {
         return uint256(o.matchedAt) + uint256(o.paymentWindow);
     }
 
-    /// @notice Maker-confirm deadline (0 if not yet FIAT_CLAIMED).
+    /// @notice Maker-confirm deadline (0 if not yet FIAT_CLAIMED). Also the
+    /// earliest a TAKER may raise a dispute on a claimed order.
     function confirmDeadline(uint256 orderId) external view returns (uint256) {
         Order storage o = _orders[orderId];
         if (o.fiatClaimedAt == 0) return 0;
         return uint256(o.fiatClaimedAt) + uint256(CONFIRM_WINDOW);
+    }
+
+    /// @notice Earliest time the backstop arbiter may resolve (0 if not DISPUTED).
+    function disputeDeadline(uint256 orderId) external view returns (uint256) {
+        Order storage o = _orders[orderId];
+        if (o.disputedAt == 0) return 0;
+        return uint256(o.disputedAt) + uint256(DISPUTE_TIMEOUT);
     }
 
     // ------------------------------------------------------ ERC-1155 receiver
@@ -328,7 +418,7 @@ contract Escrow {
         returns (bytes4)
     {
         require(msg.sender == address(iou), "Escrow: not iou");
-        require(_expectedDeposit == id + 1, "Escrow: unexpected deposit");
+        require(_expecting && id == _expectedId, "Escrow: unexpected deposit");
         return _ERC1155_RECEIVED;
     }
 

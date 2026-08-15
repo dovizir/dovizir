@@ -82,7 +82,11 @@ contract EscrowHandler is Test {
     function dispute(uint256 seed) external {
         (uint256 id, bool ok) = _pick(seed);
         if (!ok) return;
-        vm.prank(taker);
+        // Raise as the MAKER: the maker may escalate a claimed order at any time,
+        // whereas a taker is now gated behind the confirm window — so raising as
+        // the maker keeps the fuzzer reaching DISPUTED without depending on warp
+        // ordering. Resolve fairness is exercised by resolve() below.
+        vm.prank(maker);
         try escrow.raiseDispute(id) {} catch {}
     }
 
@@ -116,7 +120,7 @@ contract EscrowInvariantTest is ArmBase {
 
     function setUp() public override {
         super.setUp();
-        escrow = new Escrow(IEscrowIou(address(iou)));
+        escrow = new Escrow(IEscrowIou(address(iou)), outsider); // outsider = backstop
 
         _certify(sarrafA);
         _addMember(sarrafA, memberA1);

@@ -69,12 +69,30 @@ contract ReentrantTaker {
     }
 }
 
+/// @dev Stand-in IOU used only to probe the {onERC1155Received} custody gate at
+/// the tranche-id boundary. It impersonates the escrow's `iou` (so it is an
+/// authorized caller of the receiver hook) and pushes a stray receive for an
+/// arbitrary id WITHOUT the escrow having initiated a deposit.
+contract WrapProbeIou {
+    function balanceOf(address, uint256) external pure returns (uint256) {
+        return 0;
+    }
+
+    function safeTransferFrom(address, address, uint256, uint256, bytes calldata) external {}
+
+    /// Simulate the IOU delivering a stray token of tranche `id` to the escrow.
+    function pushReceive(address escrow_, uint256 id) external {
+        Escrow(escrow_).onERC1155Received(address(this), address(this), id, 1, "");
+    }
+}
+
 contract EscrowTest is ArmBase {
     Escrow internal escrow;
 
     uint256 internal T; // tranche id of sarrafA (the arbiter)
     address internal maker; // memberA1
     address internal taker; // memberA2
+    address internal backstop; // protocol fallback arbiter
 
     uint256 internal constant AMT = 100e6; // 100 IOU
     uint256 internal constant FIAT = 5_000_000; // agreed fiat units
@@ -84,7 +102,10 @@ contract EscrowTest is ArmBase {
 
     function setUp() public override {
         super.setUp();
-        escrow = new Escrow(IEscrowIou(address(iou)));
+        // `outsider` is the protocol backstop arbiter: a non-party, non-Sarraf
+        // fallback resolver that may only act after DISPUTE_TIMEOUT.
+        backstop = outsider;
+        escrow = new Escrow(IEscrowIou(address(iou)), backstop);
 
         _certify(sarrafA);
         _addMember(sarrafA, memberA1);
@@ -120,6 +141,10 @@ contract EscrowTest is ArmBase {
 
     function _disputed() internal returns (uint256 id) {
         id = _claimed();
+        // The taker's dispute is now gated behind the maker-confirm window
+        // (fix 2). Warp past it so the taker can escalate. The resolve tests
+        // that build on this helper are unconcerned with the timing itself.
+        vm.warp(block.timestamp + escrow.CONFIRM_WINDOW());
         vm.prank(taker);
         escrow.raiseDispute(id);
     }
@@ -345,6 +370,10 @@ contract EscrowTest is ArmBase {
 
     function test_raiseDispute_byTaker() public {
         uint256 id = _claimed();
+        // Fix 2: a taker may only escalate a claimed order after the confirm
+        // window elapses (see test_raiseDispute_taker_beforeConfirmWindow_reverts
+        // for the pre-window revert).
+        vm.warp(block.timestamp + escrow.CONFIRM_WINDOW());
         vm.prank(taker);
         escrow.raiseDispute(id);
         assertEq(uint256(escrow.statusOf(id)), uint256(Escrow.Status.Disputed));
@@ -464,6 +493,8 @@ contract EscrowTest is ArmBase {
         uint256 id = _open();
         evil.fill(id);
         evil.claim(id, RECEIPT);
+        // Fix 2: the taker (evil) must wait out the confirm window to escalate.
+        vm.warp(block.timestamp + escrow.CONFIRM_WINDOW());
         evil.raise(id);
         evil.arm(id, 2); // reenter resolve
 
@@ -473,6 +504,216 @@ contract EscrowTest is ArmBase {
         assertTrue(evil.reentryReverted(), "reentry rejected by guard");
         assertEq(iou.balanceOf(address(evil), T), AMT, "paid exactly once");
         assertEq(iou.balanceOf(address(escrow), T), 0);
+    }
+
+    // ============================================================ REGRESSIONS
+    // Availability / griefing findings from the two adversarial reviews. Each
+    // test fails on the pre-fix contract and passes after.
+
+    // --- Fix 1: Disputed dead-end — backstop resolves after DISPUTE_TIMEOUT ---
+
+    // The tranche Sarraf never resolves. Before the fix, the IOU is stranded
+    // forever. After: the backstop arbiter can resolve once the timeout elapses,
+    // so funds are always recoverable.
+    function test_backstop_resolvesAfterTimeout() public {
+        uint256 id = _disputed();
+        uint256 takerBefore = iou.balanceOf(taker, T);
+
+        // Too early: backstop cannot act before the timeout.
+        vm.prank(backstop);
+        vm.expectRevert("Escrow: backstop too early");
+        escrow.resolve(id, true);
+
+        vm.warp(block.timestamp + escrow.DISPUTE_TIMEOUT());
+        vm.prank(backstop);
+        escrow.resolve(id, true);
+
+        assertEq(uint256(escrow.statusOf(id)), uint256(Escrow.Status.ResolvedTaker));
+        assertEq(iou.balanceOf(taker, T), takerBefore + AMT, "backstop recovered funds");
+        assertEq(iou.balanceOf(address(escrow), T), 0, "escrow emptied");
+    }
+
+    // A random address is never a valid backstop, even after the timeout.
+    function test_backstop_onlyBackstopAddress() public {
+        uint256 id = _disputed();
+        vm.warp(block.timestamp + escrow.DISPUTE_TIMEOUT());
+        vm.prank(outsider == backstop ? address(0xBADD) : outsider);
+        // outsider IS the backstop in this suite; use a guaranteed non-backstop.
+        vm.expectRevert();
+        escrow.resolve(id, true);
+    }
+
+    // The primary arbiter (tranche Sarraf) can still resolve at ANY time — the
+    // backstop is additive, it does not displace the Sarraf's authority.
+    function test_backstop_sarrafStillResolvesImmediately() public {
+        uint256 id = _disputed();
+        vm.prank(sarrafA);
+        escrow.resolve(id, false);
+        assertEq(uint256(escrow.statusOf(id)), uint256(Escrow.Status.ResolvedMaker));
+    }
+
+    function test_constructor_zeroBackstop_reverts() public {
+        vm.expectRevert("Escrow: zero backstop");
+        new Escrow(IEscrowIou(address(iou)), address(0));
+    }
+
+    // --- Fix 2: griefing lock — taker cannot instantly dispute a clean claim ---
+
+    // The reviewers' PoC: taker fills, claims a garbage receipt hash, then tries
+    // to raiseDispute in the same breath to force an arbiter-only Disputed with
+    // the maker's IOU locked. Before the fix this succeeded; after, the taker is
+    // gated behind the confirm window.
+    function test_raiseDispute_taker_beforeConfirmWindow_reverts() public {
+        uint256 id = _matched();
+        vm.prank(taker);
+        escrow.claimFiatPaid(id, keccak256("garbage"));
+
+        vm.prank(taker);
+        vm.expectRevert("Escrow: confirm window open");
+        escrow.raiseDispute(id);
+
+        // Still FiatClaimed — the maker keeps their window to confirm/act.
+        assertEq(uint256(escrow.statusOf(id)), uint256(Escrow.Status.FiatClaimed));
+
+        // And one second before the deadline it still reverts...
+        vm.warp(uint256(escrow.confirmDeadline(id)) - 1);
+        vm.prank(taker);
+        vm.expectRevert("Escrow: confirm window open");
+        escrow.raiseDispute(id);
+
+        // ...at the deadline it opens.
+        vm.warp(uint256(escrow.confirmDeadline(id)));
+        vm.prank(taker);
+        escrow.raiseDispute(id);
+        assertEq(uint256(escrow.statusOf(id)), uint256(Escrow.Status.Disputed));
+    }
+
+    // The MAKER faces no confirm-window gate: choosing arbitration on their own
+    // order the instant a receipt lands is not griefing.
+    function test_raiseDispute_maker_notGatedByConfirmWindow() public {
+        uint256 id = _claimed();
+        vm.prank(maker);
+        escrow.raiseDispute(id); // immediately, no warp
+        assertEq(uint256(escrow.statusOf(id)), uint256(Escrow.Status.Disputed));
+    }
+
+    // --- Fix 4: front-run of the happy path — taker cannot pre-empt confirm ---
+
+    // Maker is about to confirmReceived; a hostile taker tries to front-run it
+    // into Disputed. Fix 2's gate blocks the front-run, so the maker's confirm
+    // lands cleanly and the order settles.
+    function test_frontRun_confirmNotHijackedByTakerDispute() public {
+        uint256 id = _claimed();
+        // Taker front-run attempt (same block as the maker's pending confirm).
+        vm.prank(taker);
+        vm.expectRevert("Escrow: confirm window open");
+        escrow.raiseDispute(id);
+
+        // Maker's confirm proceeds — happy path preserved.
+        vm.prank(maker);
+        escrow.confirmReceived(id);
+        assertEq(uint256(escrow.statusOf(id)), uint256(Escrow.Status.Settled));
+    }
+
+    // --- Fix 3: cancel-vs-claim race — markPaying freezes the maker's cancel ---
+
+    // Taker sends real fiat and calls markPaying, then the payment deadline
+    // passes before the receipt is uploaded. Before the fix, the maker could
+    // cancel at the deadline and keep both IOU and fiat. After, cancel is frozen.
+    function test_markPaying_freezesCancelAtDeadline() public {
+        uint256 id = _matched();
+        vm.prank(taker);
+        escrow.markPaying(id);
+
+        // Warp right past the payment deadline — the classic race window.
+        vm.warp(uint256(escrow.paymentDeadline(id)) + 1);
+
+        vm.prank(maker);
+        vm.expectRevert("Escrow: not cancelable");
+        escrow.cancel(id);
+        assertEq(uint256(escrow.statusOf(id)), uint256(Escrow.Status.Matched), "still live");
+
+        // The taker can still complete the claim; the maker then settles.
+        vm.prank(taker);
+        escrow.claimFiatPaid(id, RECEIPT);
+        vm.prank(maker);
+        escrow.confirmReceived(id);
+        assertEq(uint256(escrow.statusOf(id)), uint256(Escrow.Status.Settled));
+    }
+
+    // The freeze is not itself a maker-lock: if a committed taker stalls (never
+    // claims) past the window, the maker escalates to a (backstop-resolvable)
+    // dispute instead of being stranded.
+    function test_markPaying_makerExitViaDisputeWhenTakerStalls() public {
+        uint256 id = _matched();
+        vm.prank(taker);
+        escrow.markPaying(id);
+        vm.warp(uint256(escrow.paymentDeadline(id)) + 1);
+
+        // Cancel is frozen...
+        vm.prank(maker);
+        vm.expectRevert("Escrow: not cancelable");
+        escrow.cancel(id);
+
+        // ...but the maker can raiseDispute from MATCHED as their exit.
+        vm.prank(maker);
+        escrow.raiseDispute(id);
+        assertEq(uint256(escrow.statusOf(id)), uint256(Escrow.Status.Disputed));
+
+        // And it is fully recoverable — arbiter refunds the maker.
+        vm.prank(sarrafA);
+        escrow.resolve(id, false);
+        assertEq(uint256(escrow.statusOf(id)), uint256(Escrow.Status.ResolvedMaker));
+    }
+
+    // markPaying is taker-only and MATCHED-only.
+    function test_markPaying_onlyTaker() public {
+        uint256 id = _matched();
+        vm.prank(maker);
+        vm.expectRevert("Escrow: only taker");
+        escrow.markPaying(id);
+    }
+
+    function test_markPaying_notMatched_reverts() public {
+        uint256 id = _open();
+        vm.prank(taker);
+        vm.expectRevert("Escrow: not matched");
+        escrow.markPaying(id);
+    }
+
+    // A taker who did NOT markPaying is still cancelable at timeout (unchanged
+    // behavior — the freeze is opt-in, no regression to the timeout refund).
+    function test_cancel_afterTimeout_withoutMarkPaying_stillRefunds() public {
+        uint256 makerBefore = iou.balanceOf(maker, T);
+        uint256 id = _matched();
+        vm.warp(block.timestamp + WINDOW + 1);
+        vm.prank(maker);
+        escrow.cancel(id);
+        assertEq(uint256(escrow.statusOf(id)), uint256(Escrow.Status.Refunded));
+        assertEq(iou.balanceOf(maker, T), makerBefore, "maker refunded");
+    }
+
+    // --- Fix 5: onERC1155Received wrap at tranche id type(uint256).max ---
+
+    // A separate escrow whose tranche-id space includes type(uint256).max: the
+    // old `_expectedDeposit == id + 1` sentinel wrapped (max+1 == 0 == "expect
+    // nothing"), so a stray deposit of the max id slipped through the custody
+    // gate. The bool sentinel does not wrap.
+    function test_onReceive_maxTrancheId_noWrap() public {
+        WrapProbeIou probe = new WrapProbeIou();
+        Escrow esc = new Escrow(IEscrowIou(address(probe)), backstop);
+        // Not inside a createOrder deposit → _expecting is false → must reject
+        // even for id == type(uint256).max.
+        vm.expectRevert("Escrow: unexpected deposit");
+        probe.pushReceive(address(esc), type(uint256).max);
+    }
+
+    // --- Fix 6: quoteHash must be non-zero ---
+
+    function test_createOrder_zeroQuote_reverts() public {
+        vm.prank(maker);
+        vm.expectRevert("Escrow: zero quote");
+        escrow.createOrder(sarrafA, AMT, "IRR", FIAT, bytes32(0), WINDOW);
     }
 
     // ------------------------------------------------------------------ fuzz
@@ -509,6 +750,8 @@ contract EscrowTest is ArmBase {
         escrow.fillOrder(id);
         vm.prank(taker);
         escrow.claimFiatPaid(id, RECEIPT);
+        // Fix 2: taker escalates only after the confirm window.
+        vm.warp(block.timestamp + escrow.CONFIRM_WINDOW());
         vm.prank(taker);
         escrow.raiseDispute(id);
         vm.prank(sarrafA);
