@@ -1,3 +1,0 @@
-{
-  "_note": "Stub locale — falls back to English via deepMerge in i18n/request.ts. Translate by overriding keys from en.json."
-}
