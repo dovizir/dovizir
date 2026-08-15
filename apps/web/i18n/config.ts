@@ -1,23 +1,25 @@
 /**
- * Locale scaffold: 7 locales, en + fa fully translated; the rest fall back to
- * English (their message files deep-merge over en at request time).
+ * The 7 target-market locales. en + fa fully translated; fa-AF (Dari) seeded
+ * from fa (shares script + most vocabulary — needs native review); ar, tr, ur,
+ * ckb fall back to English key-by-key until native translation.
+ * 5 of 7 are RTL (only en, tr are LTR).
  */
-export const locales = ["en", "fa", "ar", "tr", "ur", "ru", "zh"] as const;
+export const locales = ["en", "fa", "tr", "ar", "ur", "fa-AF", "ckb"] as const;
 export type Locale = (typeof locales)[number];
 
 export const defaultLocale: Locale = "en";
 
 /** Right-to-left locales — drives <html dir> and the Vazirmatn font swap. */
-export const rtlLocales: ReadonlySet<string> = new Set(["fa", "ar", "ur"]);
+export const rtlLocales: ReadonlySet<string> = new Set(["fa", "ar", "ur", "fa-AF", "ckb"]);
 
 export const localeNames: Record<Locale, string> = {
   en: "English",
   fa: "فارسی",
-  ar: "العربية",
   tr: "Türkçe",
+  ar: "العربية",
   ur: "اردو",
-  ru: "Русский",
-  zh: "中文",
+  "fa-AF": "دری",
+  ckb: "کوردی",
 };
 
 /** Cookie used to persist the user's locale choice. */
