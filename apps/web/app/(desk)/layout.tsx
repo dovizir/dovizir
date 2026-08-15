@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import { ConnectButton } from "@/components/connect-button";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { DeskNav } from "@/components/desk/desk-nav";
 
 /** Sarraf desk shell: desktop-first dashboard chrome with a side rail. */
 export default function DeskLayout({
@@ -16,6 +17,7 @@ export default function DeskLayout({
           {tCommon("appName")}
         </span>
         <p className="mt-sm text-sm text-muted">{t("subtitle")}</p>
+        <DeskNav />
       </aside>
       <div className="flex-1">
         <header className="border-b border-border">
