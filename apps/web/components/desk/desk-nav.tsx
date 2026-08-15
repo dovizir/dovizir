@@ -9,6 +9,7 @@ const items = [
   { href: "/desk/rates", key: "rates" },
   { href: "/desk/rfq", key: "rfq" },
   { href: "/desk/orders", key: "orders" },
+  { href: "/desk/disputes", key: "disputes" },
 ] as const;
 
 /** Sarraf desk section nav (book / rates / RFQ inbox / orders). */

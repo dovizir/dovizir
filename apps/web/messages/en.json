@@ -35,7 +35,8 @@
     "deposit": "Deposit",
     "send": "Send",
     "redeem": "Redeem",
-    "notes": "Cash"
+    "notes": "Cash",
+    "market": "Market"
   },
   "home": {
     "title": "Home",
@@ -240,7 +241,8 @@
       "book": "Book",
       "rates": "Rates",
       "rfq": "RFQ inbox",
-      "orders": "Orders"
+      "orders": "Orders",
+      "disputes": "Disputes"
     },
     "rates": {
       "title": "Set indicative rates",
@@ -420,5 +422,96 @@
       "next": "Next step",
       "reset": "Reset"
     }
+  },
+  "market": {
+    "title": "P2P market",
+    "subtitle": "Buy and sell {unit} with other people — the Sarraf only arbitrates.",
+    "sell": "Sell",
+    "openOffers": "Open offers",
+    "noOffers": "No open offers right now.",
+    "take": "Take",
+    "perUnit": "{fiat} / unit",
+    "myOrders": "My orders",
+    "roleMaker": "Seller",
+    "roleTaker": "Buyer",
+    "roleVisitor": "Visitor",
+    "loading": "Loading order…",
+    "orderTitle": "Order #{id}",
+    "youGetOrPay": "Price",
+    "role": "Your role",
+    "arbiter": "Arbiter (Sarraf)",
+    "payWithin": "Pay within",
+    "confirmWithin": "Seller confirms within",
+    "bankDetails": "Seller bank details",
+    "bankPlaceholder": "IBAN / card no. to receive fiat",
+    "bankPending": "Waiting for the seller to share bank details…",
+    "share": "Share",
+    "cancel": "Cancel offer",
+    "cancelTimeout": "Reclaim IOU (payment window elapsed)",
+    "payAndUpload": "I paid — upload receipt",
+    "waitBank": "Waiting for the seller's bank details…",
+    "confirm": "Confirm fiat received — release IOU",
+    "dispute": "Raise dispute",
+    "viewReceipt": "View receipt",
+    "outcomeTaker": "Settled — the {unit} was released to the buyer.",
+    "outcomeMaker": "Closed — the {unit} was returned to the seller.",
+    "outcomeDisputed": "In dispute — the arbiter (issuing Sarraf) will decide.",
+    "chat": "Notes",
+    "noMessages": "No messages yet.",
+    "messagePlaceholder": "Message the counterparty…",
+    "send": "Send",
+    "elapsed": "elapsed",
+    "status": {
+      "OPEN": "Open",
+      "MATCHED": "Matched",
+      "FIAT_CLAIMED": "Receipt uploaded",
+      "SETTLED": "Settled",
+      "REFUNDED": "Refunded",
+      "DISPUTED": "Disputed",
+      "RESOLVED_TAKER": "Resolved — buyer",
+      "RESOLVED_MAKER": "Resolved — seller"
+    },
+    "create": {
+      "title": "Sell {unit} for fiat",
+      "subtitle": "Lock {unit} into escrow at your price. A buyer pays you fiat; you release.",
+      "tranche": "Which credit to sell",
+      "noTranche": "You hold no {unit} to sell yet.",
+      "amount": "Amount to sell",
+      "overBalance": "More than your balance.",
+      "fiat": "Currency",
+      "fiatAmount": "Total {fiat} you want",
+      "window": "Payment window",
+      "windowOpt": {
+        "m30": "30 min",
+        "h1": "1 hour",
+        "h24": "24 hours"
+      },
+      "priceHint": "≈ {fiat} {fiatCode} per 1 {unit}",
+      "enterAmount": "Enter an amount.",
+      "enterFiat": "Enter the fiat total.",
+      "lockAndPost": "Lock IOU & post offer",
+      "locking": "Locking…",
+      "lockNote": "Your IOU is held in escrow until a buyer pays and you confirm."
+    }
+  },
+  "deskDisputes": {
+    "title": "Disputes",
+    "subtitle": "Disputes on tranches you issued. Review the receipt and agreed price, then resolve.",
+    "skinInGame": "You arbitrate because you hold the KYC and the reserve backing this tranche — your call is final for the PoC.",
+    "empty": "No open disputes.",
+    "amount": "Amount",
+    "agreedPrice": "Agreed price",
+    "perUnit": "Per unit",
+    "raisedBy": "Raised by",
+    "maker": "Seller",
+    "taker": "Buyer",
+    "viewReceipt": "View receipt",
+    "noReceipt": "No receipt on file",
+    "timeline": "Notes",
+    "resolveTaker": "Release to buyer",
+    "resolveMaker": "Refund seller",
+    "resolved": "Resolved to the {side}.",
+    "sideTaker": "buyer",
+    "sideMaker": "seller"
   }
 }

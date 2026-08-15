@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 
 const items = [
   { href: "/", key: "home", icon: "⌂" },
-  { href: "/deposit", key: "deposit", icon: "⤓" },
+  { href: "/market", key: "market", icon: "⇌" },
   { href: "/send", key: "send", icon: "↗" },
   { href: "/notes", key: "notes", icon: "✎" },
   { href: "/redeem", key: "redeem", icon: "⇄" },
