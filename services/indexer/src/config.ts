@@ -3,7 +3,9 @@
  *
  * Precedence (highest first):
  *   1. explicit env vars (RPC_URL, <NAME>_ADDRESS or NEXT_PUBLIC_<NAME>_ADDRESS)
- *   2. deployments/<chainId>.env at the repo root (written by Deploy.s.sol)
+ *   2. packages/contracts/deployments/<chainId>.env (written by Deploy.s.sol —
+ *      forge resolves fs paths from the foundry project root, so this is the
+ *      single source of truth; DEPLOYMENTS_DIR overrides it)
  *
  * chainId is taken from CHAIN_ID, else read live from the RPC.
  */
@@ -39,6 +41,7 @@ const ENV_KEYS: Record<ContractName | "usdt", string> = {
   sarrafRegistry: "SARRAF_REGISTRY_ADDRESS",
   memberRegistry: "MEMBER_REGISTRY_ADDRESS",
   noteVault: "NOTE_VAULT_ADDRESS",
+  escrow: "ESCROW_ADDRESS",
   usdt: "USDT_ADDRESS",
 };
 
@@ -82,7 +85,15 @@ export async function loadConfig(): Promise<IndexerConfig> {
     chainId = await probe.getChainId();
   }
 
-  const deploymentsDir = process.env.DEPLOYMENTS_DIR ?? resolve(REPO_ROOT, "deployments");
+  // Deploy.s.sol writes to the foundry project's own deployments dir; read from
+  // there directly so no manual copy to the repo root is needed. A repo-root
+  // deployments/ copy (if present) is still honoured as a fallback.
+  const contractsDeployments = resolve(REPO_ROOT, "packages/contracts/deployments");
+  const deploymentsDir =
+    process.env.DEPLOYMENTS_DIR ??
+    (existsSync(resolve(contractsDeployments, `${chainId}.env`))
+      ? contractsDeployments
+      : resolve(REPO_ROOT, "deployments"));
   const fileEnv = parseEnvFile(resolve(deploymentsDir, `${chainId}.env`));
 
   const addresses = {} as Record<ContractName | "usdt", `0x${string}`>;

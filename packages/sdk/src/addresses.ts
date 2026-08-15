@@ -18,6 +18,7 @@ export interface DovizirAddresses {
   insuranceFund: Hex;
   sarrafRegistry: Hex;
   noteVault: Hex;
+  escrow: Hex;
   usdt: Hex;
 }
 
@@ -39,6 +40,7 @@ export function getAddresses(): DovizirAddresses {
     insuranceFund: addr(process.env.NEXT_PUBLIC_INSURANCE_FUND_ADDRESS),
     sarrafRegistry: addr(process.env.NEXT_PUBLIC_SARRAF_REGISTRY_ADDRESS),
     noteVault: addr(process.env.NEXT_PUBLIC_NOTE_VAULT_ADDRESS),
+    escrow: addr(process.env.NEXT_PUBLIC_ESCROW_ADDRESS),
     usdt: addr(process.env.NEXT_PUBLIC_USDT_ADDRESS),
   };
 }

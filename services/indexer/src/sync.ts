@@ -12,6 +12,7 @@ import {
   sarrafRegistryAbi,
   memberRegistryAbi,
   noteVaultAbi,
+  escrowAbi,
 } from "@dovizir/sdk";
 import type { IndexerConfig } from "./config.js";
 import { makeClient } from "./config.js";
@@ -26,6 +27,8 @@ import {
 import type { ContractName, IndexedEvent } from "./types.js";
 import { applyOrderEvent } from "./ramp.js";
 import { findClaimedOnRampOrder, updateOrder } from "./ramp-store.js";
+import { statusFromEvent } from "./p2p.js";
+import { patchOrderFromChain, upsertCreatedOrder } from "./p2p-store.js";
 
 interface Source {
   name: ContractName;
@@ -44,6 +47,7 @@ export function buildSources(cfg: IndexerConfig): Source[] {
     ["sarrafRegistry", cfg.addresses.sarrafRegistry, sarrafRegistryAbi],
     ["memberRegistry", cfg.addresses.memberRegistry, memberRegistryAbi],
     ["noteVault", cfg.addresses.noteVault, noteVaultAbi],
+    ["escrow", cfg.addresses.escrow, escrowAbi],
   ];
   const ZERO = "0x0000000000000000000000000000000000000000";
   return specs
@@ -125,6 +129,7 @@ export async function syncOnce(deps: SyncDeps): Promise<bigint> {
       upsertEvents(db, batch);
       reconcileSerials(db, batch);
       settleOnRampOrders(db, batch);
+      applyEscrowEvents(db, batch);
     }
   }
 
@@ -162,6 +167,85 @@ function settleOnRampOrders(db: DB, batch: IndexedEvent[]): void {
     if (!order) continue;
     const next = applyOrderEvent(order.direction, order.status, "ISSUE_CONFIRMED");
     updateOrder(db, order.id, { status: next, issueTx: e.txHash }, now);
+  }
+}
+
+/**
+ * Mirror Escrow.sol (fiat-ramp §4) into the off-chain P2P order book. The chain
+ * is the source of truth: OrderCreated seeds the row; every later event patches
+ * the on-chain-derived columns (status, taker, receipt hash, deadlines, dispute
+ * outcome). Off-chain evidence (receipt blob, chat, bank details) is layered on
+ * top by the REST routes and never overwritten here.
+ */
+function applyEscrowEvents(db: DB, batch: IndexedEvent[]): void {
+  const now = Math.floor(Date.now() / 1000);
+  for (const e of batch) {
+    if (e.contract !== "escrow") continue;
+    const orderId = e.args.orderId;
+    if (orderId === undefined) continue;
+    switch (e.event) {
+      case "OrderCreated":
+        upsertCreatedOrder(
+          db,
+          {
+            orderId,
+            maker: e.args.maker,
+            arbiter: e.args.arbiter,
+            trancheId: e.args.trancheId,
+            usdtAmount: e.args.usdtAmount,
+            fiat: e.args.fiat,
+            fiatAmount: e.args.fiatAmount,
+            quoteHash: e.args.quoteHash,
+            paymentWindow: Number(e.args.paymentWindow),
+            createdBlock: e.blockNumber,
+          },
+          now,
+        );
+        break;
+      case "OrderFilled":
+        patchOrderFromChain(
+          db,
+          orderId,
+          { status: "MATCHED", taker: e.args.taker, paymentDeadline: Number(e.args.paymentDeadline) },
+          now,
+        );
+        break;
+      case "FiatClaimed":
+        patchOrderFromChain(
+          db,
+          orderId,
+          {
+            status: "FIAT_CLAIMED",
+            receiptHash: e.args.receiptHash,
+            confirmDeadline: Number(e.args.confirmDeadline),
+          },
+          now,
+        );
+        break;
+      case "OrderSettled":
+        patchOrderFromChain(db, orderId, { status: "SETTLED", settleTx: e.txHash }, now);
+        break;
+      case "OrderRefunded":
+        patchOrderFromChain(db, orderId, { status: "REFUNDED", settleTx: e.txHash }, now);
+        break;
+      case "DisputeRaised":
+        patchOrderFromChain(db, orderId, { status: "DISPUTED", disputeBy: e.args.by }, now);
+        break;
+      case "DisputeResolved": {
+        const toTaker = e.args.toTaker === "true";
+        patchOrderFromChain(
+          db,
+          orderId,
+          {
+            status: statusFromEvent("DisputeResolved", toTaker)!,
+            resolvedTo: toTaker ? "taker" : "maker",
+            settleTx: e.txHash,
+          },
+          now,
+        );
+        break;
+      }
+    }
   }
 }
 
