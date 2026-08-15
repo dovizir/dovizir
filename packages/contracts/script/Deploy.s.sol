@@ -53,9 +53,15 @@ contract Deploy is Script {
         // Deployer key: prefer PRIVATE_KEY env; otherwise fall back to the
         // --private-key / --sender the caller passed to `forge script`.
         uint256 pk = vm.envOr("PRIVATE_KEY", uint256(0));
+        // The deployer/maintainer address doubles as the escrow's backstop
+        // arbiter (fiat-ramp §4): a fallback dispute resolver that can only act
+        // after DISPUTE_TIMEOUT, so no dispute is ever permanently stranded.
+        address deployer;
         if (pk != 0) {
+            deployer = vm.addr(pk);
             vm.startBroadcast(pk);
         } else {
+            deployer = msg.sender;
             vm.startBroadcast();
         }
 
@@ -89,7 +95,7 @@ contract Deploy is Script {
         //    privileged role — makers `setApprovalForAll(escrow)` and lock IOU
         //    themselves; the arbiter is derived from the tranche at resolve
         //    time. It only needs the IOU address to custody + release tranches.
-        sys.escrow = new Escrow(IEscrowIou(address(sys.iou)));
+        sys.escrow = new Escrow(IEscrowIou(address(sys.iou)), deployer);
 
         vm.stopBroadcast();
 
@@ -108,6 +114,7 @@ contract Deploy is Script {
         console2.log("ReservePool      ", address(sys.pool));
         console2.log("NoteVault        ", address(sys.vault));
         console2.log("Escrow           ", address(sys.escrow));
+        console2.log("Escrow.backstop  ", sys.escrow.backstopArbiter());
     }
 
     function _write(System memory sys) internal {

@@ -8,6 +8,9 @@
 #   (b) DISPUTE fill → claim → raiseDispute → arbiter resolve(toTaker) pays the
 #               taker; a second order resolve(toMaker) refunds the maker.
 #   (c) TIMEOUT fill but no fiat → payment window elapses → maker cancel refunds.
+#   (d) BACKSTOP the tranche Sarraf never resolves a dispute; the protocol
+#               backstop arbiter resolves it after DISPUTE_TIMEOUT so the funds
+#               are never permanently stranded (too-early attempt reverts first).
 #
 # Setup reuses the M1 loop: a Sarraf deposits, certifies, onboards a maker +
 # taker, and issues IOU to the maker. The Sarraf is the arbiter of its own
@@ -42,6 +45,11 @@ MAKER=0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC     # sells IOU, wants fiat
 MAKER_KEY=0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
 TAKER=0x90F79bf6EB2c4f870365E785982E1f101E93b906     # has fiat, wants IOU
 TAKER_KEY=0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6
+# Protocol backstop arbiter == the deployer/maintainer key (anvil account 0),
+# which Deploy.s.sol passes to the Escrow constructor. Only resolves after the
+# dispute timeout; a fallback so no dispute is ever permanently stranded.
+BACKSTOP=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+BACKSTOP_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 
 DEPOSIT=1000000000000   # 1,000,000.000000 mUSDT backing
 ISSUE=1000000000        #     1,000.000000 IOU to the maker
@@ -106,6 +114,13 @@ OID="$(Cb "$ESCROW" 'nextOrderId()(uint256)')"
 S "$MAKER_KEY" "$ESCROW" 'createOrder(address,uint256,string,uint256,bytes32,uint64)' "$SARRAF" "$AMT" "IRR" "$FIAT" "$QUOTE" "$WINDOW"
 S "$TAKER_KEY" "$ESCROW" 'fillOrder(uint256)' "$OID"
 S "$TAKER_KEY" "$ESCROW" 'claimFiatPaid(uint256,bytes32)' "$OID" "$RCPT"
+# A taker cannot instant-dispute a clean claim — the maker-confirm window gates
+# it (stops the fill→claim(garbage)→dispute griefing lock).
+if cast send --rpc-url "$RPC" --private-key "$TAKER_KEY" "$ESCROW" 'raiseDispute(uint256)' "$OID" >/dev/null 2>&1
+then bad "taker instant-dispute should revert (confirm window)"; else ok "taker instant-dispute reverted (confirm window)"; fi
+# Warp past the confirm window (2 days) so the taker may now escalate.
+cast rpc --rpc-url "$RPC" evm_increaseTime 172801 >/dev/null
+cast rpc --rpc-url "$RPC" evm_mine >/dev/null
 S "$TAKER_KEY" "$ESCROW" 'raiseDispute(uint256)' "$OID"
 eq "order DISPUTED"               "$(status "$OID")" "6"
 # non-arbiter cannot resolve
@@ -145,6 +160,28 @@ cast rpc --rpc-url "$RPC" evm_mine >/dev/null
 S "$MAKER_KEY" "$ESCROW" 'cancel(uint256)' "$OID"
 eq "order REFUNDED"               "$(status "$OID")" "5"
 eq "maker made whole"             "$(iou_of "$MAKER")" "$MAKER_BEFORE"
+eq "escrow emptied"               "$(iou_of "$ESCROW")" "0"
+
+echo ""
+echo "== (d) BACKSTOP (dispute recoverable after timeout) ======================"
+OID="$(Cb "$ESCROW" 'nextOrderId()(uint256)')"
+TAKER_BEFORE="$(iou_of "$TAKER")"
+S "$MAKER_KEY" "$ESCROW" 'createOrder(address,uint256,string,uint256,bytes32,uint64)' "$SARRAF" "$AMT" "IRR" "$FIAT" "$QUOTE" "$WINDOW"
+S "$TAKER_KEY" "$ESCROW" 'fillOrder(uint256)' "$OID"
+S "$TAKER_KEY" "$ESCROW" 'claimFiatPaid(uint256,bytes32)' "$OID" "$RCPT"
+# Maker escalates (maker may dispute their own claimed order at any time).
+S "$MAKER_KEY" "$ESCROW" 'raiseDispute(uint256)' "$OID"
+eq "order DISPUTED"               "$(status "$OID")" "6"
+# The tranche Sarraf goes ABSENT and never resolves. Before the timeout the
+# backstop cannot act — its early attempt must revert.
+if cast send --rpc-url "$RPC" --private-key "$BACKSTOP_KEY" "$ESCROW" 'resolve(uint256,bool)' "$OID" true >/dev/null 2>&1
+then bad "backstop resolve before timeout should revert"; else ok "backstop resolve before timeout reverted"; fi
+# Warp past DISPUTE_TIMEOUT (7 days). Now the backstop can recover the funds.
+cast rpc --rpc-url "$RPC" evm_increaseTime 604801 >/dev/null
+cast rpc --rpc-url "$RPC" evm_mine >/dev/null
+S "$BACKSTOP_KEY" "$ESCROW" 'resolve(uint256,bool)' "$OID" true
+eq "order RESOLVED_TAKER (backstop)" "$(status "$OID")" "7"
+eq "taker awarded the IOU"        "$(iou_of "$TAKER")" "$((TAKER_BEFORE + AMT))"
 eq "escrow emptied"               "$(iou_of "$ESCROW")" "0"
 
 echo ""
