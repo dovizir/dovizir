@@ -35,13 +35,20 @@ contract PurchaseInsurance {
     /// (insurance reserve-requirement analog). 1_000 bps == 10%.
     uint16 public constant RESERVE_RATIO_BPS = 1_000;
 
+    /// Trust a shop falls back to when a non-delivery claim is proven against
+    /// it: fully secured, limit == bond. It must earn graduation again.
+    uint32 public constant BASELINE_TRUST_BPS = 10_000;
+
     // --------------------------------------------------------------- types
 
     struct Shop {
-        address sarraf; //   issuing sarraf who underwrote this shop
-        uint256 bond; //     USDT posted as first-loss capital
-        uint32 trustBps; //  multiplier over the bond (10_000 == 1.0x)
+        address sarraf; //        issuing sarraf who underwrote this shop
+        uint256 bond; //          USDT posted as first-loss capital
+        uint32 trustBps; //       multiplier over the bond (10_000 == 1.0x)
         bool registered;
+        uint256 dailyVolumeCap; // 0 == unenforced (card analog: velocity cap)
+        uint256 soldToday; //     rolling total inside the current day
+        uint64 dayStart; //       timestamp the current day window opened
     }
 
     enum Status {
@@ -76,6 +83,9 @@ contract PurchaseInsurance {
     uint256 public nextPurchaseId;
     mapping(uint256 => Purchase) internal _purchases;
 
+    /// Live covered exposure per shop: locks its bond while claims can land.
+    mapping(address => uint256) internal _shopExposure;
+
     /// Per-sarraf premium layers (their own cushion, slashable).
     mapping(address => uint256) public unearnedOf;
     mapping(address => uint256) public earnedOf;
@@ -107,6 +117,10 @@ contract PurchaseInsurance {
     );
     event Withdrawn(address indexed layer, uint256 amount);
     event MaintainerFunded(address indexed from, uint256 amount);
+    event DailyVolumeCapSet(address indexed shop, uint256 cap);
+    event TrustSet(address indexed shop, uint32 trustBps);
+    event BondToppedUp(address indexed shop, address indexed from, uint256 amount);
+    event BondReleased(address indexed shop, address indexed to, uint256 amount);
 
     constructor(
         IUsdt usdt_,
@@ -144,6 +158,23 @@ contract PurchaseInsurance {
         return (s.bond * s.trustBps) / BPS_DENOMINATOR;
     }
 
+    function dailyVolumeCapOf(address shop) external view returns (uint256) {
+        return _shops[shop].dailyVolumeCap;
+    }
+
+    /// @notice Volume sold inside the current rolling day, 0 once it has rolled.
+    function soldTodayOf(address shop) external view returns (uint256) {
+        Shop storage s = _shops[shop];
+        if (block.timestamp >= s.dayStart + 1 days) return 0;
+        return s.soldToday;
+    }
+
+    /// @notice Live covered exposure attributable to one shop -- what its bond
+    /// is currently standing behind.
+    function shopExposureOf(address shop) external view returns (uint256) {
+        return _shopExposure[shop];
+    }
+
     function purchaseOf(uint256 purchaseId) external view returns (Purchase memory) {
         return _purchases[purchaseId];
     }
@@ -158,11 +189,62 @@ contract PurchaseInsurance {
         require(trustBps > 0, "PI: zero trust");
         require(!_shops[shop].registered, "PI: already registered");
 
-        _shops[shop] =
-            Shop({sarraf: msg.sender, bond: bond, trustBps: trustBps, registered: true});
+        _shops[shop] = Shop({
+            sarraf: msg.sender,
+            bond: bond,
+            trustBps: trustBps,
+            registered: true,
+            dailyVolumeCap: 0,
+            soldToday: 0,
+            dayStart: uint64(block.timestamp)
+        });
 
         require(usdt.transferFrom(msg.sender, address(this), bond), "PI: bond transfer failed");
         emit ShopRegistered(shop, msg.sender, bond, trustBps);
+    }
+
+    /// @notice Velocity cap (card analog: max sales per day). 0 disables it.
+    function setDailyVolumeCap(address shop, uint256 cap) external {
+        _onlyUnderwriter(shop);
+        _shops[shop].dailyVolumeCap = cap;
+        emit DailyVolumeCapSet(shop, cap);
+    }
+
+    /// @notice Graduation: raise (or cut) a shop's multiplier over its bond.
+    function setTrust(address shop, uint32 trustBps) external {
+        _onlyUnderwriter(shop);
+        require(trustBps > 0, "PI: zero trust");
+        _shops[shop].trustBps = trustBps;
+        emit TrustSet(shop, trustBps);
+    }
+
+    /// @notice Add first-loss capital. Open to anyone -- the shop typically
+    /// funds its own bond, and either party may reinforce it after a slash.
+    function topUpBond(address shop, uint256 amount) external {
+        require(_shops[shop].registered, "PI: shop not registered");
+        require(amount > 0, "PI: zero amount");
+        _shops[shop].bond += amount;
+        require(usdt.transferFrom(msg.sender, address(this), amount), "PI: bond transfer failed");
+        emit BondToppedUp(shop, msg.sender, amount);
+    }
+
+    /// @notice Return bond to the underwriting sarraf. Locked while ANY covered
+    /// purchase is still live: the bond is the first-loss layer standing behind
+    /// exactly those purchases, so it cannot walk before their windows close.
+    function releaseBond(address shop, uint256 amount) external {
+        _onlyUnderwriter(shop);
+        require(amount > 0, "PI: zero amount");
+        require(_shopExposure[shop] == 0, "PI: bond locked");
+        Shop storage s = _shops[shop];
+        require(amount <= s.bond, "PI: over bond");
+        s.bond -= amount;
+        require(usdt.transfer(msg.sender, amount), "PI: release failed");
+        emit BondReleased(shop, msg.sender, amount);
+    }
+
+    function _onlyUnderwriter(address shop) internal view {
+        require(_shops[shop].registered, "PI: shop not registered");
+        require(msg.sender == _shops[shop].sarraf, "PI: not the underwriter");
     }
 
     // ----------------------------------------------------------- purchases
@@ -175,6 +257,17 @@ contract PurchaseInsurance {
         require(buyer != address(0), "PI: zero buyer");
         require(amount > 0, "PI: zero amount");
         require(amount <= maxExposure(msg.sender), "PI: over max invoice");
+
+        // Rolling daily window: reset the counter once a full day has passed.
+        if (block.timestamp >= s.dayStart + 1 days) {
+            s.dayStart = uint64(block.timestamp);
+            s.soldToday = 0;
+        }
+        s.soldToday += amount;
+        if (s.dailyVolumeCap > 0) {
+            require(s.soldToday <= s.dailyVolumeCap, "PI: over daily cap");
+        }
+        _shopExposure[msg.sender] += amount;
 
         uint256 premium = (amount * PREMIUM_BPS) / BPS_DENOMINATOR;
         uint256 half = premium / 2;
@@ -240,6 +333,7 @@ contract PurchaseInsurance {
 
         outstandingExposureOf[p.sarraf] -= p.amount;
         outstandingExposureMaintainer -= p.amount;
+        _shopExposure[p.shop] -= p.amount;
 
         p.status = Status.SETTLED;
     }
@@ -277,8 +371,13 @@ contract PurchaseInsurance {
         // exposure has crystallised into an actual paid claim.
         outstandingExposureOf[p.sarraf] -= p.amount;
         outstandingExposureMaintainer -= p.amount;
+        _shopExposure[p.shop] -= p.amount;
 
         _payWaterfall(p);
+        // Discipline: a proven non-delivery resets the shop to fully secured.
+        // It must earn graduation back on clean history.
+        _shops[p.shop].trustBps = BASELINE_TRUST_BPS;
+        emit TrustSet(p.shop, BASELINE_TRUST_BPS);
         p.status = Status.REFUNDED;
 
         require(usdt.transfer(p.buyer, p.amount), "PI: refund failed");

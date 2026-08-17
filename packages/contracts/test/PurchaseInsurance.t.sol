@@ -428,4 +428,132 @@ contract PurchaseInsuranceTest is ArmBase {
             "no wei created or lost in the 50/50 split"
         );
     }
+
+    // -------------------------------------------- 7. velocity (sales/day)
+
+    function test_dailyVolume_capBlocksBeyondLimit() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        vm.prank(sarrafA);
+        ins.setDailyVolumeCap(shopA, 1_500e6);
+
+        _purchase(shopA, 1_000e6); // ok: 1000 <= 1500
+        uint256 premium = (600e6 * 90) / 10_000;
+        usdt.mint(shopA, premium);
+        vm.startPrank(shopA);
+        usdt.approve(address(ins), premium);
+        vm.expectRevert(bytes("PI: over daily cap"));
+        ins.recordPurchase(buyer, 600e6); // 1000 + 600 > 1500
+        vm.stopPrank();
+    }
+
+    function test_dailyVolume_rollsOverNextDay() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        vm.prank(sarrafA);
+        ins.setDailyVolumeCap(shopA, 1_500e6);
+        _purchase(shopA, 1_000e6);
+
+        vm.warp(block.timestamp + 1 days);
+        _purchase(shopA, 1_000e6); // fresh window
+        assertEq(ins.soldTodayOf(shopA), 1_000e6, "counter reset with the new day");
+    }
+
+    function test_dailyVolume_zeroCapMeansUnlimited() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        _purchase(shopA, 1_000e6);
+        _purchase(shopA, 1_000e6);
+        assertEq(ins.soldTodayOf(shopA), 2_000e6, "no cap set => not enforced");
+    }
+
+    function test_setDailyVolumeCap_onlyUnderwritingSarraf_reverts() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        vm.prank(sarrafB);
+        vm.expectRevert(bytes("PI: not the underwriter"));
+        ins.setDailyVolumeCap(shopA, 1e6);
+    }
+
+    // ------------------------------------------- 8. bond top-up / release
+
+    function test_topUpBond_raisesExposureCeiling() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        usdt.mint(sarrafA, BOND);
+        vm.startPrank(sarrafA);
+        usdt.approve(address(ins), BOND);
+        ins.topUpBond(shopA, BOND);
+        vm.stopPrank();
+
+        assertEq(ins.bondOf(shopA), BOND * 2, "bond grew");
+        assertEq(ins.maxExposure(shopA), BOND * 2, "ceiling follows the bond");
+    }
+
+    function test_topUpBond_anyoneMayFundIt() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        // The shop itself tops up its own bond.
+        usdt.mint(shopA, 500e6);
+        vm.startPrank(shopA);
+        usdt.approve(address(ins), 500e6);
+        ins.topUpBond(shopA, 500e6);
+        vm.stopPrank();
+        assertEq(ins.bondOf(shopA), BOND + 500e6);
+    }
+
+    function test_releaseBond_blockedWhileCoverageIsLive() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        _purchase(shopA, PURCHASE); // live exposure on this shop
+
+        vm.prank(sarrafA);
+        vm.expectRevert(bytes("PI: bond locked"));
+        ins.releaseBond(shopA, 1);
+    }
+
+    function test_releaseBond_allowedOnceAllCoverageClosed() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        uint256 id = _purchase(shopA, PURCHASE);
+        vm.prank(buyer);
+        ins.confirmReceipt(id);
+
+        uint256 before = usdt.balanceOf(sarrafA);
+        vm.prank(sarrafA);
+        ins.releaseBond(shopA, BOND);
+
+        assertEq(usdt.balanceOf(sarrafA) - before, BOND, "bond returned to the underwriter");
+        assertEq(ins.bondOf(shopA), 0);
+    }
+
+    function test_releaseBond_onlyUnderwritingSarraf_reverts() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        vm.prank(sarrafB);
+        vm.expectRevert(bytes("PI: not the underwriter"));
+        ins.releaseBond(shopA, 1);
+    }
+
+    // ------------------------------- 9. trust graduation and discipline
+
+    function test_setTrust_raisesCeilingWithoutMoreBond() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        vm.prank(sarrafA);
+        ins.setTrust(shopA, 30_000); // graduated after clean history
+        assertEq(ins.maxExposure(shopA), BOND * 3, "trust alone lifts the ceiling");
+    }
+
+    function test_upheldClaim_cutsTrustBackToBaseline() public {
+        _registerShop(sarrafA, shopA, BOND, 30_000);
+        uint256 id = _purchase(shopA, PURCHASE);
+        vm.prank(buyer);
+        ins.fileClaim(id);
+        vm.prank(adjudicator);
+        ins.ruleClaim(id, true);
+
+        assertEq(ins.trustBpsOf(shopA), 10_000, "a proven non-delivery resets trust to 1.0x");
+    }
+
+    function test_rejectedClaim_leavesTrustIntact() public {
+        _registerShop(sarrafA, shopA, BOND, 30_000);
+        uint256 id = _purchase(shopA, PURCHASE);
+        vm.prank(buyer);
+        ins.fileClaim(id);
+        vm.prank(adjudicator);
+        ins.ruleClaim(id, false);
+
+        assertEq(ins.trustBpsOf(shopA), 30_000, "an unproven claim is not punishment");
+    }
 }
