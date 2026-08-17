@@ -91,5 +91,5 @@ proposals:
     proposed_by: refine-agent
     rationale: The deployer's function signature is fixed by the plug-in pattern in `packages/acceptance/README.md`, and the six contracts' signatures are fixed by `IDovizir.sol`. Proposing a shape here would only create a second, drift-prone copy of frozen text.
 cost:
-  total_usd: 1.8962
-  last_updated: 2026-08-17T12:38:03.441Z
+  total_usd: 3.868
+  last_updated: 2026-08-17T22:53:51.880Z
