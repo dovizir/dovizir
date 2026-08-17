@@ -39,6 +39,9 @@ contract PurchaseInsurance {
     /// it: fully secured, limit == bond. It must earn graduation again.
     uint32 public constant BASELINE_TRUST_BPS = 10_000;
 
+    /// How long a buyer has to escalate a rejected claim to the backstop.
+    uint64 public constant APPEAL_WINDOW = 14 days;
+
     // --------------------------------------------------------------- types
 
     struct Shop {
@@ -56,7 +59,9 @@ contract PurchaseInsurance {
         COVERED, //    inside the window, premium unearned
         SETTLED, //    earned: window passed or buyer confirmed
         DISPUTED, //   claim filed, awaiting a ruling
-        REFUNDED //    claim upheld and paid from the waterfall
+        REFUNDED, //   claim upheld and paid from the waterfall
+        REJECTED, //   claim denied; still appealable to the backstop
+        APPEALED //    escalated; awaiting the backstop's ruling
     }
 
     struct Purchase {
@@ -66,6 +71,7 @@ contract PurchaseInsurance {
         uint256 amount;
         uint256 premium;
         uint64 coveredUntil;
+        uint64 appealUntil; //  set when a claim is rejected
         Status status;
     }
 
@@ -77,6 +83,9 @@ contract PurchaseInsurance {
     address public immutable maintainer;
     /// Overseeing body that rules on disputes. Never the earning sarraf.
     address public immutable adjudicator;
+    /// Neutral appeal authority. Hears escalations of rejected claims; the
+    /// adjudicator cannot hear an appeal of its own ruling.
+    address public immutable backstopArbiter;
 
     mapping(address => Shop) internal _shops;
 
@@ -91,6 +100,10 @@ contract PurchaseInsurance {
     mapping(address => uint256) public earnedOf;
     /// Sum of live covered purchase value attributable to a sarraf's layer.
     mapping(address => uint256) public outstandingExposureOf;
+
+    /// Underwriting failures: incremented when a loss pierces a shop's bond
+    /// and reaches the sarraf's own layer. Basis for maintainer discipline.
+    mapping(address => uint256) public strikesOf;
 
     /// Senior maintainer layer.
     uint256 public unearnedMaintainer;
@@ -121,20 +134,28 @@ contract PurchaseInsurance {
     event TrustSet(address indexed shop, uint32 trustBps);
     event BondToppedUp(address indexed shop, address indexed from, uint256 amount);
     event BondReleased(address indexed shop, address indexed to, uint256 amount);
+    event Appealed(uint256 indexed purchaseId, address indexed buyer);
+    event AppealRuled(uint256 indexed purchaseId, bool upheld);
+    event SarrafStrike(address indexed sarraf, uint256 strikes);
+    event SarrafPenalized(address indexed sarraf, uint256 amount);
 
     constructor(
         IUsdt usdt_,
         SarrafRegistry sarrafRegistry_,
         address maintainer_,
-        address adjudicator_
+        address adjudicator_,
+        address backstopArbiter_
     ) {
         require(address(usdt_) != address(0), "PI: zero usdt");
         require(maintainer_ != address(0), "PI: zero maintainer");
         require(adjudicator_ != address(0), "PI: zero adjudicator");
+        require(backstopArbiter_ != address(0), "PI: zero backstop");
+        require(backstopArbiter_ != adjudicator_, "PI: backstop must be independent");
         usdt = usdt_;
         sarrafRegistry = sarrafRegistry_;
         maintainer = maintainer_;
         adjudicator = adjudicator_;
+        backstopArbiter = backstopArbiter_;
     }
 
     // --------------------------------------------------------------- views
@@ -290,6 +311,7 @@ contract PurchaseInsurance {
             amount: amount,
             premium: premium,
             coveredUntil: coveredUntil,
+            appealUntil: 0,
             status: Status.COVERED
         });
 
@@ -361,8 +383,11 @@ contract PurchaseInsurance {
         require(msg.sender == adjudicator, "PI: not adjudicator");
 
         if (!upheld) {
-            // No loss: the premium is earned and coverage closes.
+            // No loss: the premium is earned and coverage closes -- but the
+            // buyer may still escalate to the neutral backstop.
             _settle(p);
+            p.status = Status.REJECTED;
+            p.appealUntil = uint64(block.timestamp) + APPEAL_WINDOW;
             emit ClaimRuled(purchaseId, false, 0);
             return;
         }
@@ -373,15 +398,48 @@ contract PurchaseInsurance {
         outstandingExposureMaintainer -= p.amount;
         _shopExposure[p.shop] -= p.amount;
 
+        _uphold(p);
+        emit ClaimRuled(purchaseId, true, p.amount);
+    }
+
+    /// Absorb the loss, discipline the shop, and make the buyer whole.
+    function _uphold(Purchase storage p) internal {
         _payWaterfall(p);
         // Discipline: a proven non-delivery resets the shop to fully secured.
         // It must earn graduation back on clean history.
         _shops[p.shop].trustBps = BASELINE_TRUST_BPS;
         emit TrustSet(p.shop, BASELINE_TRUST_BPS);
         p.status = Status.REFUNDED;
-
         require(usdt.transfer(p.buyer, p.amount), "PI: refund failed");
-        emit ClaimRuled(purchaseId, true, p.amount);
+    }
+
+    // ------------------------------------------------------------- appeals
+
+    /// @notice Escalate a rejected claim to the neutral backstop. This is the
+    /// customer-facing promise that the ruling is not the last word.
+    function appeal(uint256 purchaseId) external {
+        Purchase storage p = _purchases[purchaseId];
+        require(p.status == Status.REJECTED, "PI: not rejected");
+        require(msg.sender == p.buyer, "PI: not buyer");
+        require(block.timestamp <= p.appealUntil, "PI: appeal window closed");
+        p.status = Status.APPEALED;
+        emit Appealed(purchaseId, msg.sender);
+    }
+
+    /// @notice The backstop's ruling is final. Overturning a rejection pays the
+    /// buyer from the same waterfall -- never from the arbiter's pocket.
+    function ruleAppeal(uint256 purchaseId, bool upheld) external {
+        Purchase storage p = _purchases[purchaseId];
+        require(p.status == Status.APPEALED, "PI: not appealed");
+        require(msg.sender == backstopArbiter, "PI: not backstop");
+        require(msg.sender != p.sarraf, "PI: recused");
+
+        if (upheld) {
+            _uphold(p);
+        } else {
+            p.status = Status.SETTLED; // the rejection stands, finally
+        }
+        emit AppealRuled(purchaseId, upheld);
     }
 
     /// Sequential, junior to senior: the shop's bond (closest to the fault),
@@ -404,6 +462,11 @@ contract PurchaseInsurance {
         // 2. the issuing sarraf's layer — unearned first, then earned.
         uint256 fromSarraf = _drain(p.sarraf, remaining);
         remaining -= fromSarraf;
+        if (fromSarraf > 0) {
+            // The bond did not hold: this is an underwriting failure.
+            strikesOf[p.sarraf] += 1;
+            emit SarrafStrike(p.sarraf, strikesOf[p.sarraf]);
+        }
         if (remaining == 0) {
             emit LossAbsorbed(p.shop, fromBond, fromSarraf, 0);
             return;
@@ -456,6 +519,20 @@ contract PurchaseInsurance {
         earnedMaintainer += amount;
         require(usdt.transferFrom(msg.sender, address(this), amount), "PI: funding failed");
         emit MaintainerFunded(msg.sender, amount);
+    }
+
+    /// @notice The maintainer disciplines a sarraf whose underwriting failed:
+    /// a penalty from their EARNED premiums into the senior layer (reinsurer
+    /// disciplining a sloppy primary insurer). Unearned premium is out of
+    /// reach -- it is still owed to coverage. De-certification itself lives in
+    /// the SarrafRegistry; this is the monetary half of the chain.
+    function penalizeSarraf(address sarraf, uint256 amount) external {
+        require(msg.sender == maintainer, "PI: not maintainer");
+        require(amount > 0, "PI: zero amount");
+        require(amount <= earnedOf[sarraf], "PI: over earned");
+        earnedOf[sarraf] -= amount;
+        earnedMaintainer += amount;
+        emit SarrafPenalized(sarraf, amount);
     }
 
     // ---------------------------------------------------------- withdrawal

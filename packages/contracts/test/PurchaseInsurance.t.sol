@@ -16,6 +16,7 @@ contract PurchaseInsuranceTest is ArmBase {
     address internal buyer;
     address internal maintainer;
     address internal adjudicator; // overseeing body (not the earning sarraf)
+    address internal backstop; //   neutral appeal authority
 
     uint256 internal constant BOND = 10_000e6;
     uint256 internal constant PURCHASE = 1_000e6;
@@ -31,9 +32,10 @@ contract PurchaseInsuranceTest is ArmBase {
         buyer = makeAddr("buyer");
         maintainer = makeAddr("maintainer");
         adjudicator = makeAddr("adjudicator");
+        backstop = makeAddr("backstop");
 
         ins = new PurchaseInsurance(
-            IUsdt(address(usdt)), sarrafRegistry, maintainer, adjudicator
+            IUsdt(address(usdt)), sarrafRegistry, maintainer, adjudicator, backstop
         );
     }
 
@@ -53,6 +55,14 @@ contract PurchaseInsuranceTest is ArmBase {
         vm.startPrank(shop);
         usdt.approve(address(ins), premium);
         id = ins.recordPurchase(buyer, amount);
+        vm.stopPrank();
+    }
+
+    function _fundBackstop(uint256 amount) internal {
+        usdt.mint(maintainer, amount);
+        vm.startPrank(maintainer);
+        usdt.approve(address(ins), amount);
+        ins.fundMaintainer(amount);
         vm.stopPrank();
     }
 
@@ -555,5 +565,133 @@ contract PurchaseInsuranceTest is ArmBase {
         ins.ruleClaim(id, false);
 
         assertEq(ins.trustBpsOf(shopA), 30_000, "an unproven claim is not punishment");
+    }
+
+    // ------------------------------------- 10. appeals to the backstop
+
+    /// The customer-facing promise: "you can escalate". A rejected claim is
+    /// appealable to a neutral backstop that the earning sarraf does not pick.
+    function _rejectedClaim() internal returns (uint256 id) {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        id = _purchase(shopA, PURCHASE);
+        vm.prank(buyer);
+        ins.fileClaim(id);
+        vm.prank(adjudicator);
+        ins.ruleClaim(id, false);
+    }
+
+    function test_appeal_backstopOverturnsRejection_andPaysBuyer() public {
+        uint256 id = _rejectedClaim();
+        assertEq(usdt.balanceOf(buyer), 0, "rejected: nothing paid yet");
+
+        vm.prank(buyer);
+        ins.appeal(id);
+        vm.prank(backstop);
+        ins.ruleAppeal(id, true);
+
+        assertEq(usdt.balanceOf(buyer), PURCHASE, "overturned on appeal: buyer refunded");
+        assertEq(ins.bondOf(shopA), BOND - PURCHASE, "waterfall still starts at the bond");
+        assertEq(ins.trustBpsOf(shopA), 10_000, "trust reset on a proven non-delivery");
+    }
+
+    function test_appeal_backstopUpholdsRejection_paysNothing() public {
+        uint256 id = _rejectedClaim();
+        vm.prank(buyer);
+        ins.appeal(id);
+        vm.prank(backstop);
+        ins.ruleAppeal(id, false);
+
+        assertEq(usdt.balanceOf(buyer), 0, "rejection stands");
+        assertEq(ins.bondOf(shopA), BOND, "bond intact");
+    }
+
+    function test_appeal_onlyBuyer_reverts() public {
+        uint256 id = _rejectedClaim();
+        vm.prank(shopA);
+        vm.expectRevert(bytes("PI: not buyer"));
+        ins.appeal(id);
+    }
+
+    function test_appeal_afterAppealWindow_reverts() public {
+        uint256 id = _rejectedClaim();
+        vm.warp(block.timestamp + 14 days + 1);
+        vm.prank(buyer);
+        vm.expectRevert(bytes("PI: appeal window closed"));
+        ins.appeal(id);
+    }
+
+    function test_ruleAppeal_onlyBackstop_reverts() public {
+        uint256 id = _rejectedClaim();
+        vm.prank(buyer);
+        ins.appeal(id);
+
+        vm.prank(adjudicator); // the original ruler cannot hear its own appeal
+        vm.expectRevert(bytes("PI: not backstop"));
+        ins.ruleAppeal(id, true);
+    }
+
+    function test_appeal_cannotBeFiledTwice() public {
+        uint256 id = _rejectedClaim();
+        vm.prank(buyer);
+        ins.appeal(id);
+        vm.prank(buyer);
+        vm.expectRevert(bytes("PI: not rejected"));
+        ins.appeal(id);
+    }
+
+    // ---------------------------------------- 11. sarraf-level discipline
+
+    /// A loss that only the shop's bond absorbs is not the sarraf's failure.
+    function test_lossWithinBond_recordsNoStrike() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        uint256 id = _purchase(shopA, PURCHASE);
+        vm.prank(buyer);
+        ins.fileClaim(id);
+        vm.prank(adjudicator);
+        ins.ruleClaim(id, true);
+
+        assertEq(ins.strikesOf(sarrafA), 0, "bond covered it: underwriting held");
+    }
+
+    /// A loss that pierces the bond and reaches the sarraf's own layer IS.
+    function test_lossPiercingBond_recordsStrikeAgainstTheSarraf() public {
+        _fundBackstop(10e6); // senior layer capitalised so the claim can pay
+        _registerShop(sarrafA, shopA, 1e6, 20_000); // thin bond, graduated trust
+        uint256 id = _purchase(shopA, 1.2e6);
+        vm.prank(buyer);
+        ins.fileClaim(id);
+        vm.prank(adjudicator);
+        ins.ruleClaim(id, true);
+
+        assertEq(ins.strikesOf(sarrafA), 1, "bad underwriting is recorded against the sarraf");
+    }
+
+    function test_penalizeSarraf_movesEarnedToTheMaintainerLayer() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        uint256 id = _purchase(shopA, PURCHASE);
+        vm.prank(buyer);
+        ins.confirmReceipt(id); // sarrafA earns 4.5e6
+
+        uint256 maintainerBefore = ins.earnedMaintainer();
+        vm.prank(maintainer);
+        ins.penalizeSarraf(sarrafA, 1e6);
+
+        assertEq(ins.earnedOf(sarrafA), PREMIUM / 2 - 1e6, "penalty taken from earned premiums");
+        assertEq(ins.earnedMaintainer(), maintainerBefore + 1e6, "and it funds the backstop");
+    }
+
+    function test_penalizeSarraf_onlyMaintainer_reverts() public {
+        vm.prank(adjudicator);
+        vm.expectRevert(bytes("PI: not maintainer"));
+        ins.penalizeSarraf(sarrafA, 1);
+    }
+
+    function test_penalizeSarraf_cannotExceedEarned_reverts() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        _purchase(shopA, PURCHASE); // unearned only
+
+        vm.prank(maintainer);
+        vm.expectRevert(bytes("PI: over earned"));
+        ins.penalizeSarraf(sarrafA, 1);
     }
 }
