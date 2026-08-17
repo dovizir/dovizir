@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {IUsdt} from "./ReservePool.sol";
 import {SarrafRegistry} from "./SarrafRegistry.sol";
 
 interface IIou1155 {
@@ -45,9 +44,6 @@ contract PurchaseInsurance {
     /// it: fully secured, limit == bond. It must earn graduation again.
     uint32 public constant BASELINE_TRUST_BPS = 10_000;
 
-    /// How long a buyer has to escalate a rejected claim to the backstop.
-    uint64 public constant APPEAL_WINDOW = 14 days;
-
     // --------------------------------------------------------------- types
 
     struct Shop {
@@ -66,8 +62,7 @@ contract PurchaseInsurance {
         SETTLED, //    earned: window passed or buyer confirmed
         DISPUTED, //   claim filed, awaiting a ruling
         REFUNDED, //   claim upheld and paid from the waterfall
-        REJECTED, //   claim denied; still appealable to the backstop
-        APPEALED //    escalated; awaiting the backstop's ruling
+        REJECTED //    claim denied by the adjudicator; final
     }
 
     struct Purchase {
@@ -77,22 +72,17 @@ contract PurchaseInsurance {
         uint256 amount;
         uint256 premium;
         uint64 coveredUntil;
-        uint64 appealUntil; //  set when a claim is rejected
         Status status;
     }
 
     // --------------------------------------------------------------- state
 
-    IUsdt public immutable usdt;
     IIou1155 public immutable iou;
     SarrafRegistry public immutable sarrafRegistry;
     /// Senior backstop layer, and the party that disciplines sloppy sarrafs.
     address public immutable maintainer;
     /// Overseeing body that rules on disputes. Never the earning sarraf.
     address public immutable adjudicator;
-    /// Neutral appeal authority. Hears escalations of rejected claims; the
-    /// adjudicator cannot hear an appeal of its own ruling.
-    address public immutable backstopArbiter;
 
     mapping(address => Shop) internal _shops;
 
@@ -112,10 +102,12 @@ contract PurchaseInsurance {
     /// and reaches the sarraf's own layer. Basis for maintainer discipline.
     mapping(address => uint256) public strikesOf;
 
-    /// Senior maintainer layer.
-    uint256 public unearnedMaintainer;
-    uint256 public earnedMaintainer;
-    uint256 public outstandingExposureMaintainer;
+    /// Senior maintainer layer. It collects premiums from EVERY sarraf, so it
+    /// holds a basket: balances are per tranche, and a claim on one sarraf's
+    /// shop can only be paid in that sarraf's own paper.
+    mapping(uint256 => uint256) public unearnedMaintainerOf;
+    mapping(uint256 => uint256) public earnedMaintainerOf;
+    mapping(uint256 => uint256) public outstandingExposureMaintainerOf;
 
     // -------------------------------------------------------------- events
 
@@ -141,34 +133,30 @@ contract PurchaseInsurance {
     event TrustSet(address indexed shop, uint32 trustBps);
     event BondToppedUp(address indexed shop, address indexed from, uint256 amount);
     event BondReleased(address indexed shop, address indexed to, uint256 amount);
-    event Appealed(uint256 indexed purchaseId, address indexed buyer);
-    event AppealRuled(uint256 indexed purchaseId, bool upheld);
     event SarrafStrike(address indexed sarraf, uint256 strikes);
     event SarrafPenalized(address indexed sarraf, uint256 amount);
 
     constructor(
-        IUsdt usdt_,
         IIou1155 iou_,
         SarrafRegistry sarrafRegistry_,
         address maintainer_,
-        address adjudicator_,
-        address backstopArbiter_
+        address adjudicator_
     ) {
-        require(address(usdt_) != address(0), "PI: zero usdt");
         require(address(iou_) != address(0), "PI: zero iou");
         require(maintainer_ != address(0), "PI: zero maintainer");
         require(adjudicator_ != address(0), "PI: zero adjudicator");
-        require(backstopArbiter_ != address(0), "PI: zero backstop");
-        require(backstopArbiter_ != adjudicator_, "PI: backstop must be independent");
-        usdt = usdt_;
         iou = iou_;
         sarrafRegistry = sarrafRegistry_;
         maintainer = maintainer_;
         adjudicator = adjudicator_;
-        backstopArbiter = backstopArbiter_;
     }
 
     // --------------------------------------------------------------- views
+
+    /// The tranche a shop settles in: its own sarraf's paper.
+    function trancheOf(address shop) public view returns (uint256) {
+        return uint256(uint160(_shops[shop].sarraf));
+    }
 
     function bondOf(address shop) external view returns (uint256) {
         return _shops[shop].bond;
@@ -230,7 +218,9 @@ contract PurchaseInsurance {
             dayStart: uint64(block.timestamp)
         });
 
-        require(usdt.transferFrom(msg.sender, address(this), bond), "PI: bond transfer failed");
+        // The bond is posted in the sarraf's own IOU: a shop owner funds it by
+        // handing local currency across the counter, with no crypto rails.
+        iou.safeTransferFrom(msg.sender, address(this), uint256(uint160(msg.sender)), bond, "");
         emit ShopRegistered(shop, msg.sender, bond, trustBps);
     }
 
@@ -255,7 +245,7 @@ contract PurchaseInsurance {
         require(_shops[shop].registered, "PI: shop not registered");
         require(amount > 0, "PI: zero amount");
         _shops[shop].bond += amount;
-        require(usdt.transferFrom(msg.sender, address(this), amount), "PI: bond transfer failed");
+        iou.safeTransferFrom(msg.sender, address(this), trancheOf(shop), amount, "");
         emit BondToppedUp(shop, msg.sender, amount);
     }
 
@@ -269,7 +259,7 @@ contract PurchaseInsurance {
         Shop storage s = _shops[shop];
         require(amount <= s.bond, "PI: over bond");
         s.bond -= amount;
-        require(usdt.transfer(msg.sender, amount), "PI: release failed");
+        iou.safeTransferFrom(address(this), msg.sender, trancheOf(shop), amount, "");
         emit BondReleased(shop, msg.sender, amount);
     }
 
@@ -288,8 +278,9 @@ contract PurchaseInsurance {
     function payShop(address shop, uint256 amount) external returns (uint256 purchaseId) {
         address sarraf = _shops[shop].sarraf;
         require(_shops[shop].registered, "PI: shop not registered");
-        purchaseId = _record(shop, msg.sender, amount);
+        // Pay the shop first, so the premium is drawn from money it now holds.
         iou.safeTransferFrom(msg.sender, shop, uint256(uint160(sarraf)), amount, "");
+        purchaseId = _record(shop, msg.sender, amount);
     }
 
     /// @notice Shop-reported purchase, for settlement rails that do not clear
@@ -326,11 +317,12 @@ contract PurchaseInsurance {
         address sarraf = s.sarraf;
         // Odd wei goes to the sarraf's layer, mirroring InsuranceFund's frozen
         // rounding rule (maintenance takes the floor half).
+        uint256 tranche = uint256(uint160(sarraf));
         unearnedOf[sarraf] += premium - half;
-        unearnedMaintainer += half;
+        unearnedMaintainerOf[tranche] += half;
 
         outstandingExposureOf[sarraf] += amount;
-        outstandingExposureMaintainer += amount;
+        outstandingExposureMaintainerOf[tranche] += amount;
 
         purchaseId = ++nextPurchaseId;
         uint64 coveredUntil = uint64(block.timestamp) + COVERAGE_WINDOW;
@@ -341,12 +333,12 @@ contract PurchaseInsurance {
             amount: amount,
             premium: premium,
             coveredUntil: coveredUntil,
-            appealUntil: 0,
             status: Status.COVERED
         });
 
-        // The premium always comes from the SELLER, whichever rail settled it.
-        require(usdt.transferFrom(shop, address(this), premium), "PI: premium failed");
+        // The premium always comes from the SELLER, whichever rail settled it,
+        // in the same paper the sale settled in.
+        iou.safeTransferFrom(shop, address(this), tranche, premium, "");
         emit PurchaseRecorded(purchaseId, shop, buyer, amount, premium, coveredUntil);
     }
 
@@ -379,13 +371,14 @@ contract PurchaseInsurance {
         uint256 half = p.premium / 2;
         uint256 sarrafCut = p.premium - half;
 
+        uint256 tranche = uint256(uint160(p.sarraf));
         unearnedOf[p.sarraf] -= sarrafCut;
         earnedOf[p.sarraf] += sarrafCut;
-        unearnedMaintainer -= half;
-        earnedMaintainer += half;
+        unearnedMaintainerOf[tranche] -= half;
+        earnedMaintainerOf[tranche] += half;
 
         outstandingExposureOf[p.sarraf] -= p.amount;
-        outstandingExposureMaintainer -= p.amount;
+        outstandingExposureMaintainerOf[tranche] -= p.amount;
         _shopExposure[p.shop] -= p.amount;
 
         p.status = Status.SETTLED;
@@ -414,11 +407,9 @@ contract PurchaseInsurance {
         require(msg.sender == adjudicator, "PI: not adjudicator");
 
         if (!upheld) {
-            // No loss: the premium is earned and coverage closes -- but the
-            // buyer may still escalate to the neutral backstop.
+            // No loss: the premium is earned and coverage closes.
             _settle(p);
             p.status = Status.REJECTED;
-            p.appealUntil = uint64(block.timestamp) + APPEAL_WINDOW;
             emit ClaimRuled(purchaseId, false, 0);
             return;
         }
@@ -426,7 +417,7 @@ contract PurchaseInsurance {
         // Release the cushion this purchase held before absorbing the loss: the
         // exposure has crystallised into an actual paid claim.
         outstandingExposureOf[p.sarraf] -= p.amount;
-        outstandingExposureMaintainer -= p.amount;
+        outstandingExposureMaintainerOf[uint256(uint160(p.sarraf))] -= p.amount;
         _shopExposure[p.shop] -= p.amount;
 
         _uphold(p);
@@ -441,36 +432,8 @@ contract PurchaseInsurance {
         _shops[p.shop].trustBps = BASELINE_TRUST_BPS;
         emit TrustSet(p.shop, BASELINE_TRUST_BPS);
         p.status = Status.REFUNDED;
-        require(usdt.transfer(p.buyer, p.amount), "PI: refund failed");
-    }
-
-    // ------------------------------------------------------------- appeals
-
-    /// @notice Escalate a rejected claim to the neutral backstop. This is the
-    /// customer-facing promise that the ruling is not the last word.
-    function appeal(uint256 purchaseId) external {
-        Purchase storage p = _purchases[purchaseId];
-        require(p.status == Status.REJECTED, "PI: not rejected");
-        require(msg.sender == p.buyer, "PI: not buyer");
-        require(block.timestamp <= p.appealUntil, "PI: appeal window closed");
-        p.status = Status.APPEALED;
-        emit Appealed(purchaseId, msg.sender);
-    }
-
-    /// @notice The backstop's ruling is final. Overturning a rejection pays the
-    /// buyer from the same waterfall -- never from the arbiter's pocket.
-    function ruleAppeal(uint256 purchaseId, bool upheld) external {
-        Purchase storage p = _purchases[purchaseId];
-        require(p.status == Status.APPEALED, "PI: not appealed");
-        require(msg.sender == backstopArbiter, "PI: not backstop");
-        require(msg.sender != p.sarraf, "PI: recused");
-
-        if (upheld) {
-            _uphold(p);
-        } else {
-            p.status = Status.SETTLED; // the rejection stands, finally
-        }
-        emit AppealRuled(purchaseId, upheld);
+        // Refunded in the same paper they paid with: made whole in their unit.
+        iou.safeTransferFrom(address(this), p.buyer, uint256(uint160(p.sarraf)), p.amount, "");
     }
 
     /// Sequential, junior to senior: the shop's bond (closest to the fault),
@@ -504,17 +467,18 @@ contract PurchaseInsurance {
         }
 
         // 3. maintainer backstop — unearned first, then earned.
+        uint256 tranche = uint256(uint160(p.sarraf));
         uint256 fromMaintainer;
-        uint256 mu = unearnedMaintainer;
+        uint256 mu = unearnedMaintainerOf[tranche];
         uint256 takeU = mu < remaining ? mu : remaining;
-        unearnedMaintainer = mu - takeU;
+        unearnedMaintainerOf[tranche] = mu - takeU;
         remaining -= takeU;
         fromMaintainer = takeU;
 
         if (remaining > 0) {
-            uint256 me = earnedMaintainer;
+            uint256 me = earnedMaintainerOf[tranche];
             require(me >= remaining, "PI: fund insolvent");
-            earnedMaintainer = me - remaining;
+            earnedMaintainerOf[tranche] = me - remaining;
             fromMaintainer += remaining;
             remaining = 0;
         }
@@ -545,10 +509,10 @@ contract PurchaseInsurance {
     /// unpayable and the dispute stuck open. Funded capital counts as earned
     /// (it is not premium awaiting a coverage window), and the cushion rule
     /// still governs what the maintainer may take back out.
-    function fundMaintainer(uint256 amount) external {
+    function fundMaintainer(uint256 trancheId, uint256 amount) external {
         require(amount > 0, "PI: zero amount");
-        earnedMaintainer += amount;
-        require(usdt.transferFrom(msg.sender, address(this), amount), "PI: funding failed");
+        earnedMaintainerOf[trancheId] += amount;
+        iou.safeTransferFrom(msg.sender, address(this), trancheId, amount, "");
         emit MaintainerFunded(msg.sender, amount);
     }
 
@@ -562,7 +526,7 @@ contract PurchaseInsurance {
         require(amount > 0, "PI: zero amount");
         require(amount <= earnedOf[sarraf], "PI: over earned");
         earnedOf[sarraf] -= amount;
-        earnedMaintainer += amount;
+        earnedMaintainerOf[uint256(uint160(sarraf))] += amount;
         emit SarrafPenalized(sarraf, amount);
     }
 
@@ -579,26 +543,37 @@ contract PurchaseInsurance {
         return e > cushion ? e - cushion : 0;
     }
 
-    function withdrawableMaintainer() public view returns (uint256) {
+    function withdrawableMaintainer(uint256 trancheId) public view returns (uint256) {
         uint256 cushion =
-            (outstandingExposureMaintainer * RESERVE_RATIO_BPS) / BPS_DENOMINATOR;
-        return earnedMaintainer > cushion ? earnedMaintainer - cushion : 0;
+            (outstandingExposureMaintainerOf[trancheId] * RESERVE_RATIO_BPS) / BPS_DENOMINATOR;
+        uint256 e = earnedMaintainerOf[trancheId];
+        return e > cushion ? e - cushion : 0;
     }
 
     function withdraw(uint256 amount) external {
         require(amount > 0, "PI: zero amount");
         require(amount <= withdrawableOf(msg.sender), "PI: over withdrawable");
         earnedOf[msg.sender] -= amount;
-        require(usdt.transfer(msg.sender, amount), "PI: withdraw failed");
+        iou.safeTransferFrom(address(this), msg.sender, uint256(uint160(msg.sender)), amount, "");
         emit Withdrawn(msg.sender, amount);
     }
 
-    function withdrawMaintainer(uint256 amount) external {
+    function withdrawMaintainer(uint256 trancheId, uint256 amount) external {
         require(msg.sender == maintainer, "PI: not maintainer");
         require(amount > 0, "PI: zero amount");
-        require(amount <= withdrawableMaintainer(), "PI: over withdrawable");
-        earnedMaintainer -= amount;
-        require(usdt.transfer(msg.sender, amount), "PI: withdraw failed");
+        require(amount <= withdrawableMaintainer(trancheId), "PI: over withdrawable");
+        earnedMaintainerOf[trancheId] -= amount;
+        iou.safeTransferFrom(address(this), msg.sender, trancheId, amount, "");
         emit Withdrawn(msg.sender, amount);
+    }
+
+    /// @notice ERC-1155 receiver hook: this contract custodies bonds, premiums
+    /// and the senior layer as tranche IOU.
+    function onERC1155Received(address, address, uint256, uint256, bytes calldata)
+        external
+        pure
+        returns (bytes4)
+    {
+        return this.onERC1155Received.selector;
     }
 }

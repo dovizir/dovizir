@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import {ArmBase} from "./ArmBase.sol";
 import {PurchaseInsurance, IIou1155} from "../src/PurchaseInsurance.sol";
-import {IUsdt} from "../src/ReservePool.sol";
 
 /// Purchase-insurance mechanism per docs/design/purchase-insurance.md:
 /// shop bonds, 0.9% seller premium split 50/50, unearned-until-window,
@@ -16,7 +15,6 @@ contract PurchaseInsuranceTest is ArmBase {
     address internal buyer;
     address internal maintainer;
     address internal adjudicator; // overseeing body (not the earning sarraf)
-    address internal backstop; //   neutral appeal authority
 
     uint256 internal constant BOND = 10_000e6;
     uint256 internal constant PURCHASE = 1_000e6;
@@ -32,37 +30,49 @@ contract PurchaseInsuranceTest is ArmBase {
         buyer = makeAddr("buyer");
         maintainer = makeAddr("maintainer");
         adjudicator = makeAddr("adjudicator");
-        backstop = makeAddr("backstop");
 
         ins = new PurchaseInsurance(
-            IUsdt(address(usdt)), IIou1155(address(iou)), sarrafRegistry, maintainer, adjudicator, backstop
+            IIou1155(address(iou)), sarrafRegistry, maintainer, adjudicator
         );
     }
 
     // ------------------------------------------------------------- helpers
 
+    /// A sarraf posts a bond in their OWN paper -- exactly how a shop owner
+    /// funds it in practice: local currency across the counter, IOU issued.
     function _registerShop(address sarraf, address shop, uint256 bond, uint32 trustBps) internal {
-        usdt.mint(sarraf, bond);
+        _giveIou(sarraf, sarraf, bond);
         vm.startPrank(sarraf);
-        usdt.approve(address(ins), bond);
+        iou.setApprovalForAll(address(ins), true);
         ins.registerShop(shop, bond, trustBps);
         vm.stopPrank();
     }
 
+    /// Mint `to` some of `sarraf`'s tranche, fully backed.
+    function _giveIou(address sarraf, address to, uint256 amount) internal {
+        if (!registry.isMember(to)) _addMember(sarraf, to);
+        _issueBacked(sarraf, to, amount);
+    }
+
     function _purchase(address shop, uint256 amount) internal returns (uint256 id) {
+        address sarraf = ins.sarrafOf(shop);
         uint256 premium = (amount * 90) / 10_000;
-        usdt.mint(shop, premium);
+        _giveIou(sarraf, shop, premium);
         vm.startPrank(shop);
-        usdt.approve(address(ins), premium);
+        iou.setApprovalForAll(address(ins), true);
         id = ins.recordPurchase(buyer, amount);
         vm.stopPrank();
     }
 
     function _fundBackstop(uint256 amount) internal {
-        usdt.mint(maintainer, amount);
+        _fundBackstopFor(sarrafA, amount);
+    }
+
+    function _fundBackstopFor(address sarraf, uint256 amount) internal {
+        _giveIou(sarraf, maintainer, amount);
         vm.startPrank(maintainer);
-        usdt.approve(address(ins), amount);
-        ins.fundMaintainer(amount);
+        iou.setApprovalForAll(address(ins), true);
+        ins.fundMaintainer(_id(sarraf), amount);
         vm.stopPrank();
     }
 
@@ -72,7 +82,7 @@ contract PurchaseInsuranceTest is ArmBase {
         _registerShop(sarrafA, shopA, BOND, 10_000); // trust 1.0x
 
         assertEq(ins.bondOf(shopA), BOND, "bond escrowed");
-        assertEq(usdt.balanceOf(address(ins)), BOND, "USDT actually held by the contract");
+        assertEq(iou.balanceOf(address(ins), _id(sarrafA)), BOND, "USDT actually held by the contract");
         assertEq(ins.sarrafOf(shopA), sarrafA, "shop attributed to its sarraf");
         assertEq(ins.maxExposure(shopA), BOND, "trust 1.0x => exposure == bond");
     }
@@ -102,13 +112,13 @@ contract PurchaseInsuranceTest is ArmBase {
 
     function test_recordPurchase_chargesSellerNotBuyer() public {
         _registerShop(sarrafA, shopA, BOND, 10_000);
-        uint256 buyerBefore = usdt.balanceOf(buyer);
+        uint256 buyerBefore = iou.balanceOf(buyer, _id(sarrafA));
 
         _purchase(shopA, PURCHASE);
 
-        assertEq(usdt.balanceOf(buyer), buyerBefore, "buyer pays no premium");
-        assertEq(usdt.balanceOf(shopA), 0, "seller paid the premium");
-        assertEq(usdt.balanceOf(address(ins)), BOND + PREMIUM, "premium held with the bond");
+        assertEq(iou.balanceOf(buyer, _id(sarrafA)), buyerBefore, "buyer pays no premium");
+        assertEq(iou.balanceOf(shopA, _id(sarrafA)), 0, "seller paid the premium");
+        assertEq(iou.balanceOf(address(ins), _id(sarrafA)), BOND + PREMIUM, "premium held with the bond");
     }
 
     function test_recordPurchase_splitsPremium5050_bothUnearned() public {
@@ -116,9 +126,9 @@ contract PurchaseInsuranceTest is ArmBase {
         _purchase(shopA, PURCHASE);
 
         assertEq(ins.unearnedOf(sarrafA), PREMIUM / 2, "sarraf layer half, unearned");
-        assertEq(ins.unearnedMaintainer(), PREMIUM / 2, "maintainer half, unearned");
+        assertEq(ins.unearnedMaintainerOf(_id(sarrafA)), PREMIUM / 2, "maintainer half, unearned");
         assertEq(ins.earnedOf(sarrafA), 0, "nothing earned during coverage");
-        assertEq(ins.earnedMaintainer(), 0, "nothing earned during coverage");
+        assertEq(ins.earnedMaintainerOf(_id(sarrafA)), 0, "nothing earned during coverage");
     }
 
     function test_recordPurchase_perSarrafLayersAreSeparate() public {
@@ -170,7 +180,7 @@ contract PurchaseInsuranceTest is ArmBase {
 
         assertEq(ins.unearnedOf(sarrafA), 0, "no longer unearned");
         assertEq(ins.earnedOf(sarrafA), PREMIUM / 2, "sarraf half earned");
-        assertEq(ins.earnedMaintainer(), PREMIUM / 2, "maintainer half earned");
+        assertEq(ins.earnedMaintainerOf(_id(sarrafA)), PREMIUM / 2, "maintainer half earned");
         assertEq(ins.outstandingExposureOf(sarrafA), 0, "exposure released");
     }
 
@@ -261,42 +271,51 @@ contract PurchaseInsuranceTest is ArmBase {
         vm.prank(adjudicator);
         ins.ruleClaim(id, true);
 
-        assertEq(usdt.balanceOf(buyer), PURCHASE, "buyer refunded in full");
+        assertEq(iou.balanceOf(buyer, _id(sarrafA)), PURCHASE, "buyer refunded in full");
         assertEq(ins.bondOf(shopA), BOND - PURCHASE, "bond slashed first");
         assertEq(ins.unearnedOf(sarrafA), sarrafLayerBefore, "sarraf layer untouched");
-        assertEq(ins.earnedMaintainer(), 0, "maintainer untouched");
+        assertEq(ins.earnedMaintainerOf(_id(sarrafA)), 0, "maintainer untouched");
     }
 
     /// Loss exceeding the bond cascades: bond -> the issuing sarraf's own
     /// layer -> the maintainer backstop, in that order.
     function test_upheldClaim_cascadesBondThenSarrafThenMaintainer() public {
-        // Give the senior layer depth from an unrelated sarraf's premiums,
-        // proving the maintainer layer is shared while sarraf layers are not.
+        // The senior layer is a BASKET keyed by tranche: another sarraf's
+        // premiums sit in THEIR paper and cannot pay this claim.
         address shopB = makeAddr("shopB");
         _registerShop(sarrafB, shopB, 10_000e6, 10_000);
-        _purchase(shopB, 1_000e6); // maintainer unearned += 4.5e6
+        _purchase(shopB, 1_000e6);
+        assertEq(ins.unearnedMaintainerOf(_id(sarrafB)), 4.5e6, "B's premiums land in B's tranche");
+        _fundBackstopFor(sarrafA, 10e6); // capitalise THIS tranche
 
         // A thin bond with graduated trust: the shop may invoice beyond it.
         _registerShop(sarrafA, shopA, 1e6, 20_000); // 2x => max invoice 2e6
         uint256 loss = 1.2e6;
         uint256 id = _purchase(shopA, loss); // premium 10_800 -> 5_400 each layer
 
-        uint256 maintainerBefore = ins.unearnedMaintainer();
+        uint256 seniorEarnedBefore = ins.earnedMaintainerOf(_id(sarrafA));
         vm.prank(buyer);
         ins.fileClaim(id);
         vm.prank(adjudicator);
         ins.ruleClaim(id, true);
 
-        assertEq(usdt.balanceOf(buyer), loss, "buyer made whole");
+        assertEq(iou.balanceOf(buyer, _id(sarrafA)), loss, "buyer made whole");
         assertEq(ins.bondOf(shopA), 0, "1. bond wiped out first");
         assertEq(ins.unearnedOf(sarrafA), 0, "2. issuing sarraf's layer drained second");
-        // bond 1e6 + sarraf 5_400 = 1_005_400; the senior layer covers the rest.
+        // bond 1e6 + sarraf 5_400 absorbed first; the senior layer covers the
+        // rest, unearned before earned.
+        assertEq(ins.unearnedMaintainerOf(_id(sarrafA)), 0, "3a. senior unearned drained");
         assertEq(
-            ins.unearnedMaintainer(),
-            maintainerBefore - (loss - 1e6 - 5_400),
-            "3. maintainer absorbed only the senior remainder"
+            seniorEarnedBefore - ins.earnedMaintainerOf(_id(sarrafA)),
+            loss - 1e6 - 5_400 - 5_400,
+            "3b. senior earned covered only the true remainder"
         );
         assertEq(ins.unearnedOf(sarrafB), 4.5e6, "a careful sarraf's layer is never touched");
+        assertEq(
+            ins.unearnedMaintainerOf(_id(sarrafB)),
+            4.5e6,
+            "nor is their tranche of the senior basket"
+        );
     }
 
     /// A loss beyond every layer cannot be silently half-paid: it reverts, and
@@ -314,15 +333,11 @@ contract PurchaseInsuranceTest is ArmBase {
 
         // The maintainer capitalises the senior layer, then the same claim pays.
         uint256 topUp = 1_000e6;
-        usdt.mint(maintainer, topUp);
-        vm.startPrank(maintainer);
-        usdt.approve(address(ins), topUp);
-        ins.fundMaintainer(topUp);
-        vm.stopPrank();
+        _fundBackstopFor(sarrafA, topUp);
 
         vm.prank(adjudicator);
         ins.ruleClaim(id, true);
-        assertEq(usdt.balanceOf(buyer), loss, "buyer made whole once the backstop has capital");
+        assertEq(iou.balanceOf(buyer, _id(sarrafA)), loss, "buyer made whole once the backstop has capital");
     }
 
     function test_rejectedClaim_paysNothingAndReleasesCoverage() public {
@@ -334,7 +349,7 @@ contract PurchaseInsuranceTest is ArmBase {
         vm.prank(adjudicator);
         ins.ruleClaim(id, false);
 
-        assertEq(usdt.balanceOf(buyer), 0, "no refund on a rejected claim");
+        assertEq(iou.balanceOf(buyer, _id(sarrafA)), 0, "no refund on a rejected claim");
         assertEq(ins.bondOf(shopA), BOND, "bond intact");
         assertEq(ins.earnedOf(sarrafA), PREMIUM / 2, "premium earned once the dispute clears");
     }
@@ -369,11 +384,11 @@ contract PurchaseInsuranceTest is ArmBase {
         assertEq(ins.outstandingExposureOf(sarrafA), 0);
         assertEq(ins.withdrawableOf(sarrafA), PREMIUM / 2, "earned with no exposure");
 
-        uint256 before = usdt.balanceOf(sarrafA);
+        uint256 before = iou.balanceOf(sarrafA, _id(sarrafA));
         vm.prank(sarrafA);
         ins.withdraw(PREMIUM / 2);
 
-        assertEq(usdt.balanceOf(sarrafA) - before, PREMIUM / 2, "profit paid out");
+        assertEq(iou.balanceOf(sarrafA, _id(sarrafA)) - before, PREMIUM / 2, "profit paid out");
         assertEq(ins.earnedOf(sarrafA), 0, "earned balance consumed");
     }
 
@@ -395,8 +410,8 @@ contract PurchaseInsuranceTest is ArmBase {
     /// lifecycle -- register, purchase, confirm, claim, payout, withdraw.
     function _assertBacked(string memory stage) internal view {
         uint256 owed = ins.bondOf(shopA) + ins.unearnedOf(sarrafA) + ins.earnedOf(sarrafA)
-            + ins.unearnedMaintainer() + ins.earnedMaintainer();
-        assertGe(usdt.balanceOf(address(ins)), owed, stage);
+            + ins.unearnedMaintainerOf(_id(sarrafA)) + ins.earnedMaintainerOf(_id(sarrafA));
+        assertGe(iou.balanceOf(address(ins), _id(sarrafA)), owed, stage);
     }
 
     function test_invariant_contractAlwaysCoversItsObligations() public {
@@ -433,7 +448,7 @@ contract PurchaseInsuranceTest is ArmBase {
 
         uint256 premium = (amount * 90) / 10_000;
         assertEq(
-            ins.unearnedOf(sarrafA) + ins.unearnedMaintainer(),
+            ins.unearnedOf(sarrafA) + ins.unearnedMaintainerOf(_id(sarrafA)),
             premium,
             "no wei created or lost in the 50/50 split"
         );
@@ -485,11 +500,9 @@ contract PurchaseInsuranceTest is ArmBase {
 
     function test_topUpBond_raisesExposureCeiling() public {
         _registerShop(sarrafA, shopA, BOND, 10_000);
-        usdt.mint(sarrafA, BOND);
-        vm.startPrank(sarrafA);
-        usdt.approve(address(ins), BOND);
+        _giveIou(sarrafA, sarrafA, BOND);
+        vm.prank(sarrafA);
         ins.topUpBond(shopA, BOND);
-        vm.stopPrank();
 
         assertEq(ins.bondOf(shopA), BOND * 2, "bond grew");
         assertEq(ins.maxExposure(shopA), BOND * 2, "ceiling follows the bond");
@@ -497,10 +510,10 @@ contract PurchaseInsuranceTest is ArmBase {
 
     function test_topUpBond_anyoneMayFundIt() public {
         _registerShop(sarrafA, shopA, BOND, 10_000);
-        // The shop itself tops up its own bond.
-        usdt.mint(shopA, 500e6);
+        // The shop itself tops up its own bond, in its sarraf's paper.
+        _giveIou(sarrafA, shopA, 500e6);
         vm.startPrank(shopA);
-        usdt.approve(address(ins), 500e6);
+        iou.setApprovalForAll(address(ins), true);
         ins.topUpBond(shopA, 500e6);
         vm.stopPrank();
         assertEq(ins.bondOf(shopA), BOND + 500e6);
@@ -521,11 +534,11 @@ contract PurchaseInsuranceTest is ArmBase {
         vm.prank(buyer);
         ins.confirmReceipt(id);
 
-        uint256 before = usdt.balanceOf(sarrafA);
+        uint256 before = iou.balanceOf(sarrafA, _id(sarrafA));
         vm.prank(sarrafA);
         ins.releaseBond(shopA, BOND);
 
-        assertEq(usdt.balanceOf(sarrafA) - before, BOND, "bond returned to the underwriter");
+        assertEq(iou.balanceOf(sarrafA, _id(sarrafA)) - before, BOND, "bond returned to the underwriter");
         assertEq(ins.bondOf(shopA), 0);
     }
 
@@ -567,78 +580,6 @@ contract PurchaseInsuranceTest is ArmBase {
         assertEq(ins.trustBpsOf(shopA), 30_000, "an unproven claim is not punishment");
     }
 
-    // ------------------------------------- 10. appeals to the backstop
-
-    /// The customer-facing promise: "you can escalate". A rejected claim is
-    /// appealable to a neutral backstop that the earning sarraf does not pick.
-    function _rejectedClaim() internal returns (uint256 id) {
-        _registerShop(sarrafA, shopA, BOND, 10_000);
-        id = _purchase(shopA, PURCHASE);
-        vm.prank(buyer);
-        ins.fileClaim(id);
-        vm.prank(adjudicator);
-        ins.ruleClaim(id, false);
-    }
-
-    function test_appeal_backstopOverturnsRejection_andPaysBuyer() public {
-        uint256 id = _rejectedClaim();
-        assertEq(usdt.balanceOf(buyer), 0, "rejected: nothing paid yet");
-
-        vm.prank(buyer);
-        ins.appeal(id);
-        vm.prank(backstop);
-        ins.ruleAppeal(id, true);
-
-        assertEq(usdt.balanceOf(buyer), PURCHASE, "overturned on appeal: buyer refunded");
-        assertEq(ins.bondOf(shopA), BOND - PURCHASE, "waterfall still starts at the bond");
-        assertEq(ins.trustBpsOf(shopA), 10_000, "trust reset on a proven non-delivery");
-    }
-
-    function test_appeal_backstopUpholdsRejection_paysNothing() public {
-        uint256 id = _rejectedClaim();
-        vm.prank(buyer);
-        ins.appeal(id);
-        vm.prank(backstop);
-        ins.ruleAppeal(id, false);
-
-        assertEq(usdt.balanceOf(buyer), 0, "rejection stands");
-        assertEq(ins.bondOf(shopA), BOND, "bond intact");
-    }
-
-    function test_appeal_onlyBuyer_reverts() public {
-        uint256 id = _rejectedClaim();
-        vm.prank(shopA);
-        vm.expectRevert(bytes("PI: not buyer"));
-        ins.appeal(id);
-    }
-
-    function test_appeal_afterAppealWindow_reverts() public {
-        uint256 id = _rejectedClaim();
-        vm.warp(block.timestamp + 14 days + 1);
-        vm.prank(buyer);
-        vm.expectRevert(bytes("PI: appeal window closed"));
-        ins.appeal(id);
-    }
-
-    function test_ruleAppeal_onlyBackstop_reverts() public {
-        uint256 id = _rejectedClaim();
-        vm.prank(buyer);
-        ins.appeal(id);
-
-        vm.prank(adjudicator); // the original ruler cannot hear its own appeal
-        vm.expectRevert(bytes("PI: not backstop"));
-        ins.ruleAppeal(id, true);
-    }
-
-    function test_appeal_cannotBeFiledTwice() public {
-        uint256 id = _rejectedClaim();
-        vm.prank(buyer);
-        ins.appeal(id);
-        vm.prank(buyer);
-        vm.expectRevert(bytes("PI: not rejected"));
-        ins.appeal(id);
-    }
-
     // ---------------------------------------- 11. sarraf-level discipline
 
     /// A loss that only the shop's bond absorbs is not the sarraf's failure.
@@ -672,12 +613,12 @@ contract PurchaseInsuranceTest is ArmBase {
         vm.prank(buyer);
         ins.confirmReceipt(id); // sarrafA earns 4.5e6
 
-        uint256 maintainerBefore = ins.earnedMaintainer();
+        uint256 maintainerBefore = ins.earnedMaintainerOf(_id(sarrafA));
         vm.prank(maintainer);
         ins.penalizeSarraf(sarrafA, 1e6);
 
         assertEq(ins.earnedOf(sarrafA), PREMIUM / 2 - 1e6, "penalty taken from earned premiums");
-        assertEq(ins.earnedMaintainer(), maintainerBefore + 1e6, "and it funds the backstop");
+        assertEq(ins.earnedMaintainerOf(_id(sarrafA)), maintainerBefore + 1e6, "and it funds the backstop");
     }
 
     function test_penalizeSarraf_onlyMaintainer_reverts() public {
@@ -700,17 +641,16 @@ contract PurchaseInsuranceTest is ArmBase {
     /// Give `buyer` spendable IOU on sarrafA's tranche and let the insurance
     /// contract move it on their behalf.
     function _fundBuyerWithIou(uint256 amount) internal {
-        _addMember(sarrafA, buyer);
-        _issueBacked(sarrafA, buyer, amount);
+        _giveIou(sarrafA, buyer, amount);
         vm.prank(buyer);
         iou.setApprovalForAll(address(ins), true);
     }
 
     function _approveShopPremium(address shop, uint256 amount) internal {
-        uint256 premium = (amount * 90) / 10_000;
-        usdt.mint(shop, premium);
+        address sarraf = ins.sarrafOf(shop);
+        _giveIou(sarraf, shop, (amount * 90) / 10_000);
         vm.prank(shop);
-        usdt.approve(address(ins), premium);
+        iou.setApprovalForAll(address(ins), true);
     }
 
     function test_payShop_movesIouAndRecordsTheSamePurchase() public {
@@ -742,11 +682,16 @@ contract PurchaseInsuranceTest is ArmBase {
         uint256 purchaseId = ins.payShop(shopA, PURCHASE);
 
         // The buyer can claim on it, and is refunded the amount they truly sent.
+        uint256 afterPaying = iou.balanceOf(buyer, _id(sarrafA));
         vm.prank(buyer);
         ins.fileClaim(purchaseId);
         vm.prank(adjudicator);
         ins.ruleClaim(purchaseId, true);
-        assertEq(usdt.balanceOf(buyer), PURCHASE, "refund matches the transferred value");
+        assertEq(
+            iou.balanceOf(buyer, _id(sarrafA)) - afterPaying,
+            PURCHASE,
+            "refunded exactly what was transferred, in the paper they paid with"
+        );
     }
 
     function test_payShop_wrongTranche_isNotSpendable() public {
