@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {ArmBase} from "./ArmBase.sol";
-import {PurchaseInsurance} from "../src/PurchaseInsurance.sol";
+import {PurchaseInsurance, IIou1155} from "../src/PurchaseInsurance.sol";
 import {IUsdt} from "../src/ReservePool.sol";
 
 /// Purchase-insurance mechanism per docs/design/purchase-insurance.md:
@@ -35,7 +35,7 @@ contract PurchaseInsuranceTest is ArmBase {
         backstop = makeAddr("backstop");
 
         ins = new PurchaseInsurance(
-            IUsdt(address(usdt)), sarrafRegistry, maintainer, adjudicator, backstop
+            IUsdt(address(usdt)), IIou1155(address(iou)), sarrafRegistry, maintainer, adjudicator, backstop
         );
     }
 
@@ -693,5 +693,101 @@ contract PurchaseInsuranceTest is ArmBase {
         vm.prank(maintainer);
         vm.expectRevert(bytes("PI: over earned"));
         ins.penalizeSarraf(sarrafA, 1);
+    }
+
+    // ------------------------------ 12. provable purchases (IOU settlement)
+
+    /// Give `buyer` spendable IOU on sarrafA's tranche and let the insurance
+    /// contract move it on their behalf.
+    function _fundBuyerWithIou(uint256 amount) internal {
+        _addMember(sarrafA, buyer);
+        _issueBacked(sarrafA, buyer, amount);
+        vm.prank(buyer);
+        iou.setApprovalForAll(address(ins), true);
+    }
+
+    function _approveShopPremium(address shop, uint256 amount) internal {
+        uint256 premium = (amount * 90) / 10_000;
+        usdt.mint(shop, premium);
+        vm.prank(shop);
+        usdt.approve(address(ins), premium);
+    }
+
+    function test_payShop_movesIouAndRecordsTheSamePurchase() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        _fundBuyerWithIou(5_000e6);
+        _approveShopPremium(shopA, PURCHASE);
+
+        uint256 id = _id(sarrafA);
+        uint256 buyerBefore = iou.balanceOf(buyer, id);
+
+        vm.prank(buyer);
+        uint256 purchaseId = ins.payShop(shopA, PURCHASE);
+
+        assertEq(iou.balanceOf(buyer, id), buyerBefore - PURCHASE, "buyer actually paid");
+        assertEq(iou.balanceOf(shopA, id), PURCHASE, "shop actually received the money");
+
+        PurchaseInsurance.Purchase memory p = ins.purchaseOf(purchaseId);
+        assertEq(p.buyer, buyer, "buyer is msg.sender -- cannot be forged");
+        assertEq(p.amount, PURCHASE, "covered amount == the amount that moved");
+        assertEq(ins.outstandingExposureOf(sarrafA), PURCHASE, "coverage opened atomically");
+    }
+
+    function test_payShop_coversExactlyWhatWasTransferred() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        _fundBuyerWithIou(5_000e6);
+        _approveShopPremium(shopA, PURCHASE);
+
+        vm.prank(buyer);
+        uint256 purchaseId = ins.payShop(shopA, PURCHASE);
+
+        // The buyer can claim on it, and is refunded the amount they truly sent.
+        vm.prank(buyer);
+        ins.fileClaim(purchaseId);
+        vm.prank(adjudicator);
+        ins.ruleClaim(purchaseId, true);
+        assertEq(usdt.balanceOf(buyer), PURCHASE, "refund matches the transferred value");
+    }
+
+    function test_payShop_wrongTranche_isNotSpendable() public {
+        // Buyer holds sarrafB's IOU but the shop is underwritten by sarrafA:
+        // the payment must draw on the shop's own sarraf tranche.
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        _addMember(sarrafB, buyer);
+        _issueBacked(sarrafB, buyer, 5_000e6);
+        vm.prank(buyer);
+        iou.setApprovalForAll(address(ins), true);
+        _approveShopPremium(shopA, PURCHASE);
+
+        vm.prank(buyer);
+        vm.expectRevert(bytes("IouToken: insufficient balance"));
+        ins.payShop(shopA, PURCHASE);
+    }
+
+    function test_payShop_withoutApproval_reverts() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        _addMember(sarrafA, buyer);
+        _issueBacked(sarrafA, buyer, 5_000e6); // no setApprovalForAll
+        _approveShopPremium(shopA, PURCHASE);
+
+        vm.prank(buyer);
+        vm.expectRevert(bytes("IouToken: not owner nor approved"));
+        ins.payShop(shopA, PURCHASE);
+    }
+
+    function test_payShop_respectsInvoiceAndVelocityCaps() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        _fundBuyerWithIou(50_000e6);
+        vm.prank(sarrafA);
+        ins.setDailyVolumeCap(shopA, 1_500e6);
+        _approveShopPremium(shopA, 1_000e6);
+
+        vm.prank(buyer);
+        ins.payShop(shopA, 1_000e6);
+
+        _approveShopPremium(shopA, 600e6);
+        vm.prank(buyer);
+        vm.expectRevert(bytes("PI: over daily cap"));
+        ins.payShop(shopA, 600e6);
     }
 }

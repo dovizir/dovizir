@@ -4,6 +4,12 @@ pragma solidity ^0.8.24;
 import {IUsdt} from "./ReservePool.sol";
 import {SarrafRegistry} from "./SarrafRegistry.sol";
 
+interface IIou1155 {
+    function balanceOf(address account, uint256 id) external view returns (uint256);
+    function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes calldata data)
+        external;
+}
+
 /// @title PurchaseInsurance — bonded shops, earned premiums, tranched losses
 /// @notice Implements docs/design/purchase-insurance.md. Distinct from
 /// {InsuranceFund}, which owns the redemption fee and offline-note double-spend
@@ -78,6 +84,7 @@ contract PurchaseInsurance {
     // --------------------------------------------------------------- state
 
     IUsdt public immutable usdt;
+    IIou1155 public immutable iou;
     SarrafRegistry public immutable sarrafRegistry;
     /// Senior backstop layer, and the party that disciplines sloppy sarrafs.
     address public immutable maintainer;
@@ -141,17 +148,20 @@ contract PurchaseInsurance {
 
     constructor(
         IUsdt usdt_,
+        IIou1155 iou_,
         SarrafRegistry sarrafRegistry_,
         address maintainer_,
         address adjudicator_,
         address backstopArbiter_
     ) {
         require(address(usdt_) != address(0), "PI: zero usdt");
+        require(address(iou_) != address(0), "PI: zero iou");
         require(maintainer_ != address(0), "PI: zero maintainer");
         require(adjudicator_ != address(0), "PI: zero adjudicator");
         require(backstopArbiter_ != address(0), "PI: zero backstop");
         require(backstopArbiter_ != adjudicator_, "PI: backstop must be independent");
         usdt = usdt_;
+        iou = iou_;
         sarrafRegistry = sarrafRegistry_;
         maintainer = maintainer_;
         adjudicator = adjudicator_;
@@ -270,14 +280,34 @@ contract PurchaseInsurance {
 
     // ----------------------------------------------------------- purchases
 
-    /// @notice Called by the shop when a covered purchase settles. The premium
-    /// is pulled from the SELLER; the buyer pays nothing.
+    /// @notice Buyer-initiated, provable purchase: the IOU actually moves
+    /// through this contract, so the covered amount IS the amount transferred
+    /// and the buyer is `msg.sender` rather than a name the shop supplied.
+    /// The tranche is the shop's own sarraf -- the money-changer standing
+    /// behind the shop is the one whose paper settles the sale.
+    function payShop(address shop, uint256 amount) external returns (uint256 purchaseId) {
+        address sarraf = _shops[shop].sarraf;
+        require(_shops[shop].registered, "PI: shop not registered");
+        purchaseId = _record(shop, msg.sender, amount);
+        iou.safeTransferFrom(msg.sender, shop, uint256(uint160(sarraf)), amount, "");
+    }
+
+    /// @notice Shop-reported purchase, for settlement rails that do not clear
+    /// through this contract (in-person QR hand-off). The premium is still
+    /// pulled from the SELLER; the buyer pays nothing.
     function recordPurchase(address buyer, uint256 amount) external returns (uint256 purchaseId) {
-        Shop storage s = _shops[msg.sender];
+        return _record(msg.sender, buyer, amount);
+    }
+
+    function _record(address shop, address buyer, uint256 amount)
+        internal
+        returns (uint256 purchaseId)
+    {
+        Shop storage s = _shops[shop];
         require(s.registered, "PI: shop not registered");
         require(buyer != address(0), "PI: zero buyer");
         require(amount > 0, "PI: zero amount");
-        require(amount <= maxExposure(msg.sender), "PI: over max invoice");
+        require(amount <= maxExposure(shop), "PI: over max invoice");
 
         // Rolling daily window: reset the counter once a full day has passed.
         if (block.timestamp >= s.dayStart + 1 days) {
@@ -288,7 +318,7 @@ contract PurchaseInsurance {
         if (s.dailyVolumeCap > 0) {
             require(s.soldToday <= s.dailyVolumeCap, "PI: over daily cap");
         }
-        _shopExposure[msg.sender] += amount;
+        _shopExposure[shop] += amount;
 
         uint256 premium = (amount * PREMIUM_BPS) / BPS_DENOMINATOR;
         uint256 half = premium / 2;
@@ -305,7 +335,7 @@ contract PurchaseInsurance {
         purchaseId = ++nextPurchaseId;
         uint64 coveredUntil = uint64(block.timestamp) + COVERAGE_WINDOW;
         _purchases[purchaseId] = Purchase({
-            shop: msg.sender,
+            shop: shop,
             buyer: buyer,
             sarraf: sarraf,
             amount: amount,
@@ -315,8 +345,9 @@ contract PurchaseInsurance {
             status: Status.COVERED
         });
 
-        require(usdt.transferFrom(msg.sender, address(this), premium), "PI: premium failed");
-        emit PurchaseRecorded(purchaseId, msg.sender, buyer, amount, premium, coveredUntil);
+        // The premium always comes from the SELLER, whichever rail settled it.
+        require(usdt.transferFrom(shop, address(this), premium), "PI: premium failed");
+        emit PurchaseRecorded(purchaseId, shop, buyer, amount, premium, coveredUntil);
     }
 
     // ------------------------------------------------------------- earning
