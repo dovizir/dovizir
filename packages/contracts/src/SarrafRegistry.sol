@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.24;
 
 import {ISarrafRegistry} from "dovizir-acceptance/interfaces/IDovizir.sol";
@@ -27,7 +27,11 @@ interface IPoolTotals {
 contract SarrafRegistry is ISarrafRegistry {
     // ------------------------------------------------------------- constants
     uint256 public constant FLOOR_CAP = 1_000_000e6; // $1M in 6-decimal mock USDT
-    uint256 public constant TWAB_WINDOW = 7 days;
+    /// @dev 7 days on mainnet/tests. Made immutable (default-preserving: a 0
+    /// constructor arg keeps 7 days) so a TESTNET deploy can pass a short window
+    /// and let a Sarraf certify in minutes instead of waiting 7 real days. Never
+    /// pass a non-zero value on a production deploy.
+    uint256 public immutable TWAB_WINDOW;
     uint256 public constant EVALUATE_COOLDOWN = 24 hours;
     uint256 public constant EXIT_BPS = 90_00; // exit threshold: 90% of floor
     uint8 public constant LOW_STREAK_TO_DROP = 3;
@@ -48,8 +52,11 @@ contract SarrafRegistry is ISarrafRegistry {
     mapping(address => uint64) public lastEvaluatedAt;
     mapping(address => uint8) public lowStreak;
 
-    constructor() {
+    /// @param twabWindow_ TWAB averaging window in seconds; pass 0 for the
+    /// production default of 7 days. A short value is TESTNET-ONLY.
+    constructor(uint256 twabWindow_) {
         deployer = msg.sender;
+        TWAB_WINDOW = twabWindow_ == 0 ? 7 days : twabWindow_;
     }
 
     function init(address reservePool_) external {

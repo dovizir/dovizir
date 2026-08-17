@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.24;
 
 /// @title MockUsdt — 6-decimal mock ERC-20 with an OPEN mint (test/acceptance only)

@@ -35,3 +35,22 @@ See docs/ for protocol stories (US-001..US-016, US-P12) and consumer US-Cxx pack
 
 #License
 MIT — see LICENSE.
+
+## Licence
+
+Dovizir is released under the **Business Source License 1.1** (see `LICENSE`).
+
+It is **source available, not OSI open source**. Concretely:
+
+- You may read, audit, copy, modify, and self-host it.
+- **A sarraf, merchant, or end user may run an instance for their own
+  business** — holding their own funds, serving their own customers.
+- You may **not** offer Dovizir, or a derivative, to third parties as a hosted,
+  managed, or embedded service.
+- On **2030-08-17** it converts automatically to **GPL-2.0-or-later**.
+
+Auditability is the point: the trust model depends on anyone being able to
+verify what the contracts do, and BUSL preserves that in full.
+
+Earlier commits were published under MIT. That grant is not revoked for the
+versions it already covered.
