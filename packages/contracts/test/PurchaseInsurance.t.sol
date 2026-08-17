@@ -443,7 +443,9 @@ contract PurchaseInsuranceTest is ArmBase {
     /// Premium is symmetric: what each layer holds equals what was charged.
     function testFuzz_premiumSplitConservesTheWholeFee(uint96 raw) public {
         uint256 amount = uint256(raw) % 5_000e6 + 1e6;
-        _registerShop(sarrafA, shopA, 5_000e6, 10_000);
+        // Ceiling must exceed the fuzz range: this test is about premium
+        // arithmetic, not about the invoice cap (which has its own test).
+        _registerShop(sarrafA, shopA, 10_000e6, 10_000);
         _purchase(shopA, amount);
 
         uint256 premium = (amount * 90) / 10_000;
