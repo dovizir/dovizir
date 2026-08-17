@@ -102,6 +102,12 @@ contract PurchaseInsurance {
     /// and reaches the sarraf's own layer. Basis for maintainer discipline.
     mapping(address => uint256) public strikesOf;
 
+    /// Claimants whose claims were rejected. Card networks score cardholders,
+    /// not only merchants: a serial claimant is a signal in its own right.
+    /// Recorded, never automatically punitive -- an honest buyer can lose a
+    /// dispute, so this informs underwriting rather than blocking a claim.
+    mapping(address => uint256) public buyerStrikesOf;
+
     /// Senior maintainer layer. It collects premiums from EVERY sarraf, so it
     /// holds a basket: balances are per tranche, and a claim on one sarraf's
     /// shop can only be paid in that sarraf's own paper.
@@ -135,6 +141,7 @@ contract PurchaseInsurance {
     event BondReleased(address indexed shop, address indexed to, uint256 amount);
     event SarrafStrike(address indexed sarraf, uint256 strikes);
     event SarrafPenalized(address indexed sarraf, uint256 amount);
+    event BuyerStrike(address indexed buyer, uint256 strikes);
 
     constructor(
         IIou1155 iou_,
@@ -407,8 +414,11 @@ contract PurchaseInsurance {
         require(msg.sender == adjudicator, "PI: not adjudicator");
 
         if (!upheld) {
-            // No loss: the premium is earned and coverage closes.
+            // No loss: the premium is earned and coverage closes. The
+            // claimant carries the rejection on their record.
             _settle(p);
+            buyerStrikesOf[p.buyer] += 1;
+            emit BuyerStrike(p.buyer, buyerStrikesOf[p.buyer]);
             p.status = Status.REJECTED;
             emit ClaimRuled(purchaseId, false, 0);
             return;

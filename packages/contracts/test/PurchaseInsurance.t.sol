@@ -735,4 +735,54 @@ contract PurchaseInsuranceTest is ArmBase {
         vm.expectRevert(bytes("PI: over daily cap"));
         ins.payShop(shopA, 600e6);
     }
+
+    // ------------------------------------------- 12. buyer-side strikes
+
+    /// Card networks score cardholders, not only merchants. A buyer whose
+    /// claims are repeatedly rejected is a signal in their own right.
+    function test_rejectedClaim_recordsStrikeAgainstTheBuyer() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        uint256 id = _purchase(shopA, PURCHASE);
+        vm.prank(buyer);
+        ins.fileClaim(id);
+        vm.prank(adjudicator);
+        ins.ruleClaim(id, false);
+
+        assertEq(ins.buyerStrikesOf(buyer), 1, "a rejected claim counts against the claimant");
+    }
+
+    function test_upheldClaim_leavesBuyerUnmarked() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        uint256 id = _purchase(shopA, PURCHASE);
+        vm.prank(buyer);
+        ins.fileClaim(id);
+        vm.prank(adjudicator);
+        ins.ruleClaim(id, true);
+
+        assertEq(ins.buyerStrikesOf(buyer), 0, "a legitimate claim is never punished");
+    }
+
+    function test_buyerStrikes_accumulateAcrossPurchases() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        for (uint256 i; i < 3; ++i) {
+            uint256 id = _purchase(shopA, PURCHASE);
+            vm.prank(buyer);
+            ins.fileClaim(id);
+            vm.prank(adjudicator);
+            ins.ruleClaim(id, false);
+        }
+        assertEq(ins.buyerStrikesOf(buyer), 3, "serial claimant is visible");
+    }
+
+    function test_buyerStrikes_areScopedToTheClaimant() public {
+        address other = makeAddr("otherBuyer");
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        uint256 id = _purchase(shopA, PURCHASE);
+        vm.prank(buyer);
+        ins.fileClaim(id);
+        vm.prank(adjudicator);
+        ins.ruleClaim(id, false);
+
+        assertEq(ins.buyerStrikesOf(other), 0, "one buyer's record never taints another");
+    }
 }
