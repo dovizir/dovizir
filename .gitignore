@@ -19,3 +19,14 @@ contracts/lib/
 artifacts/
 typechain-types/
 .claude/
+
+# Dovizir testnet wallet keys (private — never commit)
+.env.testnet
+packages/contracts/.env.testnet
+
+# Strategy playbook — deliberately NOT in the public repo (second-mover exposure).
+# Lives in ../dovizir-strategy. Contracts stay public for auditability; the
+# reasoning, roadmap economics and underwriting parameters do not.
+docs/design/mvp.md
+docs/design/mvp-build-plan.md
+docs/design/purchase-insurance.md

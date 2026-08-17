@@ -1,0 +1,34 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+/* next/font provided these CSS vars in the Next build; in Vite the faces come
+ * from @fontsource (imported in main.tsx) and we bind the vars to the family
+ * names here so tokens.css (--font-body/--font-heading) resolves unchanged. */
+:root {
+  --font-roboto: "Roboto";
+  --font-inter: "Inter";
+  --font-vazirmatn: "Vazirmatn";
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-body);
+}
+
+/* Farsi (and any future RTL locale) leads with the Vazirmatn face. */
+:root[dir="rtl"] body {
+  font-family: var(--font-vazirmatn), var(--font-body);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+}
+
+:root[dir="rtl"] h1,
+:root[dir="rtl"] h2,
+:root[dir="rtl"] h3 {
+  font-family: var(--font-vazirmatn), var(--font-heading);
+}

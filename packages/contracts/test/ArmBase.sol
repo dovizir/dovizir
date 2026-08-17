@@ -46,7 +46,7 @@ abstract contract ArmBase is Test {
 
         usdt = new MockUsdt();
         iou = new IouToken();
-        sarrafRegistry = new SarrafRegistry();
+        sarrafRegistry = new SarrafRegistry(0); // 0 => production 7-day window
         registry = new MemberRegistry(sarrafRegistry);
         fund = new InsuranceFund(IUsdtLike(address(usdt)));
         pool = new ReservePool(

@@ -32,7 +32,7 @@ contract ArmADeployer is IAcceptanceDeployer {
     function deploy() external override returns (DovizirSystem memory system) {
         MockUsdt usdt = new MockUsdt();
         IouToken iou = new IouToken();
-        SarrafRegistry sarrafRegistry = new SarrafRegistry();
+        SarrafRegistry sarrafRegistry = new SarrafRegistry(0); // 0 => production 7-day window
         MemberRegistry memberRegistry = new MemberRegistry(sarrafRegistry);
         InsuranceFund fund = new InsuranceFund(IUsdtLike(address(usdt)));
         ReservePool pool = new ReservePool(

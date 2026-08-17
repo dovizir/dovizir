@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import { ConnectButton } from "@/components/connect-button";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { PersonaSwitcher } from "@/components/persona-switcher";
 import { DeskNav } from "@/components/desk/desk-nav";
 
 /** Sarraf desk shell: desktop-first dashboard chrome with a side rail. */
@@ -26,6 +27,7 @@ export default function DeskLayout({
               {t("title")}
             </h1>
             <div className="flex items-center gap-sm">
+              <PersonaSwitcher />
               <LocaleSwitcher />
               <ConnectButton />
             </div>

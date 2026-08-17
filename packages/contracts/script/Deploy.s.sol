@@ -68,7 +68,9 @@ contract Deploy is Script {
         // 1. Leaf contracts whose one-time initializer is this deployer key.
         sys.usdt = new MockUsdt();
         sys.iou = new IouToken();
-        sys.sarrafRegistry = new SarrafRegistry();
+        // TWAB_WINDOW: 0 => production 7-day default. Set the TWAB_WINDOW env
+        // (seconds) on a TESTNET deploy to let a Sarraf certify in minutes.
+        sys.sarrafRegistry = new SarrafRegistry(vm.envOr("TWAB_WINDOW", uint256(0)));
         sys.memberRegistry = new MemberRegistry(sys.sarrafRegistry);
         sys.fund = new InsuranceFund(IUsdtLike(address(sys.usdt)));
 

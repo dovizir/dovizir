@@ -24,7 +24,7 @@ export default function DisputesPage() {
   const list = disputes.data?.orders ?? [];
 
   return (
-    <div className="flex max-w-3xl flex-col gap-xl">
+    <div className="flex max-w-[48rem] flex-col gap-xl">
       <header>
         <h1 className="font-heading text-lg font-semibold text-foreground">{t("title")}</h1>
         <p className="mt-xs text-sm text-muted">{t("subtitle")}</p>
