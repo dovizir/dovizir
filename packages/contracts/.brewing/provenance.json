@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "by_file": {
+    "packages/acceptance/src/arm/ArmBDeployer.sol": {
+      "first_added_by": "story-002",
+      "modified_by": [
+        "story-002"
+      ],
+      "last_brew": "story-002",
+      "last_pr": null,
+      "last_modified": "2026-08-17T12:38:04.072Z",
+      "halt_count": 1,
+      "regression_count": 0
+    },
+    "packages/contracts/specs/story-002.cost.jsonl": {
+      "first_added_by": "story-002",
+      "modified_by": [
+        "story-002"
+      ],
+      "last_brew": "story-002",
+      "last_pr": null,
+      "last_modified": "2026-08-17T12:38:04.072Z",
+      "halt_count": 1,
+      "regression_count": 0
+    },
+    "packages/contracts/specs/story-002.yaml": {
+      "first_added_by": "story-002",
+      "modified_by": [
+        "story-002"
+      ],
+      "last_brew": "story-002",
+      "last_pr": null,
+      "last_modified": "2026-08-17T12:38:04.072Z",
+      "halt_count": 1,
+      "regression_count": 0
+    },
+    "packages/contracts/src/arm-b/InsuranceFund.sol": {
+      "first_added_by": "story-002",
+      "modified_by": [
+        "story-002"
+      ],
+      "last_brew": "story-002",
+      "last_pr": null,
+      "last_modified": "2026-08-17T12:38:04.072Z",
+      "halt_count": 1,
+      "regression_count": 0
+    },
+    "packages/contracts/src/arm-b/IouToken.sol": {
+      "first_added_by": "story-002",
+      "modified_by": [
+        "story-002"
+      ],
+      "last_brew": "story-002",
+      "last_pr": null,
+      "last_modified": "2026-08-17T12:38:04.072Z",
+      "halt_count": 1,
+      "regression_count": 0
+    },
+    "packages/contracts/src/arm-b/MemberRegistry.sol": {
+      "first_added_by": "story-002",
+      "modified_by": [
+        "story-002"
+      ],
+      "last_brew": "story-002",
+      "last_pr": null,
+      "last_modified": "2026-08-17T12:38:04.072Z",
+      "halt_count": 1,
+      "regression_count": 0
+    },
+    "packages/contracts/src/arm-b/MockUsdt.sol": {
+      "first_added_by": "story-002",
+      "modified_by": [
+        "story-002"
+      ],
+      "last_brew": "story-002",
+      "last_pr": null,
+      "last_modified": "2026-08-17T12:38:04.072Z",
+      "halt_count": 1,
+      "regression_count": 0
+    },
+    "packages/contracts/src/arm-b/NoteVault.sol": {
+      "first_added_by": "story-002",
+      "modified_by": [
+        "story-002"
+      ],
+      "last_brew": "story-002",
+      "last_pr": null,
+      "last_modified": "2026-08-17T12:38:04.072Z",
+      "halt_count": 1,
+      "regression_count": 0
+    },
+    "packages/contracts/src/arm-b/ReservePool.sol": {
+      "first_added_by": "story-002",
+      "modified_by": [
+        "story-002"
+      ],
+      "last_brew": "story-002",
+      "last_pr": null,
+      "last_modified": "2026-08-17T12:38:04.072Z",
+      "halt_count": 1,
+      "regression_count": 0
+    },
+    "packages/contracts/src/arm-b/SarrafRegistry.sol": {
+      "first_added_by": "story-002",
+      "modified_by": [
+        "story-002"
+      ],
+      "last_brew": "story-002",
+      "last_pr": null,
+      "last_modified": "2026-08-17T12:38:04.072Z",
+      "halt_count": 1,
+      "regression_count": 0
+    }
+  },
+  "by_symbol": {},
+  "by_route": {}
+}

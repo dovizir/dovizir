@@ -1,0 +1,40 @@
+diff --git a/packages/acceptance/src/arm/ArmBDeployer.sol b/packages/acceptance/src/arm/ArmBDeployer.sol
+index d43a047..b534830 100644
+--- a/packages/acceptance/src/arm/ArmBDeployer.sol
++++ b/packages/acceptance/src/arm/ArmBDeployer.sol
+@@ -4,7 +4,13 @@ pragma solidity ^0.8.24;
+ import {Stub} from "../StubDeployer.sol";
+ import {IAcceptanceDeployer, DovizirSystem} from "../interfaces/IAcceptanceDeployer.sol";
+ import {IInsuranceFund, INoteVault} from "../interfaces/IDovizir.sol";
+-import {MockUsdt, MemberRegistry, ReservePool, IouToken, SarrafRegistry} from "arm-b/ArmB.sol";
++import {
++    MockUsdt,
++    MemberRegistry,
++    ReservePool,
++    IouToken,
++    SarrafRegistry
++} from "../../../contracts/lib/arm-b/src/ArmB.sol";
+ 
+ /// Arm B deployer — wires the arm-b IouToken subsystem; InsuranceFund and
+ /// NoteVault remain Stub until later iterations implement them.
+diff --git a/packages/contracts/specs/story-002.cost.jsonl b/packages/contracts/specs/story-002.cost.jsonl
+index 3a7e5f5..01853b5 100644
+--- a/packages/contracts/specs/story-002.cost.jsonl
++++ b/packages/contracts/specs/story-002.cost.jsonl
+@@ -2,3 +2,4 @@
+ {"agent":"brew","usd":0,"model":"claude-opus-5","round":"iter-1","at":"2026-08-17T01:10:11.668Z","tokens_in":0,"tokens_out":0,"cache_read":0,"cache_create":0}
+ {"agent":"brew","usd":0,"model":"claude-opus-5","round":"iter-2","at":"2026-08-17T01:10:14.638Z","tokens_in":0,"tokens_out":0,"cache_read":0,"cache_create":0}
+ {"agent":"brew","usd":1.8961627500000002,"model":"claude-sonnet-5","round":"iter-7","at":"2026-08-17T12:38:03.440Z","tokens_in":38,"tokens_out":72220,"cache_read":1352375,"cache_create":108543}
++{"agent":"brew","usd":1.23584325,"model":"claude-sonnet-5","round":"iter-1","at":"2026-08-17T22:51:27.228Z","tokens_in":42,"tokens_out":27337,"cache_read":1315720,"cache_create":114919}
+diff --git a/packages/contracts/specs/story-002.yaml b/packages/contracts/specs/story-002.yaml
+index 3f47159..e37b2dc 100644
+--- a/packages/contracts/specs/story-002.yaml
++++ b/packages/contracts/specs/story-002.yaml
+@@ -91,5 +91,5 @@ proposals:
+     proposed_by: refine-agent
+     rationale: The deployer's function signature is fixed by the plug-in pattern in `packages/acceptance/README.md`, and the six contracts' signatures are fixed by `IDovizir.sol`. Proposing a shape here would only create a second, drift-prone copy of frozen text.
+ cost:
+-  total_usd: 1.8962
+-  last_updated: 2026-08-17T12:38:03.441Z
++  total_usd: 3.132
++  last_updated: 2026-08-17T22:51:27.228Z

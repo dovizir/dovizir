@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "slowcook_version": "0.2.0",
+  "recorded_at": "2026-08-15T17:57:11.342Z",
+  "story_id": "002",
+  "tests": [
+    {
+      "id": "test/IouToken.t.sol > IouTokenTest > testFuzz_transferWithAuthorization_transfersExactAmount",
+      "file": "test/IouToken.t.sol"
+    },
+    {
+      "id": "test/IouToken.t.sol > IouTokenTest > test_burn_revertsForNonPoolCallers",
+      "file": "test/IouToken.t.sol"
+    },
+    {
+      "id": "test/IouToken.t.sol > IouTokenTest > test_mint_revertsForNonPoolCallers",
+      "file": "test/IouToken.t.sol"
+    },
+    {
+      "id": "test/IouToken.t.sol > IouTokenTest > test_trancheIdIsSarrafAddress_issuanceLandsInIssuerTranche",
+      "file": "test/IouToken.t.sol"
+    },
+    {
+      "id": "test/IouToken.t.sol > IouTokenTest > test_transferWithAuthorization_afterValidBefore_reverts",
+      "file": "test/IouToken.t.sol"
+    },
+    {
+      "id": "test/IouToken.t.sol > IouTokenTest > test_transferWithAuthorization_beforeValidAfter_reverts",
+      "file": "test/IouToken.t.sol"
+    },
+    {
+      "id": "test/IouToken.t.sol > IouTokenTest > test_transferWithAuthorization_happyPath_emitsAndFlipsAuthorizationState",
+      "file": "test/IouToken.t.sol"
+    },
+    {
+      "id": "test/IouToken.t.sol > IouTokenTest > test_transferWithAuthorization_nonceReplay_reverts",
+      "file": "test/IouToken.t.sol"
+    },
+    {
+      "id": "test/IouToken.t.sol > IouTokenTest > test_transferWithAuthorization_wrongSigner_reverts",
+      "file": "test/IouToken.t.sol"
+    }
+  ],
+  "suites": [
+    {
+      "suite": "forge",
+      "command": "forge test --root ../acceptance --list --json",
+      "test_count": 9
+    }
+  ]
+}
