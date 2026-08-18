@@ -38,7 +38,7 @@ export function PersonaSwitcher() {
           const next = personas.find((p) => p.value === e.target.value);
           if (next) router.push(next.href);
         }}
-        className="rounded-pill border border-border bg-surface px-md py-xs text-sm text-foreground"
+        className="max-w-[9rem] min-w-0 rounded-pill border border-border bg-surface px-md py-xs text-sm text-foreground"
         title={t("label")}
       >
         {personas.map((p) => (

@@ -25,7 +25,7 @@ export default function DeskLayout() {
             <h1 className="font-heading text-xl font-semibold text-foreground">
               {t("title")}
             </h1>
-            <div className="flex items-center gap-sm">
+            <div className="flex min-w-0 flex-wrap items-center justify-end gap-sm">
               <PersonaSwitcher />
               <LocaleSwitcher />
               <ConnectButton />

@@ -18,7 +18,7 @@ export default function ConsumerLayout() {
           <span className="font-heading text-base font-extrabold text-primary">
             {t("appName")}
           </span>
-          <div className="flex items-center gap-sm">
+          <div className="flex min-w-0 flex-wrap items-center justify-end gap-sm">
             <PersonaSwitcher />
             <LocaleSwitcher />
             <ConnectButton />
