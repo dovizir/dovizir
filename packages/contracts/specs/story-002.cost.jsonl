@@ -1,1 +1,3 @@
 {"agent":"refine","usd":0,"model":"claude-opus-5","round":"spec","at":"2026-08-13T11:02:50.964Z","tokens_in":4,"tokens_out":7608,"cache_read":1820,"cache_create":14447}
+{"agent":"brew","usd":0.74579955,"model":"claude-sonnet-5","round":"iter-11","at":"2026-08-18T01:04:42.886Z","tokens_in":8,"tokens_out":28658,"cache_read":642981,"cache_create":32803}
+{"agent":"brew","usd":2.3520408,"model":"claude-sonnet-5","round":"iter-8","at":"2026-08-18T01:07:40.667Z","tokens_in":34,"tokens_out":40702,"cache_read":3286071,"cache_create":201490}
