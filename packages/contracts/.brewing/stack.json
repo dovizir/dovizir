@@ -1,20 +1,23 @@
 {
-  "$schema": "./stack.schema.json",
-  "$doc": "Project-level stack configuration consumed by slowcook (@slowcook-ai/stack-solidity). Tells the harness how to discover and run tests. Only include suites that are actually runnable \u2014 slowcook refuses to record an incomplete manifest. (gas_snapshot enables the gas ratchet: brew treats `forge snapshot --check` regressions as a hard signal. Re-baseline with `forge snapshot` when a gas increase is intentional.)",
-  "language": "solidity",
-  "test": {
-    "forge": {
-      "runner": "forge",
-      "run_command": "forge test --root ../acceptance --json",
-      "discover_command": "forge test --root ../acceptance --list --json",
-      "reporter_format": "forge-json"
-    }
-  },
-  "lint": {
-    "lint_command": "forge fmt --check"
-  },
-  "gas_snapshot": {
-    "snapshot_command": "forge snapshot",
-    "snapshot_file": ".gas-snapshot"
+ "$schema": "./stack.schema.json",
+ "$doc": "Project-level stack configuration consumed by slowcook (@slowcook-ai/stack-solidity). Tells the harness how to discover and run tests. Only include suites that are actually runnable \u2014 slowcook refuses to record an incomplete manifest. (gas_snapshot enables the gas ratchet: brew treats `forge snapshot --check` regressions as a hard signal. Re-baseline with `forge snapshot` when a gas increase is intentional.)",
+ "language": "solidity",
+ "test": {
+  "forge": {
+   "runner": "forge",
+   "run_command": "forge test --root ../acceptance --json",
+   "discover_command": "forge test --root ../acceptance --list --json",
+   "reporter_format": "forge-json",
+   "env": {
+    "DOVIZIR_DEPLOYER": "src/arm/ArmBDeployer.sol:ArmBDeployer"
+   }
   }
+ },
+ "lint": {
+  "lint_command": "forge fmt --check"
+ },
+ "gas_snapshot": {
+  "snapshot_command": "forge snapshot",
+  "snapshot_file": ".gas-snapshot"
+ }
 }
