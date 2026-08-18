@@ -92,6 +92,13 @@ contract PurchaseInsurance {
     /// Live covered exposure per shop: locks its bond while claims can land.
     mapping(address => uint256) internal _shopExposure;
 
+    /// Hashes of off-chain evidence bundles, append-only, per purchase. ONLY
+    /// hashes live here: the bundles themselves (receipts, photos, chat logs,
+    /// identity documents) stay off-chain, because putting them on a public
+    /// chain would publish exactly the personal data this protocol otherwise
+    /// keeps behind the sarraf.
+    mapping(uint256 => bytes32[]) internal _evidence;
+
     /// Per-sarraf premium layers (their own cushion, slashable).
     mapping(address => uint256) public unearnedOf;
     mapping(address => uint256) public earnedOf;
@@ -130,6 +137,10 @@ contract PurchaseInsurance {
     event ReceiptConfirmed(uint256 indexed purchaseId, address indexed buyer);
     event ClaimFiled(uint256 indexed purchaseId, address indexed buyer, uint256 amount);
     event ClaimRuled(uint256 indexed purchaseId, bool upheld, uint256 paid);
+    event EvidenceSubmitted(
+        uint256 indexed purchaseId, address indexed by, bytes32 evidenceHash, bytes32 root
+    );
+    event RulingEvidence(uint256 indexed purchaseId, bytes32 judgedRoot);
     event LossAbsorbed(
         address indexed shop, uint256 fromBond, uint256 fromSarraf, uint256 fromMaintainer
     );
@@ -199,6 +210,21 @@ contract PurchaseInsurance {
     /// is currently standing behind.
     function shopExposureOf(address shop) external view returns (uint256) {
         return _shopExposure[shop];
+    }
+
+    /// @notice Commitment to EVERYTHING on record for this claim. A ruling must
+    /// quote it, so a ruling can never be applied to a different body of
+    /// evidence than the one the adjudicator actually read.
+    function evidenceRootOf(uint256 purchaseId) public view returns (bytes32) {
+        return keccak256(abi.encodePacked(_evidence[purchaseId]));
+    }
+
+    function evidenceCountOf(uint256 purchaseId) external view returns (uint256) {
+        return _evidence[purchaseId].length;
+    }
+
+    function evidenceAt(uint256 purchaseId, uint256 i) external view returns (bytes32) {
+        return _evidence[purchaseId][i];
     }
 
     function purchaseOf(uint256 purchaseId) external view returns (Purchase memory) {
@@ -393,25 +419,46 @@ contract PurchaseInsurance {
 
     // -------------------------------------------------------------- claims
 
-    /// @notice The buyer reports goods not delivered, inside the window.
-    function fileClaim(uint256 purchaseId) external {
+    /// @notice The buyer reports goods not delivered, inside the window. The
+    /// claim must arrive WITH evidence: a bare assertion is not adjudicable,
+    /// and in-person sales have no shipping record to fall back on.
+    function fileClaim(uint256 purchaseId, bytes32 evidenceHash) external {
         Purchase storage p = _purchases[purchaseId];
         require(p.status == Status.COVERED, "PI: not covered");
         require(msg.sender == p.buyer, "PI: not buyer");
         require(block.timestamp <= p.coveredUntil, "PI: coverage expired");
+        require(evidenceHash != bytes32(0), "PI: no evidence");
         p.status = Status.DISPUTED;
+        _evidence[purchaseId].push(evidenceHash);
+        emit EvidenceSubmitted(purchaseId, msg.sender, evidenceHash, evidenceRootOf(purchaseId));
         emit ClaimFiled(purchaseId, msg.sender, p.amount);
+    }
+
+    /// @notice Either party adds to the record while the claim is open — most
+    /// importantly the seller, who otherwise has no way to rebut.
+    function submitEvidence(uint256 purchaseId, bytes32 evidenceHash) external {
+        Purchase storage p = _purchases[purchaseId];
+        require(p.status == Status.DISPUTED, "PI: not disputed");
+        require(msg.sender == p.buyer || msg.sender == p.shop, "PI: not a party");
+        require(evidenceHash != bytes32(0), "PI: no evidence");
+        _evidence[purchaseId].push(evidenceHash);
+        emit EvidenceSubmitted(purchaseId, msg.sender, evidenceHash, evidenceRootOf(purchaseId));
     }
 
     /// @notice The overseeing body rules. The sarraf who earns the premium on
     /// this sale is recused — they never judge their own case — and the payout
     /// comes from the waterfall, never from the ruler's pocket, so the ruler is
     /// financially indifferent to the outcome.
-    function ruleClaim(uint256 purchaseId, bool upheld) external {
+    function ruleClaim(uint256 purchaseId, bool upheld, bytes32 judgedRoot) external {
         Purchase storage p = _purchases[purchaseId];
         require(p.status == Status.DISPUTED, "PI: not disputed");
         require(msg.sender != p.sarraf, "PI: recused");
         require(msg.sender == adjudicator, "PI: not adjudicator");
+        // The ruling names the exact record it judged. If evidence landed after
+        // the adjudicator formed a view, this fails and they must re-read --
+        // which is the point: no ruling is ever applied to a body of evidence
+        // its author did not see.
+        require(judgedRoot == evidenceRootOf(purchaseId), "PI: stale evidence");
 
         if (!upheld) {
             // No loss: the premium is earned and coverage closes. The
@@ -421,6 +468,7 @@ contract PurchaseInsurance {
             emit BuyerStrike(p.buyer, buyerStrikesOf[p.buyer]);
             p.status = Status.REJECTED;
             emit ClaimRuled(purchaseId, false, 0);
+            emit RulingEvidence(purchaseId, judgedRoot);
             return;
         }
 
@@ -432,6 +480,7 @@ contract PurchaseInsurance {
 
         _uphold(p);
         emit ClaimRuled(purchaseId, true, p.amount);
+        emit RulingEvidence(purchaseId, judgedRoot);
     }
 
     /// Absorb the loss, discipline the shop, and make the buyer whole.

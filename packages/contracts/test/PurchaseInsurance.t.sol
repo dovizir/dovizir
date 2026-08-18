@@ -20,6 +20,8 @@ contract PurchaseInsuranceTest is ArmBase {
     uint256 internal constant PURCHASE = 1_000e6;
     /// 0.9% of 1_000e6 == 9e6, split 4.5e6 / 4.5e6.
     uint256 internal constant PREMIUM = 9e6;
+    /// Hash of an off-chain evidence bundle. Only the HASH is ever on-chain.
+    bytes32 internal constant EV1 = keccak256("buyer bundle: order + chat + non-delivery");
 
     function setUp() public override {
         super.setUp();
@@ -52,6 +54,13 @@ contract PurchaseInsuranceTest is ArmBase {
     function _giveIou(address sarraf, address to, uint256 amount) internal {
         if (!registry.isMember(to)) _addMember(sarraf, to);
         _issueBacked(sarraf, to, amount);
+    }
+
+    /// vm.prank affects only the NEXT call, so the root must be read before it.
+    function _rule(uint256 id, bool upheld) internal {
+        bytes32 root = ins.evidenceRootOf(id);
+        vm.prank(adjudicator);
+        ins.ruleClaim(id, upheld, root);
     }
 
     function _purchase(address shop, uint256 amount) internal returns (uint256 id) {
@@ -221,7 +230,7 @@ contract PurchaseInsuranceTest is ArmBase {
 
         vm.prank(buyer);
         vm.expectRevert(bytes("PI: not covered"));
-        ins.fileClaim(id);
+        ins.fileClaim(id, EV1);
     }
 
     // ------------------------------------- 4. claims, waterfall, recusal
@@ -233,30 +242,33 @@ contract PurchaseInsuranceTest is ArmBase {
         vm.warp(block.timestamp + 120 days + 1);
         vm.prank(buyer);
         vm.expectRevert(bytes("PI: coverage expired"));
-        ins.fileClaim(id);
+        ins.fileClaim(id, EV1);
     }
 
     function test_ruleClaim_earningSarrafIsRecused() public {
         _registerShop(sarrafA, shopA, BOND, 10_000);
         uint256 id = _purchase(shopA, PURCHASE);
         vm.prank(buyer);
-        ins.fileClaim(id);
+        ins.fileClaim(id, EV1);
 
         // The sarraf who earns the premium on this sale may not rule on it.
+        bytes32 root1 = ins.evidenceRootOf(id);
         vm.prank(sarrafA);
         vm.expectRevert(bytes("PI: recused"));
-        ins.ruleClaim(id, true);
+        ins.ruleClaim(id, true, root1);
     }
 
     function test_ruleClaim_onlyAdjudicator_reverts() public {
         _registerShop(sarrafA, shopA, BOND, 10_000);
         uint256 id = _purchase(shopA, PURCHASE);
         vm.prank(buyer);
-        ins.fileClaim(id);
+        ins.fileClaim(id, EV1);
+
+        bytes32 root2 = ins.evidenceRootOf(id);
 
         vm.prank(outsider);
         vm.expectRevert(bytes("PI: not adjudicator"));
-        ins.ruleClaim(id, true);
+        ins.ruleClaim(id, true, root2);
     }
 
     /// Loss smaller than the bond: the shop alone absorbs it.
@@ -264,12 +276,11 @@ contract PurchaseInsuranceTest is ArmBase {
         _registerShop(sarrafA, shopA, BOND, 10_000);
         uint256 id = _purchase(shopA, PURCHASE);
         vm.prank(buyer);
-        ins.fileClaim(id);
+        ins.fileClaim(id, EV1);
 
         uint256 sarrafLayerBefore = ins.unearnedOf(sarrafA);
 
-        vm.prank(adjudicator);
-        ins.ruleClaim(id, true);
+        _rule(id, true);
 
         assertEq(iou.balanceOf(buyer, _id(sarrafA)), PURCHASE, "buyer refunded in full");
         assertEq(ins.bondOf(shopA), BOND - PURCHASE, "bond slashed first");
@@ -295,9 +306,8 @@ contract PurchaseInsuranceTest is ArmBase {
 
         uint256 seniorEarnedBefore = ins.earnedMaintainerOf(_id(sarrafA));
         vm.prank(buyer);
-        ins.fileClaim(id);
-        vm.prank(adjudicator);
-        ins.ruleClaim(id, true);
+        ins.fileClaim(id, EV1);
+        _rule(id, true);
 
         assertEq(iou.balanceOf(buyer, _id(sarrafA)), loss, "buyer made whole");
         assertEq(ins.bondOf(shopA), 0, "1. bond wiped out first");
@@ -326,17 +336,17 @@ contract PurchaseInsuranceTest is ArmBase {
         uint256 id = _purchase(shopA, loss);
 
         vm.prank(buyer);
-        ins.fileClaim(id);
+        ins.fileClaim(id, EV1);
+        bytes32 root3 = ins.evidenceRootOf(id);
         vm.prank(adjudicator);
         vm.expectRevert(bytes("PI: fund insolvent"));
-        ins.ruleClaim(id, true);
+        ins.ruleClaim(id, true, root3);
 
         // The maintainer capitalises the senior layer, then the same claim pays.
         uint256 topUp = 1_000e6;
         _fundBackstopFor(sarrafA, topUp);
 
-        vm.prank(adjudicator);
-        ins.ruleClaim(id, true);
+        _rule(id, true);
         assertEq(iou.balanceOf(buyer, _id(sarrafA)), loss, "buyer made whole once the backstop has capital");
     }
 
@@ -344,10 +354,9 @@ contract PurchaseInsuranceTest is ArmBase {
         _registerShop(sarrafA, shopA, BOND, 10_000);
         uint256 id = _purchase(shopA, PURCHASE);
         vm.prank(buyer);
-        ins.fileClaim(id);
+        ins.fileClaim(id, EV1);
 
-        vm.prank(adjudicator);
-        ins.ruleClaim(id, false);
+        _rule(id, false);
 
         assertEq(iou.balanceOf(buyer, _id(sarrafA)), 0, "no refund on a rejected claim");
         assertEq(ins.bondOf(shopA), BOND, "bond intact");
@@ -427,9 +436,8 @@ contract PurchaseInsuranceTest is ArmBase {
 
         uint256 id2 = _purchase(shopA, PURCHASE);
         vm.prank(buyer);
-        ins.fileClaim(id2);
-        vm.prank(adjudicator);
-        ins.ruleClaim(id2, true);
+        ins.fileClaim(id2, EV1);
+        _rule(id2, true);
         _assertBacked("after an upheld claim paid out");
 
         uint256 w = ins.withdrawableOf(sarrafA);
@@ -564,9 +572,8 @@ contract PurchaseInsuranceTest is ArmBase {
         _registerShop(sarrafA, shopA, BOND, 30_000);
         uint256 id = _purchase(shopA, PURCHASE);
         vm.prank(buyer);
-        ins.fileClaim(id);
-        vm.prank(adjudicator);
-        ins.ruleClaim(id, true);
+        ins.fileClaim(id, EV1);
+        _rule(id, true);
 
         assertEq(ins.trustBpsOf(shopA), 10_000, "a proven non-delivery resets trust to 1.0x");
     }
@@ -575,9 +582,8 @@ contract PurchaseInsuranceTest is ArmBase {
         _registerShop(sarrafA, shopA, BOND, 30_000);
         uint256 id = _purchase(shopA, PURCHASE);
         vm.prank(buyer);
-        ins.fileClaim(id);
-        vm.prank(adjudicator);
-        ins.ruleClaim(id, false);
+        ins.fileClaim(id, EV1);
+        _rule(id, false);
 
         assertEq(ins.trustBpsOf(shopA), 30_000, "an unproven claim is not punishment");
     }
@@ -589,9 +595,8 @@ contract PurchaseInsuranceTest is ArmBase {
         _registerShop(sarrafA, shopA, BOND, 10_000);
         uint256 id = _purchase(shopA, PURCHASE);
         vm.prank(buyer);
-        ins.fileClaim(id);
-        vm.prank(adjudicator);
-        ins.ruleClaim(id, true);
+        ins.fileClaim(id, EV1);
+        _rule(id, true);
 
         assertEq(ins.strikesOf(sarrafA), 0, "bond covered it: underwriting held");
     }
@@ -602,9 +607,8 @@ contract PurchaseInsuranceTest is ArmBase {
         _registerShop(sarrafA, shopA, 1e6, 20_000); // thin bond, graduated trust
         uint256 id = _purchase(shopA, 1.2e6);
         vm.prank(buyer);
-        ins.fileClaim(id);
-        vm.prank(adjudicator);
-        ins.ruleClaim(id, true);
+        ins.fileClaim(id, EV1);
+        _rule(id, true);
 
         assertEq(ins.strikesOf(sarrafA), 1, "bad underwriting is recorded against the sarraf");
     }
@@ -686,9 +690,8 @@ contract PurchaseInsuranceTest is ArmBase {
         // The buyer can claim on it, and is refunded the amount they truly sent.
         uint256 afterPaying = iou.balanceOf(buyer, _id(sarrafA));
         vm.prank(buyer);
-        ins.fileClaim(purchaseId);
-        vm.prank(adjudicator);
-        ins.ruleClaim(purchaseId, true);
+        ins.fileClaim(purchaseId, EV1);
+        _rule(purchaseId, true);
         assertEq(
             iou.balanceOf(buyer, _id(sarrafA)) - afterPaying,
             PURCHASE,
@@ -746,9 +749,8 @@ contract PurchaseInsuranceTest is ArmBase {
         _registerShop(sarrafA, shopA, BOND, 10_000);
         uint256 id = _purchase(shopA, PURCHASE);
         vm.prank(buyer);
-        ins.fileClaim(id);
-        vm.prank(adjudicator);
-        ins.ruleClaim(id, false);
+        ins.fileClaim(id, EV1);
+        _rule(id, false);
 
         assertEq(ins.buyerStrikesOf(buyer), 1, "a rejected claim counts against the claimant");
     }
@@ -757,9 +759,8 @@ contract PurchaseInsuranceTest is ArmBase {
         _registerShop(sarrafA, shopA, BOND, 10_000);
         uint256 id = _purchase(shopA, PURCHASE);
         vm.prank(buyer);
-        ins.fileClaim(id);
-        vm.prank(adjudicator);
-        ins.ruleClaim(id, true);
+        ins.fileClaim(id, EV1);
+        _rule(id, true);
 
         assertEq(ins.buyerStrikesOf(buyer), 0, "a legitimate claim is never punished");
     }
@@ -769,9 +770,8 @@ contract PurchaseInsuranceTest is ArmBase {
         for (uint256 i; i < 3; ++i) {
             uint256 id = _purchase(shopA, PURCHASE);
             vm.prank(buyer);
-            ins.fileClaim(id);
-            vm.prank(adjudicator);
-            ins.ruleClaim(id, false);
+            ins.fileClaim(id, EV1);
+            _rule(id, false);
         }
         assertEq(ins.buyerStrikesOf(buyer), 3, "serial claimant is visible");
     }
@@ -781,10 +781,99 @@ contract PurchaseInsuranceTest is ArmBase {
         _registerShop(sarrafA, shopA, BOND, 10_000);
         uint256 id = _purchase(shopA, PURCHASE);
         vm.prank(buyer);
-        ins.fileClaim(id);
-        vm.prank(adjudicator);
-        ins.ruleClaim(id, false);
+        ins.fileClaim(id, EV1);
+        _rule(id, false);
 
         assertEq(ins.buyerStrikesOf(other), 0, "one buyer's record never taints another");
+    }
+
+    // ------------------------------------------- 13. evidence and rulings
+
+    /// A claim must arrive with evidence, and a ruling must state exactly which
+    /// evidence it judged. Without that, "the adjudicator decided" is not
+    /// reviewable by anyone afterwards.
+
+    function _dispute() internal returns (uint256 id) {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        id = _purchase(shopA, PURCHASE);
+        vm.prank(buyer);
+        ins.fileClaim(id, EV1);
+    }
+
+    function test_fileClaim_requiresEvidence() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        uint256 id = _purchase(shopA, PURCHASE);
+        vm.prank(buyer);
+        vm.expectRevert(bytes("PI: no evidence"));
+        ins.fileClaim(id, bytes32(0));
+    }
+
+    function test_fileClaim_recordsEvidenceInTheRoot() public {
+        uint256 id = _dispute();
+        assertTrue(ins.evidenceRootOf(id) != bytes32(0), "root set from the buyer's bundle");
+        assertEq(ins.evidenceCountOf(id), 1, "one bundle on record");
+    }
+
+    function test_ruleClaim_mustReferenceTheRootItJudged() public {
+        uint256 id = _dispute();
+        vm.prank(adjudicator);
+        vm.expectRevert(bytes("PI: stale evidence"));
+        ins.ruleClaim(id, true, keccak256("some other bundle"));
+    }
+
+    function test_ruleClaim_withCurrentRoot_succeeds() public {
+        uint256 id = _dispute();
+        _rule(id, true);
+        assertEq(iou.balanceOf(buyer, _id(sarrafA)), PURCHASE, "upheld and paid");
+    }
+
+    /// The substitution attack this exists to stop: evidence lands after the
+    /// adjudicator formed a view, so the ruling they submit no longer matches
+    /// what is on record. It must fail rather than silently apply.
+    function test_lateEvidence_invalidatesAnInFlightRuling() public {
+        uint256 id = _dispute();
+        bytes32 seen = ins.evidenceRootOf(id);
+
+        vm.prank(shopA); // the shop rebuts
+        ins.submitEvidence(id, keccak256("delivery photo + signature"));
+
+        vm.prank(adjudicator);
+        vm.expectRevert(bytes("PI: stale evidence"));
+        ins.ruleClaim(id, true, seen);
+
+        // Re-reading the record, the same ruling now goes through.
+        _rule(id, true);
+    }
+
+    function test_submitEvidence_sellerAndBuyerOnly() public {
+        uint256 id = _dispute();
+        vm.prank(outsider);
+        vm.expectRevert(bytes("PI: not a party"));
+        ins.submitEvidence(id, keccak256("hearsay"));
+    }
+
+    function test_submitEvidence_onlyWhileDisputed() public {
+        _registerShop(sarrafA, shopA, BOND, 10_000);
+        uint256 id = _purchase(shopA, PURCHASE); // COVERED, not disputed
+        vm.prank(buyer);
+        vm.expectRevert(bytes("PI: not disputed"));
+        ins.submitEvidence(id, keccak256("premature"));
+    }
+
+    function test_evidenceRoot_dependsOnOrderAndContent() public {
+        uint256 id = _dispute();
+        bytes32 before = ins.evidenceRootOf(id);
+        vm.prank(shopA);
+        ins.submitEvidence(id, keccak256("b"));
+        assertTrue(ins.evidenceRootOf(id) != before, "root moves when evidence is added");
+    }
+
+    /// The earning sarraf is recused at this layer too, not only the old one.
+    function test_ruleClaim_earningSarrafStillRecused_withEvidence() public {
+        uint256 id = _dispute();
+        bytes32 root4 = ins.evidenceRootOf(id);
+        vm.prank(sarrafA);
+        vm.expectRevert(bytes("PI: recused"));
+        ins.ruleClaim(id, true, root4);
     }
 }

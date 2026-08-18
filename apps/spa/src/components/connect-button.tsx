@@ -28,7 +28,7 @@ export function ConnectButton() {
           type="button"
           onClick={() => setOpen((v) => !v)}
           title={t("yourWallet")}
-          className="rounded-pill border border-border bg-surface px-lg py-sm text-sm font-medium text-foreground"
+          className="whitespace-nowrap rounded-pill border border-border bg-surface px-lg py-sm text-sm font-medium text-foreground"
         >
           <span dir="ltr">{shortAddress(address)}</span>
         </button>
@@ -65,7 +65,7 @@ export function ConnectButton() {
       type="button"
       disabled={isPending}
       onClick={() => create()}
-      className="rounded-pill bg-primary px-lg py-sm text-sm font-medium text-primary-foreground shadow-sm disabled:opacity-50"
+      className="whitespace-nowrap rounded-pill bg-primary px-lg py-sm text-sm font-medium text-primary-foreground shadow-sm disabled:opacity-50"
     >
       {isPending ? t("creating") : t("createWallet")}
     </button>

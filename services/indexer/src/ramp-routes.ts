@@ -37,6 +37,7 @@ import {
 } from "./ramp.js";
 import {
   getFirmQuote,
+  getOrderByQuote,
   getIndicativeRate,
   getOrder,
   getReceiptBlob,
@@ -257,6 +258,14 @@ export function registerRampRoutes(app: FastifyInstance, deps: { db: DB; chainId
     const quote = getFirmQuote(db, parsed.data.quoteId);
     if (!quote) return reply.code(404).send({ error: "firm quote not found" });
     if (quote.validUntil < now()) return reply.code(410).send({ error: "firm quote expired" });
+    // Single-use: a firm price was computed for one order of one size, so a
+    // second acceptance would bind the sarraf twice at a price offered once.
+    // The unique index is the real guard (it survives concurrent accepts);
+    // this turns the collision into a clear 409 instead of a 500.
+    const existing = getOrderByQuote(db, quote.quoteId);
+    if (existing) {
+      return reply.code(409).send({ error: "firm quote already accepted", orderId: existing.id });
+    }
     // Born OPEN, the customer's acceptance drives OPEN → QUOTED.
     const status = applyOrderEvent(quote.direction, "OPEN", "ACCEPT_QUOTE");
     const id = crypto.randomUUID();
