@@ -1,0 +1,97 @@
+diff --git a/packages/acceptance/src/arm/ArmBDeployer.sol b/packages/acceptance/src/arm/ArmBDeployer.sol
+index a8869d5..a8e107b 100644
+--- a/packages/acceptance/src/arm/ArmBDeployer.sol
++++ b/packages/acceptance/src/arm/ArmBDeployer.sol
+@@ -1,5 +1,52 @@
+ // SPDX-License-Identifier: MIT
+ pragma solidity ^0.8.24;
+-import {StubDeployer} from "../StubDeployer.sol";
+-/// Arm B deployer — brew replaces this stub inheritance with the real system.
+-contract ArmBDeployer is StubDeployer {}
++
++import {IAcceptanceDeployer, IMockUsdt, DovizirSystem} from "../interfaces/IAcceptanceDeployer.sol";
++import {
++    IIouToken,
++    IMemberRegistry,
++    IReservePool,
++    IInsuranceFund,
++    ISarrafRegistry,
++    INoteVault
++} from "../interfaces/IDovizir.sol";
++
++import {MockUsdt} from "../../../contracts/src/armb/MockUsdt.sol";
++import {IouToken} from "../../../contracts/src/armb/IouToken.sol";
++import {SarrafRegistry} from "../../../contracts/src/armb/SarrafRegistry.sol";
++import {MemberRegistry} from "../../../contracts/src/armb/MemberRegistry.sol";
++import {InsuranceFund} from "../../../contracts/src/armb/InsuranceFund.sol";
++import {ReservePool} from "../../../contracts/src/armb/ReservePool.sol";
++import {NoteVault} from "../../../contracts/src/armb/NoteVault.sol";
++
++/// Arm B deployer. Stateless: every deploy() call creates a fresh, disjoint
++/// set of six contracts and wires them, then drops all deployer-side
++/// privilege before returning (each contract locks its wiring setter after
++/// one use).
++contract ArmBDeployer is IAcceptanceDeployer {
++    function deploy() external override returns (DovizirSystem memory system) {
++        MockUsdt usdt = new MockUsdt();
++        IouToken iou = new IouToken();
++        SarrafRegistry sarrafRegistry = new SarrafRegistry();
++        MemberRegistry memberRegistry = new MemberRegistry(address(sarrafRegistry));
++        InsuranceFund fund = new InsuranceFund(address(usdt));
++        ReservePool pool =
++            new ReservePool(address(usdt), address(iou), address(sarrafRegistry), address(fund));
++        NoteVault vault = new NoteVault(address(iou));
++
++        sarrafRegistry.setReservePool(address(pool));
++        memberRegistry.setReservePool(address(pool));
++        iou.setMinters(address(pool), address(vault));
++        fund.setAuthorized(address(pool), address(vault));
++
++        system = DovizirSystem({
++            usdt: IMockUsdt(address(usdt)),
++            iouToken: IIouToken(address(iou)),
++            memberRegistry: IMemberRegistry(address(memberRegistry)),
++            reservePool: IReservePool(address(pool)),
++            insuranceFund: IInsuranceFund(address(fund)),
++            sarrafRegistry: ISarrafRegistry(address(sarrafRegistry)),
++            noteVault: INoteVault(address(vault))
++        });
++    }
++}
+diff --git a/packages/contracts/specs/story-002.cost.jsonl b/packages/contracts/specs/story-002.cost.jsonl
+index 582140e..c16cf8a 100644
+--- a/packages/contracts/specs/story-002.cost.jsonl
++++ b/packages/contracts/specs/story-002.cost.jsonl
+@@ -1 +1,2 @@
+ {"agent":"refine","usd":0,"model":"claude-opus-5","round":"spec","at":"2026-08-13T11:02:50.964Z","tokens_in":4,"tokens_out":7608,"cache_read":1820,"cache_create":14447}
++{"agent":"brew","usd":0.74579955,"model":"claude-sonnet-5","round":"iter-11","at":"2026-08-18T01:04:42.886Z","tokens_in":8,"tokens_out":28658,"cache_read":642981,"cache_create":32803}
+diff --git a/packages/contracts/specs/story-002.yaml b/packages/contracts/specs/story-002.yaml
+index 669df69..a41298c 100644
+--- a/packages/contracts/specs/story-002.yaml
++++ b/packages/contracts/specs/story-002.yaml
+@@ -61,7 +61,7 @@ proposals:
+   auth:
+     status: approved
+     approved_by: amin (PM, via orchestrator)
+-    approved_at: "2026-08-13T11:20:00Z"
++    approved_at: 2026-08-13T11:20:00Z
+     pm_amendment: Revert semantics authority is the frozen acceptance suite, not custom errors — the interfaces declare none. Match what the suite asserts; where unpinned, any revert is fine. Do not invent custom errors.
+     proposed_by: refine-agent
+     rationale: On-chain access control replaces the usual RLS framing; the concrete role set is fixed by `IDovizir.sol`, so this proposal states the enforcement discipline, not the role list.
+@@ -81,7 +81,7 @@ proposals:
+   infra:
+     status: approved
+     approved_by: amin (PM, via orchestrator)
+-    approved_at: "2026-08-13T11:20:00Z"
++    approved_at: 2026-08-13T11:20:00Z
+     proposed_by: refine-agent
+     runtime: Foundry (`forge test`), local only
+     deploy_target: None. M1 is local `forge test`; no live or testnet deployment in this story.
+@@ -91,5 +91,5 @@ proposals:
+     proposed_by: refine-agent
+     rationale: The deployer's function signature is fixed by the plug-in pattern in `packages/acceptance/README.md`, and the six contracts' signatures are fixed by `IDovizir.sol`. Proposing a shape here would only create a second, drift-prone copy of frozen text.
+ cost:
+-  total_usd: 0
+-  last_updated: 2026-08-13T11:02:50.964Z
++  total_usd: 0.7458
++  last_updated: 2026-08-18T01:04:42.886Z
