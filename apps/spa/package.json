@@ -9,8 +9,9 @@
     "preview": "vite preview --port 3200",
     "lint:messages": "node scripts/lint-messages.mjs",
     "test:sponsorship": "node src/lib/embedded/sponsorship.test.mjs",
-    "check": "npm run lint:messages && npm run test:sponsorship && npm run test:aa",
-    "test:aa": "node src/lib/embedded/aa-config.test.mjs"
+    "check": "npm run lint:messages && npm run test:sponsorship && npm run test:aa && npm run test:notes",
+    "test:aa": "node src/lib/embedded/aa-config.test.mjs",
+    "test:notes": "node src/lib/notes/spend-commit.test.mjs"
   },
   "dependencies": {
     "@dovizir/notes": "workspace:*",

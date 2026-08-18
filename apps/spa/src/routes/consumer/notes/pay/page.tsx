@@ -15,8 +15,7 @@ import { publishHandoff } from "@/lib/notes/handoff";
 import { CARVER, personaForPubkey, shortHex } from "@/lib/notes/personas";
 import {
   listBatches,
-  markSerialSpent,
-  putSpend,
+  commitSpendAtomic,
   spendKey,
   type StoredBatch,
 } from "@/lib/notes/store";
@@ -71,14 +70,18 @@ export default function PayPage() {
       const serials = c.batch.batch.notes.map((n) => n.serial);
       const { proof } = solRootAndProof(serials, c.index);
       const spendBundle: SpendBundle = { t: tx, r: c.batch.onchainRoot, p: proof };
-      await putSpend({
+      // One transaction: the serial is marked AND the spend recorded, or
+      // neither is. A crash between two separate writes could leave the note
+      // looking spendable after it was handed over — a double spend the chain
+      // punishes by seizing collateral, for what was only a flat battery.
+      await commitSpendAtomic(c.batch.batchRoot, tx.serial, {
         key: spendKey(tx.serial, invoice.nonce),
         transcript: tx,
         onchainRoot: c.batch.onchainRoot,
         proof,
         createdAt: Math.floor(Date.now() / 1000),
       });
-      await markSerialSpent(c.batch.batchRoot, tx.serial);
+      // Only now may the recipient receive it.
       publishHandoff(packSpend(spendBundle));
       setBundle(spendBundle);
       await refresh();

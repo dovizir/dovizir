@@ -80,6 +80,30 @@ export async function markSerialSpent(root: Hex, serial: Hex): Promise<void> {
 }
 
 // -------- sent (buyer's outgoing spends) --------
+/**
+ * Commit a spend and mark its serial in ONE IndexedDB transaction, so a crash
+ * cannot leave the device holding a recorded spend whose serial still looks
+ * spendable — that state is a double spend waiting to happen, and the chain
+ * seizes the payer's collateral for it. Ordering inside the transaction still
+ * marks first, so even a partial flush is safe (see spend-commit.mjs).
+ */
+export async function commitSpendAtomic(
+  batchRoot: Hex,
+  serial: Hex,
+  spend: StoredSpend,
+): Promise<void> {
+  const database = await db();
+  const tx = database.transaction(["batches", "sent"], "readwrite");
+  const batches = tx.objectStore("batches");
+  const b = await batches.get(batchRoot);
+  if (b && !b.spentSerials.includes(serial)) {
+    b.spentSerials.push(serial);
+    await batches.put(b);
+  }
+  await tx.objectStore("sent").put(spend);
+  await tx.done;
+}
+
 export async function putSpend(s: StoredSpend): Promise<void> {
   (await db()).put("sent", s);
 }
