@@ -51,6 +51,3 @@ It is **source available, not OSI open source**. Concretely:
 
 Auditability is the point: the trust model depends on anyone being able to
 verify what the contracts do, and BUSL preserves that in full.
-
-Earlier commits were published under MIT. That grant is not revoked for the
-versions it already covered.
