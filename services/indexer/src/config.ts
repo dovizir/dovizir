@@ -41,6 +41,7 @@ const ENV_KEYS: Record<ContractName | "usdt", string> = {
   sarrafRegistry: "SARRAF_REGISTRY_ADDRESS",
   memberRegistry: "MEMBER_REGISTRY_ADDRESS",
   noteVault: "NOTE_VAULT_ADDRESS",
+  purchaseInsurance: "PURCHASE_INSURANCE_ADDRESS",
   escrow: "ESCROW_ADDRESS",
   usdt: "USDT_ADDRESS",
 };

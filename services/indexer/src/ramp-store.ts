@@ -68,6 +68,13 @@ export function initRampSchema(db: DB): void {
       created_at    INTEGER NOT NULL,
       updated_at    INTEGER NOT NULL
     );
+    -- A firm quote is a price the sarraf committed to for ONE order of one
+    -- size (fiat-ramp §2: a firm price is size-dependent). Accepting it twice
+    -- binds them to two fills at a price offered once, letting the customer
+    -- wait out the market and accept again if it moves. Application-level
+    -- checks lose to concurrent accepts, so the constraint lives here.
+    CREATE UNIQUE INDEX IF NOT EXISTS ramp_orders_quote_unique
+      ON ramp_orders (quote_id);
     CREATE INDEX IF NOT EXISTS orders_by_sarraf ON ramp_orders (sarraf, status);
     CREATE INDEX IF NOT EXISTS orders_by_customer ON ramp_orders (customer, status);
     CREATE TABLE IF NOT EXISTS receipts (
@@ -294,6 +301,14 @@ export interface OrderRecord {
   customerBank?: string;
   createdAt: number;
   updatedAt: number;
+}
+
+/** The order already accepted against a quote, if any. */
+export function getOrderByQuote(db: DB, quoteId: string): OrderRecord | undefined {
+  const x = db.prepare(`SELECT * FROM ramp_orders WHERE quote_id = ?`).get(quoteId) as
+    | Record<string, unknown>
+    | undefined;
+  return x ? rowToOrder(x) : undefined;
 }
 
 export function insertOrder(
