@@ -2,7 +2,7 @@
  * The 8 target-market locales (ported from the Next app). All are now fully
  * translated; en remains the deep-merge fallback base. 6 of 8 are RTL.
  */
-export const locales = ["en", "fa", "tr", "ar", "ur", "fa-AF", "ckb", "ps"] as const;
+export const locales = ["en", "tr", "ar", "fa", "ur", "fa-AF", "ckb", "ps"] as const;
 export type Locale = (typeof locales)[number];
 
 export const defaultLocale: Locale = "en";
