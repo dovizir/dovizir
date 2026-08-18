@@ -16,9 +16,9 @@
     "confirmed": "Transaction confirmed",
     "error": "Something went wrong",
     "copied": "Copied",
-    "iou": "IOU",
+    "iou": "hawala",
     "usdt": "USDT",
-    "unit": "USDT-IOU",
+    "unit": "USDT",
     "unitDescriptor": "USDT-backed credit",
     "notDeployed": {
       "title": "Testnet not deployed yet",
@@ -58,14 +58,14 @@
     "request": "Request deposit",
     "requested": "Request sent to your sarraf. Your balance updates once they issue.",
     "howItWorksTitle": "How it works",
-    "howItWorks": "You hand cash or USDT to your sarraf. They deposit backing on-chain and issue you the same amount of IOU — always fully funded, never more than their backing.",
+    "howItWorks": "You hand cash or USDT to your sarraf. They deposit backing on-chain and issue you the same amount of hawala — always fully funded, never more than their backing.",
     "onchainTitle": "Direct on-chain deposit",
     "onchainHint": "For sarrafs: deposit USDT backing straight into the reserve pool.",
     "approveAndDeposit": "Approve & deposit"
   },
   "send": {
     "title": "Send",
-    "subtitle": "Send IOU to anyone, instantly",
+    "subtitle": "Send hawala to anyone, instantly",
     "recipient": "Recipient",
     "recipientPlaceholder": "0x… address or handle",
     "invalidRecipient": "Enter a valid address",
@@ -83,7 +83,7 @@
   },
   "redeem": {
     "title": "Redeem",
-    "subtitle": "Cash out IOU for USDT",
+    "subtitle": "Cash out hawala for USDT",
     "fromSarraf": "Redeem from tranche",
     "feeNote": "A {feeBps} redemption fee funds the insurance pool",
     "youRedeem": "You redeem",
@@ -190,7 +190,7 @@
   },
   "pos": {
     "title": "Seller terminal",
-    "subtitle": "Accept Dovizir IOU at the counter",
+    "subtitle": "Accept Dovizir hawala at the counter",
     "comingSoon": "Charge, scan-to-pay and daily settlement land here."
   },
   "desk": {
@@ -308,11 +308,11 @@
   "notes": {
     "hub": {
       "title": "Offline cash",
-      "subtitle": "Turn your IOU into notes that spend hand-to-hand, with no network",
+      "subtitle": "Turn your hawala into notes that spend hand-to-hand, with no network",
       "demoTitle": "Guided demo",
       "demoHint": "Pay offline, settle on-chain, and watch a double-spend get convicted",
       "carve": "Carve",
-      "carveHint": "Lock IOU into spendable offline notes",
+      "carveHint": "Lock hawala into spendable offline notes",
       "pay": "Pay offline",
       "payHint": "Spend a note by QR — no connection needed",
       "receive": "Receive",
@@ -320,7 +320,7 @@
       "reconcile": "Reconcile",
       "reconcileHint": "Settle accepted notes on-chain",
       "howTitle": "How offline notes work",
-      "how": "Your sarraf's IOU is locked on-chain into a batch of notes. Each note is a signed, verifiable claim you can hand to anyone — the recipient checks it fully offline (cert chain + your signature + the recipient binding). When either side is back online, the note settles on-chain to the recipient. Try to spend the same note twice and the chain convicts you: your collateral is seized and the honest victim is compensated."
+      "how": "Your sarraf's hawala is locked on-chain into a batch of notes. Each note is a signed, verifiable claim you can hand to anyone — the recipient checks it fully offline (cert chain + your signature + the recipient binding). When either side is back online, the note settles on-chain to the recipient. Try to spend the same note twice and the chain convicts you: your collateral is seized and the honest victim is compensated."
     },
     "airplane": {
       "on": "Airplane mode — offline",
@@ -334,10 +334,10 @@
     },
     "carve": {
       "title": "Carve — cash to hand",
-      "subtitle": "Lock some of your IOU into offline notes you can spend anywhere",
+      "subtitle": "Lock some of your hawala into offline notes you can spend anywhere",
       "notReady": "Demo chain not prepared",
       "notReadyHint": "Run: node apps/web/scripts/notes-demo-setup.mjs (needs a local anvil + deploy)",
-      "capLeft": "Offline capacity left: {amount} IOU",
+      "capLeft": "Offline capacity left: {amount} USDT",
       "willSplit": "Splits into {count} notes",
       "done": "Notes carved and locked on-chain",
       "cta": "Carve into notes",
@@ -390,7 +390,7 @@
       "subtitle": "Offline payment, on-chain settlement, and a double-spend conviction — click through it",
       "notReady": "Demo chain not prepared",
       "notReadyHint": "Start anvil (chain 84532), deploy, then run node apps/web/scripts/notes-demo-setup.mjs",
-      "s1": "Carve offline cash (online): lock 15,000 IOU into notes",
+      "s1": "Carve offline cash (online): lock 15,000 USDT into notes",
       "s2": "Go offline (airplane mode on)",
       "s3": "Buyer pays seller1 by QR — verified offline",
       "s4": "Back online",
@@ -406,7 +406,7 @@
       "network": "Network",
       "none": "none used",
       "settled": "Outcome",
-      "seller1Iou": "seller1 IOU balance",
+      "seller1Iou": "seller1 hawala balance",
       "tx": "tx",
       "doubleSpent": "Double-spent",
       "sameSerial": "Same serial",
@@ -447,10 +447,10 @@
     "bankPending": "Waiting for the seller to share bank details…",
     "share": "Share",
     "cancel": "Cancel offer",
-    "cancelTimeout": "Reclaim IOU (payment window elapsed)",
+    "cancelTimeout": "Reclaim hawala (payment window elapsed)",
     "payAndUpload": "I paid — upload receipt",
     "waitBank": "Waiting for the seller's bank details…",
-    "confirm": "Confirm fiat received — release IOU",
+    "confirm": "Confirm fiat received — release hawala",
     "dispute": "Raise dispute",
     "viewReceipt": "View receipt",
     "outcomeTaker": "Settled — the {unit} was released to the buyer.",
@@ -489,9 +489,9 @@
       "priceHint": "≈ {fiat} {fiatCode} per 1 {unit}",
       "enterAmount": "Enter an amount.",
       "enterFiat": "Enter the fiat total.",
-      "lockAndPost": "Lock IOU & post offer",
+      "lockAndPost": "Lock hawala & post offer",
       "locking": "Locking…",
-      "lockNote": "Your IOU is held in escrow until a buyer pays and you confirm."
+      "lockNote": "Your hawala is held in escrow until a buyer pays and you confirm."
     }
   },
   "deskDisputes": {

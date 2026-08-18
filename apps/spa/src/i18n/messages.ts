@@ -5,6 +5,7 @@ import ar from "../messages/ar.json";
 import ur from "../messages/ur.json";
 import faAF from "../messages/fa-AF.json";
 import ckb from "../messages/ckb.json";
+import ps from "../messages/ps.json";
 import type { Locale } from "./config";
 
 export type Messages = typeof en;
@@ -17,6 +18,7 @@ const raw: Record<Locale, Record<string, unknown>> = {
   ur,
   "fa-AF": faAF,
   ckb,
+  ps,
 };
 
 /** Deep-merge so any missing key in a locale falls back to the English value. */

@@ -16,9 +16,9 @@
     "confirmed": "İşlem onaylandı",
     "error": "Bir şeyler ters gitti",
     "copied": "Kopyalandı",
-    "iou": "IOU",
+    "iou": "Dovizir havalesi",
     "usdt": "USDT",
-    "unit": "USDT-IOU",
+    "unit": "USDT",
     "unitDescriptor": "USDT teminatlı kredi",
     "notDeployed": {
       "title": "Test ağı henüz yayına alınmadı",
@@ -58,14 +58,14 @@
     "request": "Yatırma talep et",
     "requested": "Talep Sarrafınıza gönderildi. Sarraf çıkarım yaptığında bakiyeniz güncellenir.",
     "howItWorksTitle": "Nasıl çalışır",
-    "howItWorks": "Sarrafınıza nakit veya USDT verirsiniz. Sarraf teminatı zincir üstünde yatırır ve size aynı tutarda IOU çıkarır — her zaman tam teminatlı, teminatından asla fazla değil.",
+    "howItWorks": "Sarrafınıza nakit veya USDT verirsiniz. Sarraf teminatı zincir üstünde yatırır ve size aynı tutarda Dovizir havalesi düzenler — her zaman tam teminatlı, teminatından asla fazla değil.",
     "onchainTitle": "Doğrudan zincir üstü yatırma",
     "onchainHint": "Sarraflar için: USDT teminatını doğrudan rezerv havuzuna yatırın.",
     "approveAndDeposit": "Onayla ve yatır"
   },
   "send": {
     "title": "Gönder",
-    "subtitle": "IOU'yu herkese anında gönderin",
+    "subtitle": "Dovizir havalesini herkese anında gönderin",
     "recipient": "Alıcı",
     "recipientPlaceholder": "0x… adres veya kullanıcı adı",
     "invalidRecipient": "Geçerli bir adres girin",
@@ -83,7 +83,7 @@
   },
   "redeem": {
     "title": "Bozdur",
-    "subtitle": "IOU'yu USDT'ye çevirin",
+    "subtitle": "Dovizir havalenizi USDT'ye çevirin",
     "fromSarraf": "Dilimden bozdur",
     "feeNote": "%{feeBps} bozdurma komisyonu sigorta havuzunu besler",
     "youRedeem": "Bozdurduğunuz",
@@ -190,7 +190,7 @@
   },
   "pos": {
     "title": "Satıcı terminali",
-    "subtitle": "Kasada Dovizir IOU kabul edin",
+    "subtitle": "Kasada Dovizir havalesi kabul edin",
     "comingSoon": "Tahsilat, tara-öde ve günlük mutabakat burada olacak."
   },
   "desk": {
@@ -308,11 +308,11 @@
   "notes": {
     "hub": {
       "title": "Çevrimdışı nakit",
-      "subtitle": "IOU'nuzu ağ olmadan elden ele harcanan banknotlara dönüştürün",
+      "subtitle": "Dovizir havalenizi ağ olmadan elden ele harcanan banknotlara dönüştürün",
       "demoTitle": "Rehberli demo",
       "demoHint": "Çevrimdışı ödeyin, zincir üstünde kapatın ve bir çifte harcamanın mahkûm edilişini izleyin",
       "carve": "Böl",
-      "carveHint": "IOU'yu harcanabilir çevrimdışı banknotlara kilitleyin",
+      "carveHint": "Havalenizi harcanabilir çevrimdışı banknotlara kilitleyin",
       "pay": "Çevrimdışı öde",
       "payHint": "Bir banknotu QR ile harcayın — bağlantı gerekmez",
       "receive": "Al",
@@ -320,7 +320,7 @@
       "reconcile": "Mutabakat",
       "reconcileHint": "Kabul edilen banknotları zincir üstünde kapatın",
       "howTitle": "Çevrimdışı banknotlar nasıl çalışır",
-      "how": "Sarrafınızın IOU'su zincir üstünde bir banknot destesine kilitlenir. Her banknot, herkese verebileceğiniz imzalı ve doğrulanabilir bir alacaktır — alıcı bunu tamamen çevrimdışı kontrol eder (sertifika zinciri + imzanız + alıcı bağı). Taraflardan biri yeniden çevrimiçi olduğunda banknot zincir üstünde alıcıya kapatılır. Aynı banknotu iki kez harcamaya kalkarsanız zincir sizi mahkûm eder: teminatınıza el konur ve dürüst mağdur tazmin edilir."
+      "how": "Sarrafınızın havalesi zincir üstünde bir banknot destesine kilitlenir. Her banknot, herkese verebileceğiniz imzalı ve doğrulanabilir bir alacaktır — alıcı bunu tamamen çevrimdışı kontrol eder (sertifika zinciri + imzanız + alıcı bağı). Taraflardan biri yeniden çevrimiçi olduğunda banknot zincir üstünde alıcıya kapatılır. Aynı banknotu iki kez harcamaya kalkarsanız zincir sizi mahkûm eder: teminatınıza el konur ve dürüst mağdur tazmin edilir."
     },
     "airplane": {
       "on": "Uçak modu — çevrimdışı",
@@ -334,10 +334,10 @@
     },
     "carve": {
       "title": "Böl — elden nakit",
-      "subtitle": "IOU'nuzun bir kısmını her yerde harcayabileceğiniz çevrimdışı banknotlara kilitleyin",
+      "subtitle": "Havalenizin bir kısmını her yerde harcayabileceğiniz çevrimdışı banknotlara kilitleyin",
       "notReady": "Demo zinciri hazırlanmadı",
       "notReadyHint": "Çalıştırın: node apps/web/scripts/notes-demo-setup.mjs (yerel anvil + dağıtım gerektirir)",
-      "capLeft": "Kalan çevrimdışı kapasite: {amount} IOU",
+      "capLeft": "Kalan çevrimdışı kapasite: {amount} USDT",
       "willSplit": "{count} banknota bölünür",
       "done": "Banknotlar bölündü ve zincir üstünde kilitlendi",
       "cta": "Banknotlara böl",
@@ -390,7 +390,7 @@
       "subtitle": "Çevrimdışı ödeme, zincir üstü kapatma ve bir çifte harcama mahkûmiyeti — adım adım geçin",
       "notReady": "Demo zinciri hazırlanmadı",
       "notReadyHint": "anvil'i (zincir 84532) başlatın, dağıtın, sonra node apps/web/scripts/notes-demo-setup.mjs komutunu çalıştırın",
-      "s1": "Çevrimdışı nakit böl (çevrimiçi): 15.000 IOU'yu banknotlara kilitle",
+      "s1": "Çevrimdışı nakit böl (çevrimiçi): 15.000 USDT'yi banknotlara kilitle",
       "s2": "Çevrimdışına geç (uçak modu açık)",
       "s3": "Alıcı, satıcı1'e QR ile öder — çevrimdışı doğrulandı",
       "s4": "Yeniden çevrimiçi",
@@ -406,7 +406,7 @@
       "network": "Ağ",
       "none": "kullanılmadı",
       "settled": "Sonuç",
-      "seller1Iou": "satıcı1 IOU bakiyesi",
+      "seller1Iou": "satıcı1 havale bakiyesi",
       "tx": "işlem",
       "doubleSpent": "Çifte harcandı",
       "sameSerial": "Aynı seri no",
@@ -447,10 +447,10 @@
     "bankPending": "Satıcının banka bilgilerini paylaşması bekleniyor…",
     "share": "Paylaş",
     "cancel": "Teklifi iptal et",
-    "cancelTimeout": "IOU'yu geri al (ödeme süresi doldu)",
+    "cancelTimeout": "Havaleyi geri al (ödeme süresi doldu)",
     "payAndUpload": "Ödedim — dekont yükle",
     "waitBank": "Satıcının banka bilgileri bekleniyor…",
-    "confirm": "Fiat alındığını onayla — IOU'yu serbest bırak",
+    "confirm": "Fiat alındığını onayla — havaleyi serbest bırak",
     "dispute": "Anlaşmazlık başlat",
     "viewReceipt": "Dekontu görüntüle",
     "outcomeTaker": "Kapatıldı — {unit} alıcıya serbest bırakıldı.",
@@ -489,9 +489,9 @@
       "priceHint": "≈ 1 {unit} başına {fiat} {fiatCode}",
       "enterAmount": "Bir tutar girin.",
       "enterFiat": "Fiat toplamını girin.",
-      "lockAndPost": "IOU'yu kilitle ve teklifi yayımla",
+      "lockAndPost": "Havaleyi kilitle ve teklifi yayımla",
       "locking": "Kilitleniyor…",
-      "lockNote": "IOU'nuz, alıcı ödeyip siz onaylayana kadar emanette tutulur."
+      "lockNote": "Havaleniz, alıcı ödeyip siz onaylayana kadar emanette tutulur."
     }
   },
   "deskDisputes": {

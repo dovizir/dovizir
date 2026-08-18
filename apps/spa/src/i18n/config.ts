@@ -1,14 +1,14 @@
 /**
- * The 7 target-market locales (ported from the Next app). All are now fully
- * translated; en remains the deep-merge fallback base. 5 of 7 are RTL.
+ * The 8 target-market locales (ported from the Next app). All are now fully
+ * translated; en remains the deep-merge fallback base. 6 of 8 are RTL.
  */
-export const locales = ["en", "fa", "tr", "ar", "ur", "fa-AF", "ckb"] as const;
+export const locales = ["en", "fa", "tr", "ar", "ur", "fa-AF", "ckb", "ps"] as const;
 export type Locale = (typeof locales)[number];
 
 export const defaultLocale: Locale = "en";
 
 /** Right-to-left locales — drives <html dir> and the Vazirmatn font swap. */
-export const rtlLocales: ReadonlySet<string> = new Set(["fa", "ar", "ur", "fa-AF", "ckb"]);
+export const rtlLocales: ReadonlySet<string> = new Set(["fa", "ar", "ur", "fa-AF", "ckb", "ps"]);
 
 export const localeNames: Record<Locale, string> = {
   en: "English",
@@ -18,6 +18,7 @@ export const localeNames: Record<Locale, string> = {
   ur: "اردو",
   "fa-AF": "دری",
   ckb: "کوردی",
+  ps: "پښتو",
 };
 
 /** Persisted client-side (localStorage + cookie mirror) — SPA has no server. */
