@@ -34,7 +34,7 @@ Base Sepolia (chainId 84532). Use a public RPC and faucet ETH for gas.
 See docs/ for protocol stories (US-001..US-016, US-P12) and consumer US-Cxx packs.
 
 #License
-MIT — see LICENSE.
+Business Source License 1.1 — see `LICENSE`, and the Licence section below.
 
 ## Licence
 
