@@ -14,7 +14,7 @@ export default function ConsumerLayout() {
     <div className="min-h-dvh pb-2xl">
       <JoinCapture />
       <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur">
-        <div className="mx-auto flex max-w-[28rem] items-center justify-between gap-md px-lg py-md">
+        <div className="mx-auto flex max-w-[28rem] flex-wrap items-center justify-between gap-md px-lg py-md">
           <span className="font-heading text-base font-extrabold text-primary">
             {t("appName")}
           </span>
