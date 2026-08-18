@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "slowcook_version": "0.28.7",
+  "generated_at": "2026-08-18T00:20:54.172Z",
+  "repo_root": ".",
+  "api_routes": [],
+  "pages": [],
+  "components": [],
+  "helpers": [],
+  "types": [],
+  "contracts": [
+    {
+      "name": "Fees",
+      "kind": "contract",
+      "file": "src/Fees.sol",
+      "line": 4,
+      "inherits": [],
+      "functions": [
+        {
+          "name": "constructor",
+          "visibility": "",
+          "mutability": "",
+          "line": 12
+        },
+        {
+          "name": "setParams",
+          "visibility": "external",
+          "mutability": "",
+          "line": 20
+        }
+      ],
+      "events": [
+        "ParamsUpdated"
+      ],
+      "errors": [],
+      "modifiers": [
+        "onlyOwner"
+      ]
+    },
+    {
+      "name": "IFees",
+      "kind": "interface",
+      "file": "src/ReservePool.sol",
+      "line": 4,
+      "inherits": [],
+      "functions": [
+        {
+          "name": "treasury",
+          "visibility": "external",
+          "mutability": "view",
+          "line": 5
+        },
+        {
+          "name": "issuanceFee",
+          "visibility": "external",
+          "mutability": "view",
+          "line": 6
+        },
+        {
+          "name": "redemptionFee",
+          "visibility": "external",
+          "mutability": "view",
+          "line": 7
+        }
+      ],
+      "events": [],
+      "errors": [],
+      "modifiers": []
+    },
+    {
+      "name": "ReservePool",
+      "kind": "contract",
+      "file": "src/ReservePool.sol",
+      "line": 10,
+      "inherits": [],
+      "functions": [
+        {
+          "name": "constructor",
+          "visibility": "",
+          "mutability": "",
+          "line": 19
+        },
+        {
+          "name": "deposit",
+          "visibility": "external",
+          "mutability": "",
+          "line": 21
+        },
+        {
+          "name": "issueIOU",
+          "visibility": "external",
+          "mutability": "payable",
+          "line": 26
+        },
+        {
+          "name": "redeem",
+          "visibility": "external",
+          "mutability": "payable",
+          "line": 36
+        },
+        {
+          "name": "receive",
+          "visibility": "external",
+          "mutability": "payable",
+          "line": 46
+        }
+      ],
+      "events": [
+        "Issued",
+        "Redeemed",
+        "FeesCollected",
+        "Deposited"
+      ],
+      "errors": [],
+      "modifiers": []
+    },
+    {
+      "name": "SmokeTest",
+      "kind": "contract",
+      "file": "test/Smoke.t.sol",
+      "line": 11,
+      "inherits": [
+        "Test"
+      ],
+      "functions": [
+        {
+          "name": "setUp",
+          "visibility": "public",
+          "mutability": "",
+          "line": 17
+        },
+        {
+          "name": "test_feeParamsSetByOwner",
+          "visibility": "public",
+          "mutability": "",
+          "line": 22
+        },
+        {
+          "name": "test_setParamsRevertsForNonOwner",
+          "visibility": "public",
+          "mutability": "",
+          "line": 28
+        },
+        {
+          "name": "test_depositCreditsMember",
+          "visibility": "public",
+          "mutability": "",
+          "line": 34
+        },
+        {
+          "name": "test_issueRequiresExactFeeAndForwardsToTreasury",
+          "visibility": "public",
+          "mutability": "",
+          "line": 39
+        },
+        {
+          "name": "test_redeemDebitsAndCanGoNegative",
+          "visibility": "public",
+          "mutability": "",
+          "line": 50
+        }
+      ],
+      "events": [],
+      "errors": [],
+      "modifiers": []
+    }
+  ]
+}
