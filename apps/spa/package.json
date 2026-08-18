@@ -11,7 +11,8 @@
     "test:sponsorship": "node src/lib/embedded/sponsorship.test.mjs",
     "check": "npm run lint:messages && npm run test:sponsorship && npm run test:aa && npm run test:notes",
     "test:aa": "node src/lib/embedded/aa-config.test.mjs",
-    "test:notes": "node src/lib/notes/spend-commit.test.mjs"
+    "test:notes": "node src/lib/notes/spend-commit.test.mjs",
+    "check:overflow": "node scripts/check-overflow.mjs"
   },
   "dependencies": {
     "@dovizir/notes": "workspace:*",

@@ -21,7 +21,7 @@ export function LocaleSwitcher() {
       <select
         value={locale}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-pill border border-border bg-surface px-md py-xs text-sm text-foreground"
+        className="max-w-[9rem] min-w-0 rounded-pill border border-border bg-surface px-md py-xs text-sm text-foreground"
       >
         {locales.map((l) => (
           <option key={l} value={l}>
