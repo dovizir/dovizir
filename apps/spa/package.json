@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --port 3200",
-    "lint:messages": "node scripts/lint-messages.mjs"
+    "lint:messages": "node scripts/lint-messages.mjs",
+    "test:sponsorship": "node src/lib/embedded/sponsorship.test.mjs",
+    "check": "npm run lint:messages && npm run test:sponsorship"
   },
   "dependencies": {
     "@dovizir/notes": "workspace:*",
