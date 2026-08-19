@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useAccount } from "wagmi";
 import { formatIou } from "@dovizir/sdk";
+import { UnitMark } from "@/components/unit-mark";
 import { NotDeployedBanner } from "@/components/not-deployed-banner";
 import { FriendlyTxCard } from "@/components/friendly-tx-card";
 import { useActivity, useIouBalance } from "@/lib/hooks";
@@ -26,7 +27,7 @@ export default function HomePage() {
         <p className="mt-sm font-heading text-4xl font-extrabold" dir="ltr">
           {isLoading ? "…" : formatIou(total)}
           <span className="ms-sm text-base font-medium opacity-90">
-            {tCommon("iou")}
+            <UnitMark onBrand />
           </span>
         </p>
         <p className="mt-sm text-xs opacity-80">{t("balanceHint")}</p>

@@ -1,18 +1,25 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
-import { LOCALE_COOKIE, localeNames, locales } from "@/i18n/config";
+import { useTranslations } from "next-intl";
+import { localeNames, locales, type Locale } from "@/i18n/config";
+import { useLocaleSwitch } from "@/i18n/provider";
 
-/** Persists the choice in the NEXT_LOCALE cookie (read by i18n/request.ts). */
+/**
+ * Switches locale through the I18nProvider.
+ *
+ * It previously wrote a NEXT_LOCALE cookie and called router.refresh() — the
+ * Next.js server-side i18n flow, which survived the Vite migration and quietly
+ * stopped working: there is no server to read that cookie, and refresh() does
+ * not re-render a client-only provider. The select changed and nothing else
+ * did, so ONLY English was reachable. setLocale updates React state (and
+ * persists to localStorage) directly.
+ */
 export function LocaleSwitcher() {
-  const locale = useLocale();
+  const { locale, setLocale } = useLocaleSwitch();
   const t = useTranslations("locale");
-  const router = useRouter();
 
   function onChange(next: string) {
-    document.cookie = `${LOCALE_COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
-    router.refresh();
+    setLocale(next as Locale);
   }
 
   return (

@@ -1,0 +1,14 @@
+<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dovizir">
+<path d="M2 0L12 3.5L22 0L19.2316 4.79839L17.9322 7H12H6.0678L4.88136 5.08065L2 0Z" fill="url(#paint0_linear_silver)"/>
+<path d="M2 7H6.0678L12 16.9258L17.9322 7H22L15.3898 18.2419L12 24L8.61017 18.2419L2 7Z" fill="url(#paint1_linear_silver)"/>
+<defs>
+<linearGradient id="paint0_linear_silver" x1="2" y1="2.625" x2="21.9993" y2="2.43842" gradientUnits="userSpaceOnUse">
+<stop offset="0.427083" stop-color="#C9D6E2"/>
+<stop offset="1" stop-color="#FFFFFF"/>
+</linearGradient>
+<linearGradient id="paint1_linear_silver" x1="2" y1="13.375" x2="22.0007" y2="13.2982" gradientUnits="userSpaceOnUse">
+<stop offset="0.427083" stop-color="#C9D6E2"/>
+<stop offset="1" stop-color="#FFFFFF"/>
+</linearGradient>
+</defs>
+</svg>
