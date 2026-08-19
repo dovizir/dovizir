@@ -13,7 +13,8 @@ export default function DeskLayout() {
   return (
     <div className="flex min-h-dvh">
       <aside className="hidden w-64 shrink-0 border-e border-border bg-surface p-xl md:block">
-        <span className="font-heading text-base font-extrabold text-primary">
+        <span className="flex items-center gap-xs font-heading text-base font-extrabold text-primary">
+          <img src="/logo.svg" alt="" width="24" height="24" className="block" />
           {tCommon("appName")}
         </span>
         <p className="mt-sm text-sm text-muted">{t("subtitle")}</p>

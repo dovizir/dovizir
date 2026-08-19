@@ -15,7 +15,8 @@ export default function ConsumerLayout() {
       <JoinCapture />
       <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur">
         <div className="mx-auto flex max-w-[28rem] flex-wrap items-center justify-between gap-md px-lg py-md">
-          <span className="font-heading text-base font-extrabold text-primary">
+          <span className="flex items-center gap-xs font-heading text-base font-extrabold text-primary">
+            <img src="/logo.svg" alt="" width="24" height="24" className="block" />
             {t("appName")}
           </span>
           <div className="flex min-w-0 flex-wrap items-center justify-end gap-sm">
