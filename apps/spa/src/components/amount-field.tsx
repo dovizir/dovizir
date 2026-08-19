@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { UnitMark } from "@/components/unit-mark";
 
 /** Shared decimal amount input (6-dp IOU/USDT amounts, LTR digits). */
 export function AmountField({
@@ -32,7 +33,7 @@ export function AmountField({
           }}
           className="w-full bg-transparent text-2xl font-medium text-foreground outline-none placeholder:text-muted"
         />
-        <span className="text-sm font-medium text-muted">{t("iou")}</span>
+        <span className="text-sm font-medium text-muted"><UnitMark /></span>
       </div>
     </div>
   );
