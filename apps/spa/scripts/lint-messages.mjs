@@ -23,7 +23,7 @@ const MESSAGES = join(dirname(fileURLToPath(import.meta.url)), "..", "src", "mes
 
 /** Locales the product ships. Kept explicit so a missing FILE fails the lint
  *  rather than silently shrinking the matrix. */
-const EXPECTED_LOCALES = ["en", "fa", "tr", "ar", "ur", "fa-AF", "ckb", "ps"];
+const EXPECTED_LOCALES = ["en", "tr", "ar", "fa", "ur", "fa-AF", "ckb", "ps"];
 
 /** Retired vocabulary, and what replaced it.
  *
