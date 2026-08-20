@@ -240,7 +240,17 @@
     "gasTankOwed": "مینٹینر کا واجب",
     "gasTankEmpty": "ٹینک خالی ہے — ری چارج تک آپ کے گاہک نیٹ ورک فیس خود حوالے سے ادا کریں گے۔",
     "gasTankTopUp": "ری چارج (USDT)",
-    "gasTankTopUpSoon": "ری چارج کا سلسلہ ادائیگی کے انضمام کے ساتھ آئے گا"
+    "gasTankTopUpSoon": "ری چارج کا سلسلہ ادائیگی کے انضمام کے ساتھ آئے گا",
+    "insurance": "خریداری بیمہ",
+    "insuranceHint": "انڈر رائٹنگ سے آپ کی آمدن: آپ کی دکانوں کی فروخت کے پریمیم",
+    "insuranceStrikes": "{count} خلاف ورزیاں",
+    "insuranceUnavailable": "اس انڈیکسر سے ابھی دستیاب نہیں",
+    "insuranceWithdrawable": "ابھی قابلِ نکاسی (لازمی ریزرو سے اوپر کمایا ہوا)",
+    "insuranceEarned": "کمایا ہوا",
+    "insuranceUnearned": "غیر کمایا (کوریج میں)",
+    "insuranceBonds": "زیرِ انتظام ضمانتیں",
+    "insuranceShops": "{count} دکانیں",
+    "insuranceExposure": "جاری زندہ کوریج"
   },
   "deskRamp": {
     "nav": {

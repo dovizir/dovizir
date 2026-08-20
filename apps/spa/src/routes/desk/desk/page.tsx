@@ -7,6 +7,7 @@ import { formatIou } from "@dovizir/sdk";
 import { KpiTile } from "@/components/desk/kpi-tile";
 import { CoverageMeter } from "@/components/desk/coverage-meter";
 import { GasTank } from "@/components/desk/gas-tank";
+import { InsurancePanel } from "@/components/desk/insurance-panel";
 import { useSarrafBook } from "@/lib/hooks";
 import { indexer, type NetworkStats } from "@/lib/indexer";
 
@@ -203,6 +204,7 @@ export default function DeskPage() {
         </section>
 
         <GasTank />
+        <InsurancePanel sarraf={sarraf!} />
       </div>
     </div>
   );

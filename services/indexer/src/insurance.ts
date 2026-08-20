@@ -167,3 +167,19 @@ export function sarrafInsurance(events: IndexedEvent[], sarraf: string): SarrafI
     strikes,
   };
 }
+
+/** Wire-safe form of {@link sarrafInsurance}: every bigint stringified, per
+ *  the store.ts convention — a route returning raw bigints 500s on
+ *  serialization. */
+export function insuranceView(events: IndexedEvent[], sarraf: string) {
+  const p = sarrafInsurance(events, sarraf);
+  return {
+    bondsUnderManagement: p.bondsUnderManagement.toString(),
+    shopCount: p.shopCount,
+    unearned: p.unearned.toString(),
+    earned: p.earned.toString(),
+    outstandingExposure: p.outstandingExposure.toString(),
+    withdrawable: p.withdrawable.toString(),
+    strikes: p.strikes,
+  };
+}

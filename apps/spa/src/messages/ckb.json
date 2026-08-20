@@ -240,7 +240,17 @@
     "gasTankOwed": "قەرز بۆ چاودێر",
     "gasTankEmpty": "تانکەکە بەتاڵە — هەتا پڕکردنەوە، کڕیارەکانت کرێی تۆڕ بە حەوالە خۆیان دەدەن.",
     "gasTankTopUp": "پڕکردنەوە (USDT)",
-    "gasTankTopUpSoon": "ڕەوتی پڕکردنەوە لەگەڵ گرێدانی پارەدان دێت"
+    "gasTankTopUpSoon": "ڕەوتی پڕکردنەوە لەگەڵ گرێدانی پارەدان دێت",
+    "insurance": "بیمەی کڕین",
+    "insuranceHint": "داهاتی تۆ لە دەستەبەری: پریمی فرۆشتنی دوکانەکانت",
+    "insuranceStrikes": "{count} پێشێلکاری",
+    "insuranceUnavailable": "هێشتا لەم ئیندێکسەرە بەردەست نییە",
+    "insuranceWithdrawable": "ئێستا وەردەگیرێت (بەدەستهاتوو سەرووی پاشەکەوتی پێویست)",
+    "insuranceEarned": "بەدەستهاتوو",
+    "insuranceUnearned": "بەدەستنەهاتوو (لە ماوەی داپۆشین)",
+    "insuranceBonds": "دەستەبەرە بەڕێوەبراوەکان",
+    "insuranceShops": "{count} دوکان",
+    "insuranceExposure": "داپۆشینی زیندووی بەردەوام"
   },
   "deskRamp": {
     "nav": {

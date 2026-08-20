@@ -63,10 +63,23 @@ async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
   return (await res.json()) as T;
 }
 
+/** Wire shape of /sarraf/:addr/insurance — bigints arrive as strings. */
+export type SarrafInsuranceView = {
+  bondsUnderManagement: string;
+  shopCount: number;
+  unearned: string;
+  earned: string;
+  outstandingExposure: string;
+  withdrawable: string;
+  strikes: number;
+};
+
 export const indexer = {
   health: (signal?: AbortSignal) => get<IndexerHealth>("/health", signal),
   stats: (signal?: AbortSignal) => get<NetworkStats>("/stats", signal),
   sarraf: (addr: string, signal?: AbortSignal) =>
     get<SarrafView>(`/sarraf/${addr}`, signal),
   member: (addr: string, signal?: AbortSignal) => get(`/member/${addr}`, signal),
+  insurance: (addr: string, signal?: AbortSignal) =>
+    get<SarrafInsuranceView>(`/sarraf/${addr}/insurance`, signal),
 };

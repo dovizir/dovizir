@@ -240,7 +240,17 @@
     "gasTankOwed": "قرض به نگهدارنده",
     "gasTankEmpty": "تانکی خالی است — تا شارژ دوباره، مشتریان شما فیس شبکه را خود با حواله می‌پردازند.",
     "gasTankTopUp": "شارژ (USDT)",
-    "gasTankTopUpSoon": "جریان شارژ با وصل شدن پرداخت می‌آید"
+    "gasTankTopUpSoon": "جریان شارژ با وصل شدن پرداخت می‌آید",
+    "insurance": "بیمهٔ خرید",
+    "insuranceHint": "عاید شما از تضمین: حق بیمهٔ فروشات دکان‌های شما",
+    "insuranceStrikes": "{count} خطا",
+    "insuranceUnavailable": "هنوز از این ایندکسر در دسترس نیست",
+    "insuranceWithdrawable": "قابل برداشت فعلاً (به‌دست‌آمده بالاتر از ذخیرهٔ لازم)",
+    "insuranceEarned": "به‌دست‌آمده",
+    "insuranceUnearned": "به‌دست‌نیامده (در دورهٔ پوشش)",
+    "insuranceBonds": "ضمانت‌های تحت مدیریت",
+    "insuranceShops": "{count} دکان",
+    "insuranceExposure": "پوشش جاری زنده"
   },
   "deskRamp": {
     "nav": {

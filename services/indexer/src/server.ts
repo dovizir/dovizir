@@ -26,6 +26,7 @@ import {
   openDb,
 } from "./db.js";
 import { allEvents } from "./db.js";
+import { insuranceView } from "./insurance.js";
 import { buildSources, runSyncLoop } from "./sync.js";
 import { memberView, sarrafView, snapshot } from "./store.js";
 import { networkStats, sarrafPnl } from "./derive.js";
@@ -85,6 +86,12 @@ async function main() {
     const parsed = addr.safeParse((req.params as { addr: string }).addr);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
     return sarrafPnl(allEvents(db), parsed.data);
+  });
+
+  app.get("/sarraf/:addr/insurance", async (req, reply) => {
+    const parsed = addr.safeParse((req.params as { addr: string }).addr);
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
+    return insuranceView(allEvents(db), parsed.data);
   });
 
   app.get("/member/:addr", async (req, reply) => {
