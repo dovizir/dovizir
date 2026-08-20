@@ -67,7 +67,7 @@
     "title": "إرسال",
     "subtitle": "أرسل حوالة إلى أي شخص فورًا",
     "recipient": "المستلم",
-    "recipientPlaceholder": "عنوان 0x… أو معرّف",
+    "recipientPlaceholder": "عنوان 0x…، هاتف أو بريد إلكتروني",
     "invalidRecipient": "أدخل عنوانًا صالحًا",
     "insufficient": "الرصيد غير كافٍ",
     "zeroFee": "بدون رسوم",
@@ -79,7 +79,11 @@
     "signAuthorization": "توقيع التفويض",
     "authorizationSigned": "تم توقيع التفويض. شاركه مع ساعٍ لترحيله، أو رحّله بنفسك.",
     "relayNow": "الترحيل الآن",
-    "sendNow": "إرسال"
+    "sendNow": "إرسال",
+    "contactResolving": "جارٍ البحث…",
+    "contactNotFound": "لا أحد مسجّل بهذه البيانات بعد — ادعُه للانضمام أو ألصق عنوان محفظته",
+    "contactUnavailable": "بحث جهات الاتصال غير متاح — ألصق عنوان المحفظة بدلًا من ذلك",
+    "contactLimited": "عمليات بحث كثيرة — انتظر قليلًا ثم أعد المحاولة"
   },
   "redeem": {
     "title": "استرداد",

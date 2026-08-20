@@ -67,7 +67,7 @@
     "title": "بھیجیں",
     "subtitle": "کسی کو بھی فوراً حوالہ بھیجیں",
     "recipient": "وصول کنندہ",
-    "recipientPlaceholder": "0x… پتہ یا ہینڈل",
+    "recipientPlaceholder": "0x… پتہ، فون یا ای میل",
     "invalidRecipient": "ایک درست پتہ درج کریں",
     "insufficient": "کافی بیلنس نہیں",
     "zeroFee": "کوئی فیس نہیں",
@@ -79,7 +79,11 @@
     "signAuthorization": "اجازت نامہ دستخط کریں",
     "authorizationSigned": "اجازت نامہ دستخط ہو گیا۔ ریلے کے لیے کسی قاصد کو دیں، یا خود ریلے کریں۔",
     "relayNow": "ابھی ریلے کریں",
-    "sendNow": "بھیجیں"
+    "sendNow": "بھیجیں",
+    "contactResolving": "تلاش جاری…",
+    "contactNotFound": "اس رابطے سے کوئی رجسٹرڈ نہیں — انہیں دعوت دیں یا والٹ ایڈریس چسپاں کریں",
+    "contactUnavailable": "رابطہ تلاش دستیاب نہیں — والٹ ایڈریس چسپاں کریں",
+    "contactLimited": "بہت زیادہ تلاش — تھوڑا انتظار کر کے دوبارہ کوشش کریں"
   },
   "redeem": {
     "title": "نقد کرائیں",

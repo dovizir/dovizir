@@ -67,7 +67,7 @@
     "title": "Send",
     "subtitle": "Send hawala to anyone, instantly",
     "recipient": "Recipient",
-    "recipientPlaceholder": "0x… address or handle",
+    "recipientPlaceholder": "0x… address, phone, or email",
     "invalidRecipient": "Enter a valid address",
     "insufficient": "Not enough balance",
     "zeroFee": "Zero fee",
@@ -79,7 +79,11 @@
     "signAuthorization": "Sign authorization",
     "authorizationSigned": "Authorization signed. Share it with a courier to relay, or relay it yourself.",
     "relayNow": "Relay now",
-    "sendNow": "Send"
+    "sendNow": "Send",
+    "contactResolving": "Looking up…",
+    "contactNotFound": "No one with this contact is registered yet — ask them to join, or paste their address",
+    "contactUnavailable": "Contact lookup unavailable — paste their wallet address instead",
+    "contactLimited": "Too many lookups — wait a moment and try again"
   },
   "redeem": {
     "title": "Redeem",
