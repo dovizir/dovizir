@@ -99,10 +99,50 @@ for (const kind of ["friendly", "purchase"]) {
 
 // ------------------------------------------------------------------ degradation
 
+// TWO paymasters, not one. Paying in hawala IS the token paymaster: in
+// ERC-4337 the EntryPoint settles gas in ETH, and the only way a user pays in
+// an ERC-20 is for a token paymaster to accept it and cover the ETH. So
+// "sponsor down, therefore pay in hawala" only holds while the TOKEN paymaster
+// is up. An earlier version of this file collapsed both into one flag and
+// claimed nobody could ever be stranded, which was simply false.
+
 eq(
-  decideFunding({ kind: "friendly", sponsoredAt: [], now: T0, paymasterAvailable: false }),
-  { payer: "user-hawala", reason: "paymaster-unavailable" },
-  "paymaster down: the user can still transact, paying in hawala — never stranded",
+  decideFunding({ kind: "friendly", sponsoredAt: [], now: T0, sponsorAvailable: false }),
+  { payer: "user-hawala", reason: "sponsor-unavailable" },
+  "sponsor down, token paymaster up: the user pays in hawala — still never ETH",
+);
+
+eq(
+  decideFunding({ kind: "purchase", sponsoredAt: [], now: T0, sponsorAvailable: false }),
+  { payer: "user-hawala", reason: "sponsor-unavailable" },
+  "even a purchase falls back to the buyer paying if sponsorship is down",
+);
+
+eq(
+  decideFunding({
+    kind: "friendly", sponsoredAt: [], now: T0,
+    sponsorAvailable: false, tokenPaymasterAvailable: false,
+  }),
+  { payer: "none", reason: "no-paymaster" },
+  "BOTH paymasters down: honestly blocked — the user has no ETH, so nothing " +
+    "can be paid. Naming this is the point; pretending otherwise hid a hole.",
+);
+
+eq(
+  decideFunding({
+    kind: "friendly", sponsoredAt: [T0], now: T0 + 60_000,
+    tokenPaymasterAvailable: false,
+  }),
+  { payer: "none", reason: "no-paymaster" },
+  "quota spent and no token paymaster: blocked, not silently charged in ETH",
+);
+
+eq(
+  decideFunding({
+    kind: "purchase", sponsoredAt: [], now: T0, tokenPaymasterAvailable: false,
+  }),
+  { payer: "sarraf", reason: "purchase-exempt" },
+  "a sponsored purchase does not need the token paymaster at all",
 );
 
 if (failures.length) {
