@@ -240,7 +240,17 @@
     "gasTankOwed": "Bakımcıya borç",
     "gasTankEmpty": "Depo boş — yükleme yapana kadar müşterileriniz ağ ücretini havaleyle kendileri öder.",
     "gasTankTopUp": "Yükle (USDT)",
-    "gasTankTopUpSoon": "Yükleme akışı ödeme entegrasyonuyla gelecek"
+    "gasTankTopUpSoon": "Yükleme akışı ödeme entegrasyonuyla gelecek",
+    "insurance": "Satın alma sigortası",
+    "insuranceHint": "Sigortacılık geliriniz: dükkanlarınızın satışlarından primler",
+    "insuranceStrikes": "{count} ihlal",
+    "insuranceUnavailable": "Bu dizinleyiciden henüz alınamıyor",
+    "insuranceWithdrawable": "Şimdi çekilebilir (gerekli tamponun üzerindeki kazanılmış)",
+    "insuranceEarned": "Kazanılmış",
+    "insuranceUnearned": "Kazanılmamış (teminat süresinde)",
+    "insuranceBonds": "Yönetilen teminatlar",
+    "insuranceShops": "{count} dükkan",
+    "insuranceExposure": "Canlı teminat riski"
   },
   "deskRamp": {
     "nav": {

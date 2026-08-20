@@ -240,7 +240,17 @@
     "gasTankOwed": "Owed to maintainer",
     "gasTankEmpty": "Tank empty — your customers now pay their own network fee in hawala until you top up.",
     "gasTankTopUp": "Top up (USDT)",
-    "gasTankTopUpSoon": "Top-up flow arrives with the payment integration"
+    "gasTankTopUpSoon": "Top-up flow arrives with the payment integration",
+    "insurance": "Purchase insurance",
+    "insuranceHint": "Your underwriting income: premiums from your shops' sales",
+    "insuranceStrikes": "{count} strikes",
+    "insuranceUnavailable": "Not available from this indexer yet",
+    "insuranceWithdrawable": "Withdrawable now (earned above the required cushion)",
+    "insuranceEarned": "Earned",
+    "insuranceUnearned": "Unearned (in coverage)",
+    "insuranceBonds": "Bonds under management",
+    "insuranceShops": "{count} shops",
+    "insuranceExposure": "Live covered exposure"
   },
   "deskRamp": {
     "nav": {

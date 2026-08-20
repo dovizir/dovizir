@@ -240,7 +240,17 @@
     "gasTankOwed": "مستحق للمشغّل",
     "gasTankEmpty": "الخزان فارغ — حتى تعيد الشحن، يدفع عملاؤك رسوم الشبكة بأنفسهم بالحوالة.",
     "gasTankTopUp": "شحن (USDT)",
-    "gasTankTopUpSoon": "تدفق الشحن يأتي مع ربط الدفع"
+    "gasTankTopUpSoon": "تدفق الشحن يأتي مع ربط الدفع",
+    "insurance": "تأمين المشتريات",
+    "insuranceHint": "دخلك من الاكتتاب: أقساط مبيعات متاجرك",
+    "insuranceStrikes": "{count} مخالفات",
+    "insuranceUnavailable": "غير متاح من هذا المفهرس بعد",
+    "insuranceWithdrawable": "قابل للسحب الآن (المكتسب فوق الاحتياطي المطلوب)",
+    "insuranceEarned": "مكتسب",
+    "insuranceUnearned": "غير مكتسب (ضمن التغطية)",
+    "insuranceBonds": "الضمانات المُدارة",
+    "insuranceShops": "{count} متاجر",
+    "insuranceExposure": "التغطية الحية القائمة"
   },
   "deskRamp": {
     "nav": {

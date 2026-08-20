@@ -240,7 +240,17 @@
     "gasTankOwed": "ساتونکي ته پور",
     "gasTankEmpty": "ټانکی تش دی — تر بیا ډکولو پورې ستاسو پیرودونکي د شبکې فیس پخپله په حواله ورکوي.",
     "gasTankTopUp": "ډکول (USDT)",
-    "gasTankTopUpSoon": "د ډکولو بهیر د تادیې له نښلولو سره راځي"
+    "gasTankTopUpSoon": "د ډکولو بهیر د تادیې له نښلولو سره راځي",
+    "insurance": "د پیرود بیمه",
+    "insuranceHint": "ستاسو د تضمین عاید: ستاسو د دکانونو د پلور پریمونه",
+    "insuranceStrikes": "{count} سرغړونې",
+    "insuranceUnavailable": "له دې ایندېکسر څخه لا نه ترلاسه کېږي",
+    "insuranceWithdrawable": "اوس د ایستلو وړ (له اړین زېرمې پورته ګټل شوي)",
+    "insuranceEarned": "ګټل شوي",
+    "insuranceUnearned": "ناګټل شوي (د پوښښ په موده کې)",
+    "insuranceBonds": "تر مدیریت لاندې ضمانتونه",
+    "insuranceShops": "{count} دکانونه",
+    "insuranceExposure": "روان ژوندی پوښښ"
   },
   "deskRamp": {
     "nav": {

@@ -240,7 +240,17 @@
     "gasTankOwed": "بدهی به نگهدارنده",
     "gasTankEmpty": "مخزن خالی است — تا شارژ مجدد، مشتریان شما کارمزد شبکه را خودشان با حواله می‌پردازند.",
     "gasTankTopUp": "شارژ (USDT)",
-    "gasTankTopUpSoon": "جریان شارژ همراه با اتصال پرداخت می‌آید"
+    "gasTankTopUpSoon": "جریان شارژ همراه با اتصال پرداخت می‌آید",
+    "insurance": "بیمهٔ خرید",
+    "insuranceHint": "درآمد شما از پذیره‌نویسی: حق بیمهٔ فروش فروشگاه‌های شما",
+    "insuranceStrikes": "{count} خطا",
+    "insuranceUnavailable": "هنوز از این ایندکسر در دسترس نیست",
+    "insuranceWithdrawable": "قابل برداشت اکنون (کسب‌شده بالاتر از ذخیرهٔ لازم)",
+    "insuranceEarned": "کسب‌شده",
+    "insuranceUnearned": "کسب‌نشده (در دورهٔ پوشش)",
+    "insuranceBonds": "وثیقه‌های تحت مدیریت",
+    "insuranceShops": "{count} فروشگاه",
+    "insuranceExposure": "پوشش زندهٔ جاری"
   },
   "deskRamp": {
     "nav": {

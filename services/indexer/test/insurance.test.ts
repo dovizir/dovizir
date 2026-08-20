@@ -226,3 +226,28 @@ describe("sarrafInsurance", () => {
     expect(sarrafInsurance(evs, SARRAF).outstandingExposure).toBe(0n);
   });
 });
+
+describe("insuranceView (route serialization)", () => {
+  it("stringifies every bigint — JSON.stringify must not throw", async () => {
+    const { insuranceView } = await import("../src/insurance.js");
+    const evs = [
+      registered(SHOP_A),
+      purchase(SHOP_A, "1000000000", "9000000"),
+      ev("PremiumEarned", { purchaseId: "1", sarraf: SARRAF, premium: "9000000" }),
+    ];
+    const v = insuranceView(evs, SARRAF);
+    // The reason this test exists: sarrafInsurance returns bigints, and a route
+    // returning them raw would 500 on serialization.
+    const json = JSON.stringify(v);
+    expect(json).toContain('"earned":"4500000"');
+    expect(v).toEqual({
+      bondsUnderManagement: "10000000000",
+      shopCount: 1,
+      unearned: "0",
+      earned: "4500000",
+      outstandingExposure: "0",
+      withdrawable: "4500000",
+      strikes: 0,
+    });
+  });
+});
