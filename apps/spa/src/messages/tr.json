@@ -564,5 +564,46 @@
     "badLink": "Bu ödeme bağlantısı eksik.",
     "home": "Ana sayfaya dön",
     "connectFirst": "Önce cüzdanınızı oluşturun"
+  },
+  "onboarding": {
+    "join": {
+      "title": "Sarrafınız, kapınız",
+      "subtitle": "Bu sarraf aracılığıyla davet edildiniz. Bakiyeniz onda durur ve transferlerinizin masrafını o karşılar.",
+      "certified": "Sertifikalı",
+      "members": "{count} üye",
+      "noSarrafTitle": "Henüz bağlı bir sarraf yok",
+      "noSarrafHint": "Sarrafınızın davet bağlantısını açın veya QR kodunu tarayarak onun üzerinden katılın.",
+      "benefitDaily": "Arkadaşlara her gün 1 ücretsiz transfer",
+      "benefitPurchases": "Alışveriş her zaman ücretsiz — ücreti satıcı karşılar",
+      "benefitPrivacy": "Cüzdanınızı sizinle yalnızca sarrafınız ilişkilendirebilir",
+      "cta": "Bu sarrafla katıl",
+      "ctaNoSarraf": "Davetsiz devam et"
+    },
+    "create": {
+      "title": "Cüzdanını oluştur",
+      "subtitle": "Kurtarma kodu yok. Parola yok. Parmak iziniz veya yüzünüz cüzdanı bu cihazda açar.",
+      "pointDevice": "Anahtarlar telefonunuzun güvenli çipinde kalır",
+      "pointNothing": "Yazacak ya da ezberleyecek bir şey yok",
+      "pointFree": "Oluşturması ücretsiz — masrafları sarrafınız karşılar",
+      "cta": "Cüzdanımı oluştur",
+      "creating": "Cihazınız bekleniyor…",
+      "failed": "Cihazınız onayı tamamlamadı. Lütfen tekrar deneyin."
+    },
+    "ready": {
+      "title": "Cüzdanınız hazır!",
+      "subtitle": "Paranız artık özgürce hareket eder.",
+      "subtitleWithSarraf": "Sarrafınız aracılığıyla katıldınız. Paranız artık özgürce hareket eder.",
+      "giftTitle": "Bugünün ücretsiz transferi sizi bekliyor",
+      "giftBody": "Her gün 1 ücretsiz transfer. Alışverişler asla sayılmaz.",
+      "cta": "Cüzdanıma git"
+    },
+    "unlock": {
+      "title": "Tekrar hoş geldiniz!",
+      "subtitle": "Cüzdanınızı parmak izinizle veya yüzünüzle açın.",
+      "cta": "Cüzdanımın kilidini aç",
+      "unlocking": "Cihazınız bekleniyor…",
+      "switchAccount": "Farklı bir hesap kullan",
+      "switchWarning": "Bu işlem cüzdanı bu cihazdan kaldırır."
+    }
   }
 }

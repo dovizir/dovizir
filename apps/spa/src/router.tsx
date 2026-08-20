@@ -16,6 +16,9 @@ function L(loader: () => Promise<{ default: ComponentType<any> }>) {
 }
 
 export const router = createBrowserRouter([
+  // Onboarding lives outside the consumer shell: no bottom nav, its own header
+  // (the four screens from the Figma "Onboarding" section).
+  { path: "welcome", element: L(() => import("./routes/welcome/page")) },
   {
     element: <ConsumerLayout />,
     children: [
