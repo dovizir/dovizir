@@ -27,6 +27,11 @@ import {
 } from "./db.js";
 import { allEvents } from "./db.js";
 import { insuranceView } from "./insurance.js";
+import {
+  initDirectorySchema,
+  registerContact,
+  resolveContact,
+} from "./directory.js";
 import { buildSources, runSyncLoop } from "./sync.js";
 import { memberView, sarrafView, snapshot } from "./store.js";
 import { networkStats, sarrafPnl } from "./derive.js";
@@ -98,6 +103,48 @@ async function main() {
     const parsed = addr.safeParse((req.params as { addr: string }).addr);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
     return memberView(allEvents(db), parsed.data);
+  });
+
+  // ---- contact directory (Phase 3 / G6) --------------------------------
+  // The pepper lives ONLY in the environment. Unset => the directory answers
+  // 503 rather than silently running with a hardcoded key — a default pepper
+  // would make every deployment's hashes mutually crackable.
+  const DIR_PEPPER = process.env.DIRECTORY_PEPPER ?? "";
+  const DIR_ADMIN = process.env.DIRECTORY_ADMIN_TOKEN ?? "";
+  initDirectorySchema(db);
+
+  app.post("/directory/register", async (req, reply) => {
+    if (!DIR_PEPPER || !DIR_ADMIN) return reply.code(503).send({ error: "directory not configured" });
+    // Registration re-points an identifier at a wallet, so an open endpoint
+    // would let anyone hijack a phone number. Desk-held token in the pilot;
+    // OTP-verified self-serve replaces this with the onboarding flow.
+    if (req.headers["x-directory-admin"] !== DIR_ADMIN) {
+      return reply.code(401).send({ error: "unauthorized" });
+    }
+    const body = z
+      .object({ identifier: z.string().min(3).max(200), wallet: addr })
+      .safeParse(req.body);
+    if (!body.success) return reply.code(400).send({ error: body.error.message });
+    registerContact(db, DIR_PEPPER, body.data.identifier, body.data.wallet);
+    return reply.code(201).send({ ok: true });
+  });
+
+  app.get("/directory/resolve", async (req, reply) => {
+    if (!DIR_PEPPER) return reply.code(503).send({ error: "directory not configured" });
+    const q = z
+      .object({ id: z.string().min(3).max(200) })
+      .safeParse(req.query);
+    if (!q.success) return reply.code(400).send({ error: q.error.message });
+    // Rate-limit key: the caller's network identity. A spoofable body field
+    // would let a scanner mint fresh requesters per call.
+    const requester = req.ip;
+    try {
+      const hit = resolveContact(db, DIR_PEPPER, q.data.id, requester, now() * 1000);
+      return { wallet: hit?.wallet ?? null };
+    } catch (e) {
+      if (String(e).includes("rate limited")) return reply.code(429).send({ error: "rate limited" });
+      throw e;
+    }
   });
 
   app.get("/serials/pending", async () => ({ pending: getPendingSerials(db) }));
