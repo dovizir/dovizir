@@ -195,7 +195,12 @@
   "pos": {
     "title": "Satıcı terminali",
     "subtitle": "Kasada Dovizir havalesi kabul edin",
-    "comingSoon": "Tahsilat, tara-öde ve günlük mutabakat burada olacak."
+    "comingSoon": "Tahsilat, tara-öde ve günlük mutabakat burada olacak.",
+    "chargeTitle": "Müşteriden tahsilat",
+    "chargeHint": "Tutarı yazın; müşteri okutup öder — anında tahsil, sigorta kapsamında",
+    "chargeAmount": "Tutar",
+    "connectFirst": "Önce dükkan cüzdanını bağlayın",
+    "showCustomer": "Bu kodu müşteriye gösterin"
   },
   "desk": {
     "title": "Sarraf masası",
@@ -546,5 +551,18 @@
     "yourWallet": "Dovizir cüzdanınız",
     "copyAddress": "Adresi kopyala",
     "reset": "Cüzdanı sıfırla"
+  },
+  "pay": {
+    "title": "Bu dükkana öde",
+    "shop": "Dükkan",
+    "amount": "Tutar",
+    "coveredNote": "Bu alışveriş kapsam altında: ürün gelmezse talepte bulunabilirsiniz.",
+    "payNow": "Şimdi öde",
+    "paidNote": "Ödendi. Para dükkanda; kapsamanız açık.",
+    "confirmNow": "Ürünü aldım — onayla",
+    "confirmedNote": "Onaylandı. Satış kesinleşti, satıcının primi kazanıldı.",
+    "badLink": "Bu ödeme bağlantısı eksik.",
+    "home": "Ana sayfaya dön",
+    "connectFirst": "Önce cüzdanınızı oluşturun"
   }
 }

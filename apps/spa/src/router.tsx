@@ -22,6 +22,7 @@ export const router = createBrowserRouter([
       { index: true, element: L(() => import("./routes/consumer/page")) },
       { path: "deposit", element: L(() => import("./routes/consumer/deposit/page")) },
       { path: "send", element: L(() => import("./routes/consumer/send/page")) },
+      { path: "pay", element: L(() => import("./routes/consumer/pay/page")) },
       { path: "redeem", element: L(() => import("./routes/consumer/redeem/page")) },
       { path: "rates", element: L(() => import("./routes/consumer/rates/page")) },
       { path: "cash-in", element: L(() => import("./routes/consumer/cash-in/page")) },

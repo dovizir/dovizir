@@ -195,7 +195,12 @@
   "pos": {
     "title": "Seller terminal",
     "subtitle": "Accept Dovizir hawala at the counter",
-    "comingSoon": "Charge, scan-to-pay and daily settlement land here."
+    "comingSoon": "Charge, scan-to-pay and daily settlement land here.",
+    "chargeTitle": "Charge a customer",
+    "chargeHint": "Type the amount; the customer scans and pays — settled instantly, covered by insurance",
+    "chargeAmount": "Amount",
+    "connectFirst": "Connect the shop wallet first",
+    "showCustomer": "Show this code to the customer"
   },
   "desk": {
     "title": "Sarraf desk",
@@ -546,5 +551,18 @@
     "yourWallet": "Your Dovizir wallet",
     "copyAddress": "Copy address",
     "reset": "Reset wallet"
+  },
+  "pay": {
+    "title": "Pay this shop",
+    "shop": "Shop",
+    "amount": "Amount",
+    "coveredNote": "This purchase is covered: if the goods never arrive, you can claim.",
+    "payNow": "Pay now",
+    "paidNote": "Paid. The shop has the money; your coverage is open.",
+    "confirmNow": "I received the goods — confirm",
+    "confirmedNote": "Confirmed. The sale is final and the seller's premium is earned.",
+    "badLink": "This payment link is incomplete.",
+    "home": "Back to home",
+    "connectFirst": "Create your wallet first"
   }
 }

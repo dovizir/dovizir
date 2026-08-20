@@ -24,6 +24,7 @@ const CONTRACTS = {
   NoteVault: "noteVaultAbi",
   Escrow: "escrowAbi",
   MockUsdt: "mockUsdtAbi",
+  PurchaseInsurance: "purchaseInsuranceAbi",
 };
 
 mkdirSync(abiDir, { recursive: true });
