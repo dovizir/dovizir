@@ -232,9 +232,15 @@
     "members": "اعضا",
     "noMembers": "هنوز عضوی اضافه نشده است",
     "gasTank": "مخزن گاز پی‌مستر",
-    "gasTankStub": "نمونه اولیه",
     "gasTankHint": "موجودی گاز حمایت‌شده برای تراکنش‌های اعضا",
-    "gasTankPimlico": "جای‌گهدار — موجودی ساختگی. به یکپارچه‌سازی پی‌مستر Pimlico نیاز دارد (AA-SEAM)."
+    "gasTankLow": "کم",
+    "gasTankBurn": "مصرف روزانه",
+    "gasTankRunway": "دوام",
+    "gasTankDays": "{days} روز",
+    "gasTankOwed": "بدهی به نگهدارنده",
+    "gasTankEmpty": "مخزن خالی است — تا شارژ مجدد، مشتریان شما کارمزد شبکه را خودشان با حواله می‌پردازند.",
+    "gasTankTopUp": "شارژ (USDT)",
+    "gasTankTopUpSoon": "جریان شارژ همراه با اتصال پرداخت می‌آید"
   },
   "deskRamp": {
     "nav": {

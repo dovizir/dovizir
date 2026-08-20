@@ -232,9 +232,15 @@
     "members": "الأعضاء",
     "noMembers": "لم يُضف أعضاء بعد",
     "gasTank": "خزان غاز الدافع",
-    "gasTankStub": "نموذج أولي",
     "gasTankHint": "رصيد الغاز المدعوم لمعاملات الأعضاء",
-    "gasTankPimlico": "عنصر نائب — رصيد وهمي. يحتاج إلى دمج دافع Pimlico (AA-SEAM)."
+    "gasTankLow": "منخفض",
+    "gasTankBurn": "الاستهلاك اليومي",
+    "gasTankRunway": "المدة المتبقية",
+    "gasTankDays": "{days} يومًا",
+    "gasTankOwed": "مستحق للمشغّل",
+    "gasTankEmpty": "الخزان فارغ — حتى تعيد الشحن، يدفع عملاؤك رسوم الشبكة بأنفسهم بالحوالة.",
+    "gasTankTopUp": "شحن (USDT)",
+    "gasTankTopUpSoon": "تدفق الشحن يأتي مع ربط الدفع"
   },
   "deskRamp": {
     "nav": {

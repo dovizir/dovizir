@@ -232,9 +232,15 @@
     "members": "ئەندامان",
     "noMembers": "هێشتا هیچ ئەندامێک زیادنەکراوە",
     "gasTank": "تانکی گازی پەیمەستەر",
-    "gasTankStub": "نموونەی سەرەتایی",
     "gasTankHint": "باڵانسی گازی پێشکەشکراو بۆ مامەڵەکانی ئەندامان",
-    "gasTankPimlico": "جێگرەوە — باڵانسی ساختە. پێویستی بە یەکخستنی پەیمەستەری Pimlico هەیە (AA-SEAM)."
+    "gasTankLow": "کەم",
+    "gasTankBurn": "خەرجی ڕۆژانە",
+    "gasTankRunway": "ماوەی ماوە",
+    "gasTankDays": "{days} ڕۆژ",
+    "gasTankOwed": "قەرز بۆ چاودێر",
+    "gasTankEmpty": "تانکەکە بەتاڵە — هەتا پڕکردنەوە، کڕیارەکانت کرێی تۆڕ بە حەوالە خۆیان دەدەن.",
+    "gasTankTopUp": "پڕکردنەوە (USDT)",
+    "gasTankTopUpSoon": "ڕەوتی پڕکردنەوە لەگەڵ گرێدانی پارەدان دێت"
   },
   "deskRamp": {
     "nav": {

@@ -232,9 +232,15 @@
     "members": "غړي",
     "noMembers": "لا کوم غړی نه دی اضافه شوی",
     "gasTank": "د پی‌مستر ګاز ټانک",
-    "gasTankStub": "بېلګه",
     "gasTankHint": "د غړو د راکړو ورکړو لپاره د پر غاړه اخیستل شوي ګاز بیلانس",
-    "gasTankPimlico": "ځای‌نیوی — جوړ شوی بیلانس. د Pimlico پی‌مستر یوځای کولو ته اړتیا لري (AA-SEAM)."
+    "gasTankLow": "لږ",
+    "gasTankBurn": "ورځنی لګښت",
+    "gasTankRunway": "پاتې موده",
+    "gasTankDays": "{days} ورځې",
+    "gasTankOwed": "ساتونکي ته پور",
+    "gasTankEmpty": "ټانکی تش دی — تر بیا ډکولو پورې ستاسو پیرودونکي د شبکې فیس پخپله په حواله ورکوي.",
+    "gasTankTopUp": "ډکول (USDT)",
+    "gasTankTopUpSoon": "د ډکولو بهیر د تادیې له نښلولو سره راځي"
   },
   "deskRamp": {
     "nav": {

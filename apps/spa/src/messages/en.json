@@ -232,9 +232,15 @@
     "members": "Members",
     "noMembers": "No members onboarded yet",
     "gasTank": "Paymaster gas tank",
-    "gasTankStub": "Stub",
     "gasTankHint": "Sponsored-gas balance for members' transactions",
-    "gasTankPimlico": "Placeholder — mock balance. Needs the Pimlico paymaster integration (AA-SEAM)."
+    "gasTankLow": "Low",
+    "gasTankBurn": "Burn per day",
+    "gasTankRunway": "Runway",
+    "gasTankDays": "{days} days",
+    "gasTankOwed": "Owed to maintainer",
+    "gasTankEmpty": "Tank empty — your customers now pay their own network fee in hawala until you top up.",
+    "gasTankTopUp": "Top up (USDT)",
+    "gasTankTopUpSoon": "Top-up flow arrives with the payment integration"
   },
   "deskRamp": {
     "nav": {
