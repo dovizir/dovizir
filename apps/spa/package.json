@@ -14,7 +14,8 @@
     "test:notes": "node src/lib/notes/spend-commit.test.mjs",
     "check:overflow": "node scripts/check-overflow.mjs",
     "check:locale": "node scripts/check-locale-switch.mjs",
-    "test:gastank": "node src/lib/embedded/gas-tank.test.mjs"
+    "test:gastank": "node src/lib/embedded/gas-tank.test.mjs",
+    "check:consumer": "node scripts/check-consumer-flow.mjs"
   },
   "dependencies": {
     "@dovizir/notes": "workspace:*",
