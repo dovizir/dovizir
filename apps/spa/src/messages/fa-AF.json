@@ -67,7 +67,7 @@
     "title": "ارسال",
     "subtitle": "ارسال آنی حواله به هر کسی",
     "recipient": "گیرنده",
-    "recipientPlaceholder": "آدرس 0x یا شناسه",
+    "recipientPlaceholder": "آدرس 0x…، نمبر موبایل یا ایمیل",
     "invalidRecipient": "یک آدرس معتبر وارد کنید",
     "insufficient": "موجودی کافی نیست",
     "zeroFee": "بدون کارمزد",
@@ -79,7 +79,11 @@
     "signAuthorization": "امضای مجوز",
     "authorizationSigned": "مجوز امضا شد. آن را به یک پیک بدهید یا خودتان رله کنید.",
     "relayNow": "رلهٔ فوری",
-    "sendNow": "ارسال"
+    "sendNow": "ارسال",
+    "contactResolving": "در حال جستجو…",
+    "contactNotFound": "کسی با این مشخصات هنوز راجستر نشده — دعوتش کنید یا آدرس والتش را درج کنید",
+    "contactUnavailable": "جستجوی مخاطب در دسترس نیست — آدرس والت را درج کنید",
+    "contactLimited": "جستجوی زیاد — کمی صبر کنید و دوباره کوشش کنید"
   },
   "redeem": {
     "title": "برداشت",

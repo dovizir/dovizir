@@ -67,7 +67,7 @@
     "title": "لېږل",
     "subtitle": "هر چا ته سملاسي حواله ولېږئ",
     "recipient": "اخیستونکی",
-    "recipientPlaceholder": "0x… پته یا پېژندنوم",
+    "recipientPlaceholder": "0x… پته، تلیفون یا برېښنالیک",
     "invalidRecipient": "سمه پته ولیکئ",
     "insufficient": "بیلانس بس نه دی",
     "zeroFee": "بې فیسه",
@@ -79,7 +79,11 @@
     "signAuthorization": "اجازه لاسلیک کړئ",
     "authorizationSigned": "اجازه لاسلیک شوه. یوه پیک ته یې ورکړئ چې ورسوي، یا پخپله یې ورسوئ.",
     "relayNow": "اوس یې ورسوئ",
-    "sendNow": "لېږل"
+    "sendNow": "لېږل",
+    "contactResolving": "لټون روان دی…",
+    "contactNotFound": "په دې معلوماتو څوک نه دی راجستر شوی — بلنه یې ورکړئ یا د والټ پته یې ولګوئ",
+    "contactUnavailable": "د اړیکو لټون شتون نه لري — د والټ پته ولګوئ",
+    "contactLimited": "ډېر لټونونه — لږ صبر وکړئ او بیا هڅه وکړئ"
   },
   "redeem": {
     "title": "بدلول",

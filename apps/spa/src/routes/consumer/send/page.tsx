@@ -7,6 +7,7 @@ import { formatIou, parseIou, type Hex } from "@dovizir/sdk";
 import { AmountField } from "@/components/amount-field";
 import { NotDeployedBanner } from "@/components/not-deployed-banner";
 import { useFriendlyTx, useIouBalance, useSend } from "@/lib/hooks";
+import { looksLikeContact, useContactResolve } from "@/lib/hooks/use-contact-resolve";
 
 type Method = "direct" | "courier";
 
@@ -22,6 +23,12 @@ export default function SendPage() {
   const friendly = useFriendlyTx();
 
   const [recipient, setRecipient] = useState("");
+  const resolution = useContactResolve(recipient);
+  // What actually receives the money: a pasted address as-is, or the wallet
+  // the directory resolved a phone/email to. The raw-address path never
+  // consults the directory — that is the degradation rule.
+  const effectiveRecipient: string =
+    resolution.state === "found" ? resolution.wallet : recipient;
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState<Method>("direct");
   const [status, setStatus] = useState<"idle" | "busy" | "done">("idle");
@@ -36,19 +43,19 @@ export default function SendPage() {
   })();
 
   const canSubmit =
-    isConnected && isAddress(recipient) && parsedAmount > 0n && status !== "busy";
+    isConnected && isAddress(effectiveRecipient) && parsedAmount > 0n && status !== "busy";
 
   async function onSubmit() {
-    if (!isAddress(recipient)) return;
+    if (!isAddress(effectiveRecipient)) return;
     setError(null);
     setStatus("busy");
     try {
       if (method === "direct") {
-        await send.sendDirect(recipient, parsedAmount);
+        await send.sendDirect(effectiveRecipient as Hex, parsedAmount);
         friendly.markUsed(); // UI-stub quota tick; paymaster enforces later
         setStatus("done");
       } else {
-        await send.signCourierAuthorization(recipient, parsedAmount);
+        await send.signCourierAuthorization(effectiveRecipient as Hex, parsedAmount);
         setStatus("idle");
       }
     } catch (e) {
@@ -107,11 +114,28 @@ export default function SendPage() {
             id="recipient"
             dir="ltr"
             value={recipient}
-            onChange={(e) => setRecipient(e.target.value.trim())}
+            onChange={(e) => setRecipient(e.target.value)}
             placeholder={t("recipientPlaceholder")}
             className="w-full rounded-md border border-border bg-surface-alt px-lg py-md text-sm text-foreground outline-none placeholder:text-muted focus:border-focus"
           />
-          {recipient && !isAddress(recipient) && (
+          {resolution.state === "resolving" && (
+            <p className="mt-xs text-xs text-muted">{t("contactResolving")}</p>
+          )}
+          {resolution.state === "found" && (
+            <p className="mt-xs text-xs text-accent" dir="ltr">
+              ✓ {resolution.wallet.slice(0, 10)}…{resolution.wallet.slice(-6)}
+            </p>
+          )}
+          {resolution.state === "notFound" && (
+            <p className="mt-xs text-xs text-danger">{t("contactNotFound")}</p>
+          )}
+          {resolution.state === "unavailable" && (
+            <p className="mt-xs text-xs text-muted">{t("contactUnavailable")}</p>
+          )}
+          {resolution.state === "limited" && (
+            <p className="mt-xs text-xs text-muted">{t("contactLimited")}</p>
+          )}
+          {recipient && resolution.state === "idle" && !isAddress(recipient) && !looksLikeContact(recipient) && (
             <p className="mt-xs text-xs text-danger">{t("invalidRecipient")}</p>
           )}
         </div>

@@ -67,7 +67,7 @@
     "title": "Gönder",
     "subtitle": "Dovizir havalesini herkese anında gönderin",
     "recipient": "Alıcı",
-    "recipientPlaceholder": "0x… adres veya kullanıcı adı",
+    "recipientPlaceholder": "0x… adres, telefon veya e-posta",
     "invalidRecipient": "Geçerli bir adres girin",
     "insufficient": "Yetersiz bakiye",
     "zeroFee": "Sıfır komisyon",
@@ -79,7 +79,11 @@
     "signAuthorization": "Yetkiyi imzala",
     "authorizationSigned": "Yetki imzalandı. İletmesi için bir kuryeyle paylaşın ya da kendiniz iletin.",
     "relayNow": "Şimdi ilet",
-    "sendNow": "Gönder"
+    "sendNow": "Gönder",
+    "contactResolving": "Aranıyor…",
+    "contactNotFound": "Bu bilgiyle kayıtlı kimse yok — davet edin ya da cüzdan adresini yapıştırın",
+    "contactUnavailable": "Kişi araması kullanılamıyor — cüzdan adresini yapıştırın",
+    "contactLimited": "Çok fazla arama — biraz bekleyip yeniden deneyin"
   },
   "redeem": {
     "title": "Bozdur",
