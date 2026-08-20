@@ -6,3 +6,4 @@ export { sarrafRegistryAbi } from "./SarrafRegistry";
 export { noteVaultAbi } from "./NoteVault";
 export { escrowAbi } from "./Escrow";
 export { mockUsdtAbi } from "./MockUsdt";
+export { purchaseInsuranceAbi } from "./PurchaseInsurance";

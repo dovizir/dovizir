@@ -13,6 +13,7 @@ export const ZERO_ADDRESS: Hex = "0x0000000000000000000000000000000000000000";
 
 export interface DovizirAddresses {
   iouToken: Hex;
+  purchaseInsurance: Hex;
   memberRegistry: Hex;
   reservePool: Hex;
   insuranceFund: Hex;
@@ -35,6 +36,7 @@ function addr(value: string | undefined): Hex {
 export function getAddresses(): DovizirAddresses {
   return {
     iouToken: addr(process.env.NEXT_PUBLIC_IOU_TOKEN_ADDRESS),
+    purchaseInsurance: addr(process.env.NEXT_PUBLIC_PURCHASE_INSURANCE_ADDRESS),
     memberRegistry: addr(process.env.NEXT_PUBLIC_MEMBER_REGISTRY_ADDRESS),
     reservePool: addr(process.env.NEXT_PUBLIC_RESERVE_POOL_ADDRESS),
     insuranceFund: addr(process.env.NEXT_PUBLIC_INSURANCE_FUND_ADDRESS),
