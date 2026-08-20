@@ -232,9 +232,15 @@
     "members": "Üyeler",
     "noMembers": "Henüz üye eklenmedi",
     "gasTank": "Paymaster gas deposu",
-    "gasTankStub": "Taslak",
     "gasTankHint": "Üyelerin işlemleri için karşılanan gas bakiyesi",
-    "gasTankPimlico": "Yer tutucu — sahte bakiye. Pimlico paymaster entegrasyonu gerekiyor (AA-SEAM)."
+    "gasTankLow": "Düşük",
+    "gasTankBurn": "Günlük tüketim",
+    "gasTankRunway": "Kalan süre",
+    "gasTankDays": "{days} gün",
+    "gasTankOwed": "Bakımcıya borç",
+    "gasTankEmpty": "Depo boş — yükleme yapana kadar müşterileriniz ağ ücretini havaleyle kendileri öder.",
+    "gasTankTopUp": "Yükle (USDT)",
+    "gasTankTopUpSoon": "Yükleme akışı ödeme entegrasyonuyla gelecek"
   },
   "deskRamp": {
     "nav": {

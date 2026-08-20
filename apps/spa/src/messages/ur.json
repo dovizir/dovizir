@@ -232,9 +232,15 @@
     "members": "اراکین",
     "noMembers": "ابھی کوئی رکن شامل نہیں ہوا",
     "gasTank": "پے ماسٹر گیس ٹینک",
-    "gasTankStub": "نمونہ",
     "gasTankHint": "اراکین کے لین دین کے لیے سرپرست گیس کا بیلنس",
-    "gasTankPimlico": "جگہ رکھنے والا — فرضی بیلنس۔ Pimlico پے ماسٹر انضمام درکار ہے (AA-SEAM)۔"
+    "gasTankLow": "کم",
+    "gasTankBurn": "روزانہ خرچ",
+    "gasTankRunway": "باقی مدت",
+    "gasTankDays": "{days} دن",
+    "gasTankOwed": "مینٹینر کا واجب",
+    "gasTankEmpty": "ٹینک خالی ہے — ری چارج تک آپ کے گاہک نیٹ ورک فیس خود حوالے سے ادا کریں گے۔",
+    "gasTankTopUp": "ری چارج (USDT)",
+    "gasTankTopUpSoon": "ری چارج کا سلسلہ ادائیگی کے انضمام کے ساتھ آئے گا"
   },
   "deskRamp": {
     "nav": {
