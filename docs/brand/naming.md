@@ -58,6 +58,11 @@ The unit name + descriptor need native-speaker wording in each shipped locale
 (the same gap flagged for buy/sell terms). "Sarraf" stays in every locale.
 Table to fill with a native reviewer per corridor (fa, then tr/ar/ur/dari/kurdish).
 
+**Brand rendering (founder-decided, 2026-08-21):** in Persian (fa) and Dari
+(fa-AF) the brand is written **دویزیر** — one و, no ZWNJ. The earlier mixed
+renderings (دوی‌زیر، دوویزیر) are superseded. Other Arabic-script locales
+(ar, ur, ckb, ps) still await the same native ruling.
+
 ## 4. Migration checklist (when the unit name is locked)
 - [ ] Set the unit name + descriptor here (§1) and per-locale (§3).
 - [ ] Replace "USDT-IOU" in user-facing docs + UI i18n values with the owned term.
