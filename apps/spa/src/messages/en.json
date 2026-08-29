@@ -24,7 +24,14 @@
       "title": "Testnet not deployed yet",
       "body": "The Dovizir contracts are not deployed on Base Sepolia yet. On-chain actions are disabled until addresses are configured."
     },
-    "wrongNetwork": "Please switch to Base Sepolia"
+    "wrongNetwork": "Please switch to Base Sepolia",
+    "appError": {
+      "title": "Something went wrong",
+      "body": "An unexpected error occurred. Reloading usually fixes it.",
+      "updatedTitle": "The app was updated",
+      "updatedBody": "A new version is available. Reload to continue.",
+      "reload": "Reload"
+    }
   },
   "locale": {
     "label": "Language",

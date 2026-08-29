@@ -4,6 +4,7 @@ import ConsumerLayout from "./routes/consumer/layout";
 import DeskLayout from "./routes/desk/layout";
 import PosLayout from "./routes/pos/layout";
 import NotesLayout from "./routes/consumer/notes/layout";
+import { RouteError } from "./components/route-error";
 
 // Lazy route element with a null fallback (pages render their own skeletons).
 function L(loader: () => Promise<{ default: ComponentType<any> }>) {
@@ -18,9 +19,10 @@ function L(loader: () => Promise<{ default: ComponentType<any> }>) {
 export const router = createBrowserRouter([
   // Onboarding lives outside the consumer shell: no bottom nav, its own header
   // (the four screens from the Figma "Onboarding" section).
-  { path: "welcome", element: L(() => import("./routes/welcome/page")) },
+  { path: "welcome", element: L(() => import("./routes/welcome/page")), errorElement: <RouteError /> },
   {
     element: <ConsumerLayout />,
+    errorElement: <RouteError />,
     children: [
       { index: true, element: L(() => import("./routes/consumer/page")) },
       { path: "deposit", element: L(() => import("./routes/consumer/deposit/page")) },
@@ -49,6 +51,7 @@ export const router = createBrowserRouter([
   },
   {
     element: <DeskLayout />,
+    errorElement: <RouteError />,
     children: [
       { path: "desk", element: L(() => import("./routes/desk/desk/page")) },
       { path: "desk/rates", element: L(() => import("./routes/desk/desk/rates/page")) },
@@ -59,6 +62,7 @@ export const router = createBrowserRouter([
   },
   {
     element: <PosLayout />,
+    errorElement: <RouteError />,
     children: [{ path: "pos", element: L(() => import("./routes/pos/pos/page")) }],
   },
 ]);
