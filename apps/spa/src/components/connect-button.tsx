@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useDovizirWallet } from "@/lib/embedded/use-wallet";
 
@@ -18,7 +19,7 @@ function shortAddress(address: string) {
  */
 export function ConnectButton() {
   const t = useTranslations("wallet");
-  const { address, isReady, isPending, create, reset } = useDovizirWallet();
+  const { address, isReady, isPending, reset } = useDovizirWallet();
   const [open, setOpen] = useState(false);
 
   if (isReady && address) {
@@ -60,14 +61,14 @@ export function ConnectButton() {
     );
   }
 
+  // First-time users are routed through onboarding (join sarraf -> passkey
+  // ceremony -> ready) instead of a bare inline create.
   return (
-    <button
-      type="button"
-      disabled={isPending}
-      onClick={() => create()}
-      className="whitespace-nowrap rounded-pill bg-primary px-lg py-sm text-sm font-medium text-primary-foreground shadow-sm disabled:opacity-50"
+    <Link
+      href="/welcome"
+      className="whitespace-nowrap rounded-pill bg-primary px-lg py-sm text-sm font-medium text-primary-foreground shadow-sm"
     >
       {isPending ? t("creating") : t("createWallet")}
-    </button>
+    </Link>
   );
 }

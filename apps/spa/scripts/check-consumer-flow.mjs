@@ -54,7 +54,20 @@ const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
 const page = await ctx.newPage();
 const problems = [];
 
-// --- onboarding: the real ceremony ---------------------------------------
+/** Forbidden-vocabulary + renders-something sweep of whatever is on screen. */
+const sweep = async (label) => {
+  const text = await page.evaluate(() => document.body.innerText || "");
+  if (text.trim().length < 20) problems.push(`${label}: renders (almost) nothing`);
+  for (const { re, why } of FORBIDDEN) {
+    const m = text.match(re);
+    if (m) problems.push(`${label}: says "${m[0]}" — ${why}`);
+  }
+};
+
+// --- onboarding: the four designed screens, with the real ceremony --------
+// The header CTA now routes through /welcome (join sarraf -> passkey create
+// -> ready) instead of an inline create; each screen is swept while visible
+// because a finished onboarding redirects /welcome home.
 const cdp = await ctx.newCDPSession(page);
 await cdp.send("WebAuthn.enable");
 await cdp.send("WebAuthn.addVirtualAuthenticator", {
@@ -66,9 +79,27 @@ await cdp.send("WebAuthn.addVirtualAuthenticator", {
 });
 await page.goto(BASE, { waitUntil: "networkidle", timeout: 30_000 }).catch(() => {});
 await page.waitForTimeout(1000);
-await page.click('button:has-text("Create your wallet")').catch(() => {
-  problems.push("onboarding: the create-wallet button was not found");
+await page.click('a:has-text("Create your wallet")').catch(() => {
+  problems.push("onboarding: the create-wallet entry was not found on /");
 });
+await page.waitForURL("**/welcome**", { timeout: 10_000 }).catch(() => {
+  problems.push("onboarding: the entry CTA did not lead to /welcome");
+});
+await page.waitForTimeout(500);
+await sweep("/welcome (join)");
+await page.click('button:has-text("Continue without an invite")').catch(() => {
+  problems.push("onboarding: the join screen offered no way forward");
+});
+await page.waitForTimeout(300);
+await sweep("/welcome (create)");
+await page.click('button:has-text("Create my wallet")').catch(() => {
+  problems.push("onboarding: the create-wallet ceremony button was not found");
+});
+await page
+  .waitForSelector('button:has-text("Go to my wallet")', { timeout: 20_000 })
+  .then(() => sweep("/welcome (ready)"))
+  .catch(() => problems.push("onboarding: the ready screen never appeared after the ceremony"));
+await page.click('button:has-text("Go to my wallet")').catch(() => {});
 await page.waitForSelector('button:has-text("0x")', { timeout: 20_000 }).catch(() => {
   problems.push("onboarding: no connected address appeared after the ceremony");
 });
@@ -79,12 +110,7 @@ if (leakedKey) problems.push("onboarding: a raw private key was written despite 
 for (const route of ROUTES) {
   await page.goto(BASE + route, { waitUntil: "networkidle", timeout: 30_000 }).catch(() => {});
   await page.waitForTimeout(700);
-  const text = await page.evaluate(() => document.body.innerText || "");
-  if (text.trim().length < 20) problems.push(`${route}: renders (almost) nothing`);
-  for (const { re, why } of FORBIDDEN) {
-    const m = text.match(re);
-    if (m) problems.push(`${route}: says "${m[0]}" — ${why}`);
-  }
+  await sweep(route);
 }
 
 // --- the balance is denominated, not just a number ------------------------

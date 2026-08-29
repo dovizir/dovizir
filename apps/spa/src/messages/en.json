@@ -564,5 +564,46 @@
     "badLink": "This payment link is incomplete.",
     "home": "Back to home",
     "connectFirst": "Create your wallet first"
+  },
+  "onboarding": {
+    "join": {
+      "title": "Your sarraf, your gateway",
+      "subtitle": "You were invited through this money changer. They hold your balance and sponsor your transfers.",
+      "certified": "Certified",
+      "members": "{count} members",
+      "noSarrafTitle": "No sarraf linked yet",
+      "noSarrafHint": "Open your sarraf's invite link or scan their QR code to join through them.",
+      "benefitDaily": "1 free transfer to friends, every day",
+      "benefitPurchases": "Purchases always free — sellers cover the fee",
+      "benefitPrivacy": "Only your sarraf can link your wallet to you",
+      "cta": "Join with this sarraf",
+      "ctaNoSarraf": "Continue without an invite"
+    },
+    "create": {
+      "title": "Create your wallet",
+      "subtitle": "No recovery codes. No passwords. Your fingerprint or face unlocks your wallet on this device.",
+      "pointDevice": "Keys stay in your phone's secure chip",
+      "pointNothing": "Nothing to write down or remember",
+      "pointFree": "Free to create — your sarraf covers the costs",
+      "cta": "Create my wallet",
+      "creating": "Waiting for your device…",
+      "failed": "Your device didn't finish the confirmation. Please try again."
+    },
+    "ready": {
+      "title": "Your wallet is ready!",
+      "subtitle": "Your money moves freely from here on.",
+      "subtitleWithSarraf": "You joined through your sarraf. Your money moves freely from here on.",
+      "giftTitle": "Today's free transfer is waiting",
+      "giftBody": "1 free transfer every day. Purchases never count.",
+      "cta": "Go to my wallet"
+    },
+    "unlock": {
+      "title": "Welcome back!",
+      "subtitle": "Unlock your wallet with your fingerprint or face.",
+      "cta": "Unlock my wallet",
+      "unlocking": "Waiting for your device…",
+      "switchAccount": "Use a different account",
+      "switchWarning": "This removes the wallet from this device."
+    }
   }
 }
