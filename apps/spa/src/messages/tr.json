@@ -24,7 +24,14 @@
       "title": "Test ağı henüz yayına alınmadı",
       "body": "Dovizir sözleşmeleri henüz Base Sepolia üzerinde yayına alınmadı. Adresler yapılandırılana kadar zincir üstü işlemler devre dışıdır."
     },
-    "wrongNetwork": "Lütfen Base Sepolia ağına geçin"
+    "wrongNetwork": "Lütfen Base Sepolia ağına geçin",
+    "appError": {
+      "title": "Bir şeyler ters gitti",
+      "body": "Beklenmeyen bir hata oluştu. Yeniden yüklemek genellikle sorunu çözer.",
+      "updatedTitle": "Uygulama güncellendi",
+      "updatedBody": "Yeni bir sürüm hazır. Devam etmek için yeniden yükleyin.",
+      "reload": "Yeniden yükle"
+    }
   },
   "locale": {
     "label": "Dil",
