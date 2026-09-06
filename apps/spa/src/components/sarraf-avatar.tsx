@@ -17,10 +17,15 @@ export function SarrafAvatar({
 }: {
   name: string;
   logo?: string;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
   onBrand?: boolean;
 }) {
-  const box = size === "sm" ? "h-5 w-5 text-[10px]" : "h-12 w-12 text-base";
+  const box =
+    size === "sm"
+      ? "h-5 w-5 text-[10px]"
+      : size === "lg"
+        ? "h-16 w-16 text-2xl"
+        : "h-12 w-12 text-base";
   if (logo) {
     return (
       <img

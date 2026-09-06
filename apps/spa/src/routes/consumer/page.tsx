@@ -36,21 +36,28 @@ export default function HomePage() {
     <div className="flex flex-col gap-xl">
       <NotDeployedBanner />
 
-      <section className="rounded-lg bg-primary p-xl text-primary-foreground shadow-card">
-        <p className="text-sm opacity-90">{t("balanceLabel")}</p>
-        <p className="mt-sm font-heading text-4xl font-extrabold" dir="ltr">
-          {isLoading ? "…" : formatIou(total)}
-          <span className="ms-sm text-base font-medium opacity-90">
-            <UnitMark onBrand />
-          </span>
-        </p>
-        {profile ? (
-          <p className="mt-sm flex items-center gap-sm text-xs opacity-90">
-            <SarrafAvatar name={profile.name} logo={profile.logo} size="sm" onBrand />
-            <span>{t("balanceHintNamed", { name: profile.name })}</span>
+      {/* Two columns when the sarraf has a profile: balance at the start,
+          their logo big at the end (right in LTR, left in RTL — flex handles
+          the mirroring). Fallback stays the single-column generic card. */}
+      <section className="flex items-center gap-lg rounded-lg bg-primary p-xl text-primary-foreground shadow-card">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm opacity-90">{t("balanceLabel")}</p>
+          <p className="mt-sm font-heading text-4xl font-extrabold" dir="ltr">
+            {isLoading ? "…" : formatIou(total)}
+            <span className="ms-sm text-base font-medium opacity-90">
+              <UnitMark onBrand />
+            </span>
           </p>
-        ) : (
-          <p className="mt-sm text-xs opacity-80">{t("balanceHint")}</p>
+          {profile ? (
+            <p className="mt-sm text-xs opacity-90">
+              {t("balanceHintNamed", { name: profile.name })}
+            </p>
+          ) : (
+            <p className="mt-sm text-xs opacity-80">{t("balanceHint")}</p>
+          )}
+        </div>
+        {profile && (
+          <SarrafAvatar name={profile.name} logo={profile.logo} size="lg" onBrand />
         )}
       </section>
 
