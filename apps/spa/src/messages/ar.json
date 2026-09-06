@@ -48,7 +48,8 @@
     "activitySent": "مُرسل",
     "quickDeposit": "إيداع",
     "quickSend": "إرسال",
-    "quickRedeem": "استرداد"
+    "quickRedeem": "استرداد",
+    "balanceHintNamed": "مغطى بنسبة ١:١ بـ USDT محفوظ لدى {name}"
   },
   "deposit": {
     "title": "إيداع",

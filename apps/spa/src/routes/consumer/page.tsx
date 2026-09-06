@@ -8,6 +8,10 @@ import { UnitMark } from "@/components/unit-mark";
 import { NotDeployedBanner } from "@/components/not-deployed-banner";
 import { FriendlyTxCard } from "@/components/friendly-tx-card";
 import { useActivity, useIouBalance } from "@/lib/hooks";
+import { useQuery } from "@tanstack/react-query";
+import { indexer } from "@/lib/indexer";
+import { useDovizirWallet } from "@/lib/embedded/use-wallet";
+import { SarrafAvatar } from "@/components/sarraf-avatar";
 
 /** Home: ONE aggregated IOU number (tranches hidden) + recent activity. */
 export default function HomePage() {
@@ -17,6 +21,16 @@ export default function HomePage() {
   const { isConnected } = useAccount();
   const { total, isLoading } = useIouBalance();
   const activity = useActivity();
+  const { joinedSarraf } = useDovizirWallet();
+
+  // The party standing behind the money, named where the backing claim is
+  // made. The indexer serves a profile only while the sarraf is certified.
+  const profile = useQuery({
+    queryKey: ["sarraf-profile", joinedSarraf],
+    queryFn: () => indexer.sarrafProfile(joinedSarraf as string),
+    enabled: !!joinedSarraf,
+    staleTime: 5 * 60_000,
+  }).data?.profile;
 
   return (
     <div className="flex flex-col gap-xl">
@@ -30,7 +44,14 @@ export default function HomePage() {
             <UnitMark onBrand />
           </span>
         </p>
-        <p className="mt-sm text-xs opacity-80">{t("balanceHint")}</p>
+        {profile ? (
+          <p className="mt-sm flex items-center gap-sm text-xs opacity-90">
+            <SarrafAvatar name={profile.name} logo={profile.logo} size="sm" onBrand />
+            <span>{t("balanceHintNamed", { name: profile.name })}</span>
+          </p>
+        ) : (
+          <p className="mt-sm text-xs opacity-80">{t("balanceHint")}</p>
+        )}
       </section>
 
       <div className="grid grid-cols-3 gap-md">

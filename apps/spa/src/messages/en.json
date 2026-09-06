@@ -48,7 +48,8 @@
     "activitySent": "Sent",
     "quickDeposit": "Deposit",
     "quickSend": "Send",
-    "quickRedeem": "Redeem"
+    "quickRedeem": "Redeem",
+    "balanceHintNamed": "Backed 1:1 by USDT held at {name}"
   },
   "deposit": {
     "title": "Deposit",

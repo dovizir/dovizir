@@ -48,7 +48,8 @@
     "activitySent": "Gönderilen",
     "quickDeposit": "Yatır",
     "quickSend": "Gönder",
-    "quickRedeem": "Bozdur"
+    "quickRedeem": "Bozdur",
+    "balanceHintNamed": "{name} nezdinde tutulan USDT ile 1:1 teminatlı"
   },
   "deposit": {
     "title": "Yatır",

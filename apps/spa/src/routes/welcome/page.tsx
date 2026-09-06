@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useDovizirWallet } from "@/lib/embedded/use-wallet";
 import { JoinCapture } from "@/components/join-capture";
 import { indexer } from "@/lib/indexer";
+import { SarrafAvatar } from "@/components/sarraf-avatar";
 // @ts-expect-error — plain-JS module, tested standalone (steps.test.mjs)
 import { deriveOnboardingStep } from "@/lib/onboarding/steps.mjs";
 import { getWelcomed, setWelcomed, hasStoredWallet } from "@/lib/onboarding/state";
@@ -149,6 +150,12 @@ export default function WelcomePage() {
     enabled: step === "join" && !!joinedSarraf,
     retry: false,
   });
+  const sarrafProfile = useQuery({
+    queryKey: ["sarraf-profile", joinedSarraf],
+    queryFn: () => indexer.sarrafProfile(joinedSarraf as string),
+    enabled: step === "join" && !!joinedSarraf,
+    retry: false,
+  }).data?.profile;
 
   const begin = useMemo(
     () => async () => {
@@ -182,13 +189,21 @@ export default function WelcomePage() {
 
             {joinedSarraf ? (
               <div className="flex items-center gap-md rounded-lg border border-border bg-surface p-lg shadow-sm">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-base font-medium text-primary">
-                  S
-                </div>
+                {sarrafProfile ? (
+                  <SarrafAvatar name={sarrafProfile.name} logo={sarrafProfile.logo} />
+                ) : (
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-base font-medium text-primary">
+                    S
+                  </div>
+                )}
                 <div className="min-w-0">
-                  <p className="text-base font-medium text-foreground" dir="ltr">
-                    {shortAddress(joinedSarraf)}
-                  </p>
+                  {sarrafProfile ? (
+                    <p className="text-base font-medium text-foreground">{sarrafProfile.name}</p>
+                  ) : (
+                    <p className="text-base font-medium text-foreground" dir="ltr">
+                      {shortAddress(joinedSarraf)}
+                    </p>
+                  )}
                   <div className="mt-xs flex flex-wrap items-center gap-sm">
                     {sarrafInfo.data?.certBand === "certified" && (
                       <span className="rounded-pill bg-success/10 px-md py-xs text-xs font-medium text-success">
