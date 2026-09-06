@@ -8,6 +8,10 @@ import { UnitMark } from "@/components/unit-mark";
 import { NotDeployedBanner } from "@/components/not-deployed-banner";
 import { FriendlyTxCard } from "@/components/friendly-tx-card";
 import { useActivity, useIouBalance } from "@/lib/hooks";
+import { useQuery } from "@tanstack/react-query";
+import { indexer } from "@/lib/indexer";
+import { useDovizirWallet } from "@/lib/embedded/use-wallet";
+import { SarrafAvatar } from "@/components/sarraf-avatar";
 
 /** Home: ONE aggregated IOU number (tranches hidden) + recent activity. */
 export default function HomePage() {
@@ -17,20 +21,44 @@ export default function HomePage() {
   const { isConnected } = useAccount();
   const { total, isLoading } = useIouBalance();
   const activity = useActivity();
+  const { joinedSarraf } = useDovizirWallet();
+
+  // The party standing behind the money, named where the backing claim is
+  // made. The indexer serves a profile only while the sarraf is certified.
+  const profile = useQuery({
+    queryKey: ["sarraf-profile", joinedSarraf],
+    queryFn: () => indexer.sarrafProfile(joinedSarraf as string),
+    enabled: !!joinedSarraf,
+    staleTime: 5 * 60_000,
+  }).data?.profile;
 
   return (
     <div className="flex flex-col gap-xl">
       <NotDeployedBanner />
 
-      <section className="rounded-lg bg-primary p-xl text-primary-foreground shadow-card">
-        <p className="text-sm opacity-90">{t("balanceLabel")}</p>
-        <p className="mt-sm font-heading text-4xl font-extrabold" dir="ltr">
-          {isLoading ? "…" : formatIou(total)}
-          <span className="ms-sm text-base font-medium opacity-90">
-            <UnitMark onBrand />
-          </span>
-        </p>
-        <p className="mt-sm text-xs opacity-80">{t("balanceHint")}</p>
+      {/* Two columns when the sarraf has a profile: balance at the start,
+          their logo big at the end (right in LTR, left in RTL — flex handles
+          the mirroring). Fallback stays the single-column generic card. */}
+      <section className="flex items-center gap-lg rounded-lg bg-primary p-xl text-primary-foreground shadow-card">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm opacity-90">{t("balanceLabel")}</p>
+          <p className="mt-sm font-heading text-4xl font-extrabold" dir="ltr">
+            {isLoading ? "…" : formatIou(total)}
+            <span className="ms-sm text-base font-medium opacity-90">
+              <UnitMark onBrand />
+            </span>
+          </p>
+          {profile ? (
+            <p className="mt-sm text-xs opacity-90">
+              {t("balanceHintNamed", { name: profile.name })}
+            </p>
+          ) : (
+            <p className="mt-sm text-xs opacity-80">{t("balanceHint")}</p>
+          )}
+        </div>
+        {profile && (
+          <SarrafAvatar name={profile.name} logo={profile.logo} size="lg" onBrand />
+        )}
       </section>
 
       <div className="grid grid-cols-3 gap-md">

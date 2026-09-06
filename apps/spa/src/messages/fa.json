@@ -48,7 +48,8 @@
     "activitySent": "ارسالی",
     "quickDeposit": "واریز",
     "quickSend": "ارسال",
-    "quickRedeem": "برداشت"
+    "quickRedeem": "برداشت",
+    "balanceHintNamed": "با پشتوانهٔ یک‌به‌یک تتر نزد {name}"
   },
   "deposit": {
     "title": "واریز",

@@ -48,7 +48,8 @@
     "activitySent": "نێردراو",
     "quickDeposit": "دانان",
     "quickSend": "ناردن",
-    "quickRedeem": "وەرگرتنەوە"
+    "quickRedeem": "وەرگرتنەوە",
+    "balanceHintNamed": "بە پشتیوانی یەک بە یەکی USDT کە لای {name} پارێزراوە"
   },
   "deposit": {
     "title": "دانان",

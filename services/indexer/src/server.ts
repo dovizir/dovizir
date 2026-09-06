@@ -27,6 +27,8 @@ import {
 } from "./db.js";
 import { allEvents } from "./db.js";
 import { insuranceView } from "./insurance.js";
+import { certStatus } from "./derive.js";
+import { loadProfiles, profileFor } from "./profiles.js";
 import {
   initDirectorySchema,
   registerContact,
@@ -97,6 +99,18 @@ async function main() {
     const parsed = addr.safeParse((req.params as { addr: string }).addr);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
     return insuranceView(allEvents(db), parsed.data);
+  });
+
+  // Public branding (name/logo) — served only while the chain says certified,
+  // so file-listing alone never brands our surfaces (phishing gate). Re-read
+  // per request: the file is tiny and maintainer edits apply immediately.
+  app.get("/sarraf/:addr/profile", async (req, reply) => {
+    const parsed = addr.safeParse((req.params as { addr: string }).addr);
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
+    const profiles = loadProfiles(
+      process.env.SARRAF_PROFILES_PATH ?? "./sarraf-profiles.json",
+    );
+    return { profile: profileFor(profiles, parsed.data, certStatus(allEvents(db), parsed.data)) };
   });
 
   app.get("/member/:addr", async (req, reply) => {

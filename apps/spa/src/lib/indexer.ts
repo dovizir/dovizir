@@ -74,8 +74,16 @@ export type SarrafInsuranceView = {
   strikes: number;
 };
 
+/** Public branding — served by the indexer only while the sarraf is certified. */
+export interface SarrafProfile {
+  name: string;
+  logo?: string;
+}
+
 export const indexer = {
   health: (signal?: AbortSignal) => get<IndexerHealth>("/health", signal),
+  sarrafProfile: (addr: string, signal?: AbortSignal) =>
+    get<{ profile: SarrafProfile | null }>(`/sarraf/${addr}/profile`, signal),
   stats: (signal?: AbortSignal) => get<NetworkStats>("/stats", signal),
   sarraf: (addr: string, signal?: AbortSignal) =>
     get<SarrafView>(`/sarraf/${addr}`, signal),

@@ -48,7 +48,8 @@
     "activitySent": "بھیجا گیا",
     "quickDeposit": "جمع",
     "quickSend": "بھیجیں",
-    "quickRedeem": "نقد کرائیں"
+    "quickRedeem": "نقد کرائیں",
+    "balanceHintNamed": "{name} کے پاس رکھے USDT سے ایک بہ ایک پشتوانہ"
   },
   "deposit": {
     "title": "جمع",

@@ -48,7 +48,8 @@
     "activitySent": "لېږل شوې",
     "quickDeposit": "سپارنه",
     "quickSend": "لېږل",
-    "quickRedeem": "بدلول"
+    "quickRedeem": "بدلول",
+    "balanceHintNamed": "له {name} سره د ساتل شوي USDT له خوا یو په یو ملاتړ شوی"
   },
   "deposit": {
     "title": "سپارنه",
